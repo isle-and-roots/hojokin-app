@@ -4,6 +4,7 @@ export interface PlanInfo {
   key: PlanKey;
   name: string;
   price: number;
+  priceId: string;
   aiLimit: number;
   docxExport: boolean;
   maxApplications: number;
@@ -16,6 +17,7 @@ export const PLAN_LIST: PlanInfo[] = [
     key: "free",
     name: "Free",
     price: 0,
+    priceId: "",
     aiLimit: 3,
     docxExport: false,
     maxApplications: 1,
@@ -30,6 +32,7 @@ export const PLAN_LIST: PlanInfo[] = [
     key: "pro",
     name: "Pro",
     price: 2980,
+    priceId: process.env.STRIPE_PRO_PRICE_ID ?? "",
     aiLimit: 100,
     docxExport: true,
     maxApplications: -1,
@@ -46,6 +49,7 @@ export const PLAN_LIST: PlanInfo[] = [
     key: "business",
     name: "Business",
     price: 9800,
+    priceId: process.env.STRIPE_BUSINESS_PRICE_ID ?? "",
     aiLimit: 500,
     docxExport: true,
     maxApplications: -1,

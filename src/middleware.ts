@@ -40,7 +40,7 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   // 認証不要のパス
-  const publicPaths = ["/login", "/auth/callback", "/pricing", "/blog"];
+  const publicPaths = ["/login", "/auth/callback", "/pricing", "/blog", "/legal"];
   const isPublicPath = publicPaths.some((path) =>
     request.nextUrl.pathname.startsWith(path)
   );

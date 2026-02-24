@@ -61,7 +61,11 @@ export default function LoginPage() {
       </button>
 
       <p className="text-center text-xs text-muted-foreground">
-        ログインすることで、利用規約とプライバシーポリシーに同意したものとみなされます。
+        ログインすることで、
+        <a href="/legal/terms" className="underline hover:text-foreground">利用規約</a>
+        と
+        <a href="/legal/privacy" className="underline hover:text-foreground">プライバシーポリシー</a>
+        に同意したものとみなされます。
       </p>
     </div>
   );

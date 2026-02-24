@@ -11,11 +11,12 @@ export default function PricingPage() {
 
   useEffect(() => {
     // 現在のプラン情報を取得
-    fetch("/api/profile")
+    fetch("/api/user/plan")
       .then((res) => res.json())
       .then((data) => {
-        if (data.profile?.plan) {
-          // plan は user_profiles から取得する必要がある
+        if (data.userProfile) {
+          setCurrentPlan(data.userProfile.plan || "free");
+          setHasCustomerId(!!data.userProfile.stripe_customer_id);
         }
       })
       .catch(console.error);
@@ -103,7 +104,7 @@ export default function PricingPage() {
                         {plan.price.toLocaleString()}
                       </span>
                       <span className="text-muted-foreground text-sm">
-                        円/月
+                        円/月<span className="text-xs ml-1">(税込)</span>
                       </span>
                     </>
                   )}
@@ -166,10 +167,21 @@ export default function PricingPage() {
         })}
       </div>
 
-      <div className="mt-12 text-center text-sm text-muted-foreground">
-        <p>すべてのプランは月額制です。いつでもキャンセルできます。</p>
-        <p className="mt-1">
+      <div className="mt-12 text-center text-sm text-muted-foreground space-y-2">
+        <p>すべてのプランは月額制（税込）です。いつでもキャンセルできます。</p>
+        <p>
           お支払いは Stripe の安全な決済システムで処理されます。
+        </p>
+        <p className="flex flex-wrap justify-center gap-3 pt-2">
+          <a href="/legal/tokushoho" className="underline hover:text-foreground">
+            特定商取引法に基づく表記
+          </a>
+          <a href="/legal/terms" className="underline hover:text-foreground">
+            利用規約
+          </a>
+          <a href="/legal/privacy" className="underline hover:text-foreground">
+            プライバシーポリシー
+          </a>
         </p>
       </div>
     </div>

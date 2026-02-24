@@ -1,18 +1,20 @@
-import { getStripe, PLANS } from "./config";
+import { getStripe } from "./config";
+import { PLAN_LIST } from "@/lib/plans";
+import type Stripe from "stripe";
 
 export async function createCheckoutSession(
   userId: string,
   email: string,
   planKey: "pro" | "business",
-  returnUrl: string
+  returnUrl: string,
+  existingCustomerId?: string
 ) {
-  const plan = PLANS[planKey];
+  const plan = PLAN_LIST.find((p) => p.key === planKey);
   if (!plan || !plan.priceId) {
-    throw new Error(`無効なプラン: ${planKey}`);
+    throw new Error(`無効なプランまたは Price ID 未設定: ${planKey}`);
   }
 
-  const session = await getStripe().checkout.sessions.create({
-    customer_email: email,
+  const sessionParams: Stripe.Checkout.SessionCreateParams = {
     line_items: [
       {
         price: plan.priceId,
@@ -26,8 +28,16 @@ export async function createCheckoutSession(
       userId,
       plan: planKey,
     },
-  });
+  };
 
+  // 既存顧客の場合は customer を、新規の場合は customer_email を使用
+  if (existingCustomerId) {
+    sessionParams.customer = existingCustomerId;
+  } else {
+    sessionParams.customer_email = email;
+  }
+
+  const session = await getStripe().checkout.sessions.create(sessionParams);
   return session;
 }
 
