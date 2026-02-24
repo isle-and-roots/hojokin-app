@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Check, Loader2, Crown, Sparkles, ChevronDown } from "lucide-react";
+import Link from "next/link";
+import { Check, Loader2, Crown, Sparkles, ChevronDown, ExternalLink } from "lucide-react";
 import { PLAN_LIST, type PlanKey } from "@/lib/plans";
 import { useToast } from "@/components/ui/toast";
 
@@ -24,7 +25,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "請求書や領収書は発行できますか？",
-    a: "顧客ポータルから請求書・領収書をダウンロードできます。料金ページの「プラン管理」ボタンからアクセスしてください。",
+    a: "顧客ポータルから請求書・領収書をダウンロードできます。アカウント設定ページの「サブスクリプション管理」ボタン、または「請求書・領収書」カードからアクセスしてください。",
   },
 ];
 
@@ -96,6 +97,35 @@ export function PricingPageClient() {
         </p>
       </div>
 
+      {/* CurrentPlanBanner（有料ユーザー向け） */}
+      {currentPlan !== "free" && hasCustomerId && (
+        <div className="border-l-4 border-primary rounded-xl bg-card p-6 mb-8 flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <Crown className="h-5 w-5 text-primary" />
+              <span className="inline-flex items-center rounded-full bg-primary/10 text-primary px-3 py-1 text-sm font-semibold">
+                {PLAN_LIST.find((p) => p.key === currentPlan)?.name} プラン利用中
+              </span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              プランの変更・解約・請求書のダウンロードは顧客ポータルから行えます
+            </p>
+          </div>
+          <button
+            onClick={handleManage}
+            disabled={loading !== null}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+          >
+            {loading === "pro" ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ExternalLink className="h-4 w-4" />
+            )}
+            サブスクリプション管理
+          </button>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {PLAN_LIST.map((plan) => {
           const isCurrentPlan = currentPlan === plan.key;
@@ -105,7 +135,9 @@ export function PricingPageClient() {
               className={`relative rounded-2xl border p-6 ${
                 plan.highlighted
                   ? "border-primary shadow-lg shadow-primary/10"
-                  : "border-border"
+                  : isCurrentPlan
+                    ? "border-primary/50 ring-1 ring-primary/20"
+                    : "border-border"
               }`}
             >
               {plan.highlighted && (
@@ -144,30 +176,39 @@ export function PricingPageClient() {
                 ))}
               </ul>
 
-              {isCurrentPlan ? (
+              {isCurrentPlan && hasCustomerId ? (
+                <div className="space-y-2">
+                  <button
+                    disabled
+                    className="w-full py-2.5 rounded-lg border border-primary/30 bg-primary/5 text-sm font-medium text-primary"
+                  >
+                    現在のプラン
+                  </button>
+                  <Link
+                    href="/settings"
+                    className="block w-full text-center text-xs text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    プラン管理 →
+                  </Link>
+                </div>
+              ) : isCurrentPlan ? (
                 <button
                   disabled
                   className="w-full py-2.5 rounded-lg border border-border text-sm font-medium text-muted-foreground"
                 >
                   現在のプラン
                 </button>
+              ) : plan.key === "free" && hasCustomerId ? (
+                <p className="w-full py-2.5 text-center text-xs text-muted-foreground">
+                  ダウングレードはプラン管理から
+                </p>
               ) : plan.key === "free" ? (
-                hasCustomerId ? (
-                  <button
-                    onClick={handleManage}
-                    disabled={loading !== null}
-                    className="w-full py-2.5 rounded-lg border border-border text-sm font-medium hover:bg-accent transition-colors"
-                  >
-                    プラン管理
-                  </button>
-                ) : (
-                  <button
-                    disabled
-                    className="w-full py-2.5 rounded-lg border border-border text-sm font-medium text-muted-foreground"
-                  >
-                    現在のプラン
-                  </button>
-                )
+                <button
+                  disabled
+                  className="w-full py-2.5 rounded-lg border border-border text-sm font-medium text-muted-foreground"
+                >
+                  現在のプラン
+                </button>
               ) : (
                 <button
                   onClick={() => handleSubscribe(plan.key)}

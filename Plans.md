@@ -1,6 +1,6 @@
 # Plans.md — hojokin-app
 
-Updated: 2026-02-24
+Updated: 2026-02-25
 
 ## 現状サマリー
 
@@ -93,3 +93,9 @@ Vercel が自動デプロイします。
 ### Task 13: コンバージョン最適化 `cc:done`
 - アップグレード誘導強化（残り2回以下で警告、0回でCTA）
 - 料金ページFAQ追加、pricing-page.tsx SC分離
+
+### Task 14: アカウント設定ページ + Polar本番セットアップ `cc:done`
+- /settings: サブスクリプション管理UI（プラン表示・AIクォータ・Polar顧客ポータル連携）
+- ダッシュボードにPlanBadgeCard追加
+- 料金ページに有料ユーザー向けバナー・管理リンク追加
+- setup-polar.ts Production対応、sync-vercel-env.ts追加

@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     const polar = getPolar();
     const session = await polar.customerSessions.create({
       customerId: profile.polar_customer_id,
-      returnUrl: `${origin}/pricing`,
+      returnUrl: `${origin}/settings`,
     });
 
     return NextResponse.json({ url: session.customerPortalUrl });

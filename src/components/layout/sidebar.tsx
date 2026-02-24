@@ -9,6 +9,7 @@ import {
   FileText,
   Search,
   CreditCard,
+  Settings,
   LogOut,
   Menu,
   X,
@@ -22,6 +23,7 @@ const navigation = [
   { name: "補助金検索", href: "/subsidies", icon: Search },
   { name: "申請一覧", href: "/applications", icon: FileText },
   { name: "料金プラン", href: "/pricing", icon: CreditCard },
+  { name: "アカウント設定", href: "/settings", icon: Settings },
 ];
 
 function NavContent({

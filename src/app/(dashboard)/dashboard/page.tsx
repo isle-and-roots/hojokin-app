@@ -13,6 +13,7 @@ import {
   DIFFICULTY_CONFIG,
 } from "@/lib/data/subsidy-categories";
 import { CreditDisplay } from "@/components/credit-display";
+import { PlanBadgeCard } from "@/components/dashboard/plan-badge";
 import { RecommendedSubsidies } from "@/components/dashboard/recommended-subsidies";
 import { OnboardingStepper } from "@/components/dashboard/onboarding-stepper";
 import type { BusinessProfile, RecommendationResult } from "@/types";
@@ -136,6 +137,7 @@ export default async function Dashboard({
           <p className="mt-2 text-3xl font-bold">{aiSupported.length}件</p>
         </div>
         <CreditDisplay variant="card" />
+        <PlanBadgeCard />
       </div>
 
       {/* クイックアクション */}

@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "setup:polar": "tsx --env-file=.env.local scripts/setup-polar.ts"
+    "setup:polar": "tsx --env-file=.env.local scripts/setup-polar.ts",
+    "setup:polar:production": "tsx --env-file=.env.local scripts/setup-polar.ts --production",
+    "setup:polar:vercel": "tsx --env-file=.env.local scripts/sync-vercel-env.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
