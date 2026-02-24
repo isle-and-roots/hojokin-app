@@ -12,6 +12,7 @@ import {
   PROMPT_SUPPORT_CONFIG,
   DIFFICULTY_CONFIG,
 } from "@/lib/data/subsidy-categories";
+import { CreditDisplay } from "@/components/credit-display";
 
 const stats = [
   { label: "申請中", value: "0", icon: FileText, color: "text-blue-600" },
@@ -59,6 +60,7 @@ export default async function Dashboard() {
           </div>
           <p className="mt-2 text-3xl font-bold">{aiSupported.length}件</p>
         </div>
+        <CreditDisplay variant="card" />
       </div>
 
       {/* クイックアクション */}

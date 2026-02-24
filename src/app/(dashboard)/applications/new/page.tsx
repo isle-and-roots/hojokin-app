@@ -14,6 +14,7 @@ import {
   AlertCircle,
   Search,
 } from "lucide-react";
+import { CreditDisplay } from "@/components/credit-display";
 
 export default function NewApplicationPage() {
   return (
@@ -55,6 +56,7 @@ function NewApplicationContent() {
   const [sections, setSections] = useState<SectionState[]>([]);
   const [activeSectionIndex, setActiveSectionIndex] = useState<number>(0);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [quotaExhausted, setQuotaExhausted] = useState(false);
 
   // Load profile from Supabase
   useEffect(() => {
@@ -313,10 +315,14 @@ function NewApplicationContent() {
             AIが各セクションの下書きを生成します。生成後に編集できます。
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-4">
+          <CreditDisplay
+            variant="compact"
+            onQuotaLoaded={(remaining) => setQuotaExhausted(remaining === 0)}
+          />
           <button
             onClick={generateAll}
-            disabled={isGenerating}
+            disabled={isGenerating || quotaExhausted}
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
           >
             {isGenerating ? (
@@ -407,7 +413,7 @@ function NewApplicationContent() {
                 </div>
                 <button
                   onClick={() => generateSection(activeSectionIndex)}
-                  disabled={isGenerating}
+                  disabled={isGenerating || quotaExhausted}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm hover:bg-primary/90 transition-colors disabled:opacity-50"
                 >
                   {activeSection.status === "generating" ? (
