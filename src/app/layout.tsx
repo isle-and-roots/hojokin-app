@@ -50,6 +50,35 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "ISLE & ROOTS Inc.",
+              url: siteUrl,
+              description:
+                "中小企業向け補助金申請書類をAIで自動生成するSaaSサービスを提供。",
+              sameAs: [],
+              service: {
+                "@type": "SoftwareApplication",
+                name: "補助金申請サポート",
+                applicationCategory: "BusinessApplication",
+                operatingSystem: "Web",
+                offers: {
+                  "@type": "AggregateOffer",
+                  lowPrice: "0",
+                  highPrice: "9800",
+                  priceCurrency: "JPY",
+                  offerCount: "4",
+                },
+              },
+            }),
+          }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

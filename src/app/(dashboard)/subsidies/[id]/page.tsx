@@ -40,9 +40,26 @@ export async function generateMetadata({
     return { title: "補助金が見つかりません" };
   }
 
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://hojokin.isle-and-roots.com";
+
   return {
     title: `${subsidy.nameShort} | 補助金申請サポート`,
     description: subsidy.summary,
+    openGraph: {
+      title: `${subsidy.nameShort} | 補助金申請サポート`,
+      description: subsidy.summary,
+      type: "article",
+      url: `${siteUrl}/subsidies/${id}`,
+    },
+    twitter: {
+      card: "summary",
+      title: subsidy.nameShort,
+      description: subsidy.summary,
+    },
+    alternates: {
+      canonical: `${siteUrl}/subsidies/${id}`,
+    },
   };
 }
 
@@ -57,6 +74,26 @@ export default async function SubsidyDetailPage({
   if (!subsidy) {
     notFound();
   }
+
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL || "https://hojokin.isle-and-roots.com";
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "GovernmentService",
+    name: subsidy.name,
+    description: subsidy.summary,
+    provider: {
+      "@type": "GovernmentOrganization",
+      name: subsidy.department,
+    },
+    areaServed: {
+      "@type": "Country",
+      name: "Japan",
+    },
+    url: `${siteUrl}/subsidies/${id}`,
+    ...(subsidy.url ? { sameAs: subsidy.url } : {}),
+  };
 
   const difficultyConf = DIFFICULTY_CONFIG[subsidy.difficulty];
   const promptConf = PROMPT_SUPPORT_CONFIG[subsidy.promptSupport];
@@ -75,6 +112,10 @@ export default async function SubsidyDetailPage({
 
   return (
     <div className="p-8 max-w-4xl">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* パンくず */}
       <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
         <Link href="/subsidies" className="hover:text-foreground transition-colors">
