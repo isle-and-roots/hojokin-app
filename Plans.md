@@ -88,7 +88,13 @@ Vercel が自動デプロイします。
 - JSON-LD（Organization + GovernmentService）、OGメタデータ、サイトマップ拡充
 - Server Component wrapper パターンでメタデータ対応
 
-### Task 12: ブログ SEO 記事追加 `cc:TODO`
+### Task 12: ブログ SEO 記事追加 `cc:done`
+- ものづくり補助金ガイド 2026年版
+- キャリアアップ助成金 活用ガイド
+- 補助金と助成金の違い完全解説
+- 補助金申請 初めての準備チェックリスト
+- 省エネ補助金・環境系補助金ガイド 2026
+- 合計10記事（既存5 + 新規5）
 
 ### Task 13: コンバージョン最適化 `cc:done`
 - アップグレード誘導強化（残り2回以下で警告、0回でCTA）
@@ -99,3 +105,29 @@ Vercel が自動デプロイします。
 - ダッシュボードにPlanBadgeCard追加
 - 料金ページに有料ユーザー向けバナー・管理リンク追加
 - setup-polar.ts Production対応、sync-vercel-env.ts追加
+
+---
+
+## Phase 3.5: 技術的負債の解消
+
+### Task 15: ESLint 互換性修正 `cc:done`
+- eslint-plugin-react v7.37 + ESLint 10 非互換を `settings.react.version: "19"` で回避
+- React 19 `set-state-in-effect` エラー3件を修正（onboarding-banner, recommendation-banner, confirm-dialog）
+- `ignoreRestSiblings: true` で rest pattern の未使用変数警告を解消
+- **結果**: `npm run lint` がエラーゼロ・警告ゼロで通過
+
+### Task 16: Zod スキーマの `z.any()` 除去 `cc:done`
+- `recentRevenue`/`recentProfit` を `z.array(z.object({ year, amount }))` に変更
+
+### Task 17: JSON.parse 安全化 `cc:done`
+- recommendation-banner を useState initializer + try-catch パターンにリファクタリング
+
+### Task 18: Next.js 16 middleware → proxy 移行 `cc:done`
+- `src/middleware.ts` → `src/proxy.ts` リネーム、関数名を `proxy` に変更
+- ビルド時の非推奨警告が解消
+
+### Task 19: .catch(console.error) パターンの統一 `cc:done`
+- pricing-page: silent catch（free プランデフォルト表示のまま）
+- applications/page: エラー状態 → toast 通知に変更
+- applications/new/page: エラー状態 → toast 通知に変更
+- exhaustive-deps 警告も解消（エラー状態分離パターン）
