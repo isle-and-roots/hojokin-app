@@ -16,6 +16,7 @@ import {
   Search,
 } from "lucide-react";
 import { CreditDisplay } from "@/components/credit-display";
+import { useToast } from "@/components/ui/toast";
 
 export default function NewApplicationPage() {
   return (
@@ -48,6 +49,7 @@ function NewApplicationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const subsidyId = searchParams.get("subsidyId");
+  const toast = useToast();
 
   const [profile, setProfile] = useState<BusinessProfile | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
@@ -201,7 +203,7 @@ function NewApplicationContent() {
 
       router.push("/applications");
     } catch (error) {
-      alert("保存に失敗しました: " + String(error));
+      toast.error("保存に失敗しました: " + String(error));
     }
   };
 

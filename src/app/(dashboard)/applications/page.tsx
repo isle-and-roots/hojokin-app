@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { FileText, PlusCircle, Download, Trash2, Sparkles, Loader2 } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 
 interface AppSection {
   section_key: string;
@@ -29,6 +31,8 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
 };
 
 export default function ApplicationsPage() {
+  const toast = useToast();
+  const { confirm } = useConfirm();
   const [applications, setApplications] = useState<ApplicationData[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -45,12 +49,19 @@ export default function ApplicationsPage() {
   }, []);
 
   const handleDelete = async (id: string) => {
-    if (!confirm("この申請書を削除しますか？")) return;
+    const ok = await confirm({
+      title: "申請書の削除",
+      message: "この申請書を削除しますか？この操作は取り消せません。",
+      confirmLabel: "削除する",
+      variant: "danger",
+    });
+    if (!ok) return;
     try {
       await fetch(`/api/applications?id=${id}`, { method: "DELETE" });
       setApplications((prev) => prev.filter((a) => a.id !== id));
+      toast.success("申請書を削除しました");
     } catch (error) {
-      alert("削除に失敗しました: " + String(error));
+      toast.error("削除に失敗しました: " + String(error));
     }
   };
 
@@ -79,7 +90,7 @@ export default function ApplicationsPage() {
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
-      alert("エクスポートに失敗しました: " + String(error));
+      toast.error("エクスポートに失敗しました: " + String(error));
     }
   };
 

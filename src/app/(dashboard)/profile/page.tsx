@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { BusinessProfile } from "@/types";
 import { Loader2, Save, CheckCircle } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
 
 const INITIAL_PROFILE: Omit<BusinessProfile, "id" | "createdAt" | "updatedAt"> = {
   companyName: "",
@@ -36,6 +37,7 @@ const STEPS: { key: Step; label: string }[] = [
 
 export default function ProfilePage() {
   const router = useRouter();
+  const toastNotify = useToast();
   const [profile, setProfile] = useState(INITIAL_PROFILE);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [isNewProfile, setIsNewProfile] = useState(false);
@@ -44,7 +46,6 @@ export default function ProfilePage() {
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [toast, setToast] = useState("");
 
   // Supabase からプロフィールを読み込み
   useEffect(() => {
@@ -90,15 +91,13 @@ export default function ProfilePage() {
       if (data.profile?.id) setProfileId(data.profile.id);
       setSaved(true);
       if (wasNewProfile) {
-        setToast("プロフィールを保存しました！次は補助金を選びましょう");
+        toastNotify.success("プロフィールを保存しました！次は補助金を選びましょう");
         setIsNewProfile(false);
-        // トーストを表示してからリダイレクト
         setTimeout(() => {
           router.push("/subsidies?from=onboarding");
         }, 1200);
       } else {
-        setToast("プロフィールを更新しました");
-        setTimeout(() => setToast(""), 3000);
+        toastNotify.success("プロフィールを更新しました");
       }
     } catch (err) {
       setError(String(err));
@@ -131,13 +130,6 @@ export default function ProfilePage() {
       {error && (
         <div className="mb-6 bg-destructive/10 text-destructive text-sm p-3 rounded-lg">
           {error}
-        </div>
-      )}
-
-      {toast && (
-        <div className="mb-6 bg-green-50 text-green-800 text-sm p-3 rounded-lg flex items-center gap-2">
-          <CheckCircle className="h-4 w-4 shrink-0" />
-          {toast}
         </div>
       )}
 

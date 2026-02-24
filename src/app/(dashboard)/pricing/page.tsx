@@ -3,8 +3,10 @@
 import { useState, useEffect } from "react";
 import { Check, Loader2, Crown, Sparkles } from "lucide-react";
 import { PLAN_LIST, type PlanKey } from "@/lib/plans";
+import { useToast } from "@/components/ui/toast";
 
 export default function PricingPage() {
+  const toast = useToast();
   const [currentPlan, setCurrentPlan] = useState<PlanKey>("free");
   const [loading, setLoading] = useState<PlanKey | null>(null);
   const [hasCustomerId, setHasCustomerId] = useState(false);
@@ -40,7 +42,7 @@ export default function PricingPage() {
         throw new Error(data.error || "チェックアウトの作成に失敗しました");
       }
     } catch (error) {
-      alert(String(error));
+      toast.error("チェックアウトの作成に失敗しました。しばらくしてから再度お試しください。");
     } finally {
       setLoading(null);
     }
@@ -57,7 +59,7 @@ export default function PricingPage() {
         window.location.href = data.url;
       }
     } catch (error) {
-      alert("ポータルの表示に失敗しました");
+      toast.error("ポータルの表示に失敗しました");
     } finally {
       setLoading(null);
     }
