@@ -30,7 +30,7 @@ export default function TokushohoPage() {
             />
             <Row
               label="販売URL"
-              value="https://hojokin-app-beta.vercel.app"
+              value="https://hojokin.isle-and-roots.com"
             />
             <Row
               label="サービス内容"

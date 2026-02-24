@@ -60,6 +60,7 @@ export async function POST(request: Request) {
       customerEmail: user.email ?? undefined,
       successUrl: `${origin}/pricing?success=true`,
       metadata: { plan },
+      currency: "jpy",
     });
 
     return NextResponse.json({ url: checkout.url });

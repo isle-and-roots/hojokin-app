@@ -29,7 +29,7 @@ type PolarMode = "sandbox" | "production";
 
 const WEBHOOK_URL =
   process.env.POLAR_WEBHOOK_URL ||
-  "https://hojokin-app-beta.vercel.app/api/webhooks/polar";
+  "https://hojokin.isle-and-roots.com/api/webhooks/polar";
 
 // Polar はデフォルト通貨（USD）の価格が必須。JPY を表示通貨として追加。
 // USD 価格は概算レート（1 USD ≈ 150 JPY）で設定。
