@@ -1,4 +1,4 @@
-export type PlanKey = "free" | "pro" | "business";
+export type PlanKey = "free" | "starter" | "pro" | "business";
 
 export interface PlanInfo {
   key: PlanKey;
@@ -26,6 +26,22 @@ export const PLAN_LIST: PlanInfo[] = [
       "AI申請書生成 3回/月",
       "補助金検索・閲覧",
       "申請書 1件まで",
+    ],
+  },
+  {
+    key: "starter",
+    name: "Starter",
+    price: 980,
+    priceId: process.env.STRIPE_STARTER_PRICE_ID ?? "",
+    aiLimit: 15,
+    docxExport: true,
+    maxApplications: 5,
+    highlighted: false,
+    features: [
+      "AI申請書生成 15回/月",
+      "Word(DOCX)エクスポート",
+      "申請書 5件まで",
+      "補助金検索・閲覧",
     ],
   },
   {
@@ -71,7 +87,7 @@ export function canUseFeature(
 ): boolean {
   switch (feature) {
     case "docxExport":
-      return plan === "pro" || plan === "business";
+      return plan === "starter" || plan === "pro" || plan === "business";
     case "aiGeneration":
       return true; // すべてのプランで利用可能（回数制限あり）
     case "multipleProfiles":
@@ -82,6 +98,6 @@ export function canUseFeature(
 }
 
 export function getAiLimit(plan: PlanKey): number {
-  const limits: Record<PlanKey, number> = { free: 3, pro: 100, business: 500 };
+  const limits: Record<PlanKey, number> = { free: 3, starter: 15, pro: 100, business: 500 };
   return limits[plan] ?? 3;
 }

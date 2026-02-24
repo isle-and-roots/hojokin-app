@@ -37,6 +37,7 @@ const generateSectionSchema = z.object({
 // プラン別 AI 生成上限
 const PLAN_LIMITS: Record<string, number> = {
   free: 3,
+  starter: 15,
   pro: 100,
   business: 500,
 };
@@ -79,8 +80,10 @@ export async function POST(request: NextRequest) {
           {
             error: `今月の AI 生成回数の上限（${limit}回）に達しました。${
               userProfile.plan === "free"
-                ? "Pro プランにアップグレードすると月100回までご利用いただけます。"
-                : ""
+                ? "Starter プランにアップグレードすると月15回までご利用いただけます。"
+                : userProfile.plan === "starter"
+                  ? "Pro プランにアップグレードすると月100回までご利用いただけます。"
+                  : ""
             }`,
           },
           { status: 429 }

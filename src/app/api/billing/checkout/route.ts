@@ -35,7 +35,7 @@ export async function POST(request: Request) {
 
     const { plan } = await request.json();
 
-    if (plan !== "pro" && plan !== "business") {
+    if (!["starter", "pro", "business"].includes(plan)) {
       return NextResponse.json(
         { error: "無効なプランです" },
         { status: 400 }

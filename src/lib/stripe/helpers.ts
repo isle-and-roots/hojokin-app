@@ -5,7 +5,7 @@ import type Stripe from "stripe";
 export async function createCheckoutSession(
   userId: string,
   email: string,
-  planKey: "pro" | "business",
+  planKey: "starter" | "pro" | "business",
   returnUrl: string,
   existingCustomerId?: string
 ) {

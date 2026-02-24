@@ -17,7 +17,7 @@ $$ LANGUAGE plpgsql;
 -- =============================================
 CREATE TABLE user_profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  plan TEXT NOT NULL DEFAULT 'free' CHECK (plan IN ('free', 'pro', 'business')),
+  plan TEXT NOT NULL DEFAULT 'free' CHECK (plan IN ('free', 'starter', 'pro', 'business')),
   stripe_customer_id TEXT,
   stripe_subscription_id TEXT,
   ai_generations_used INTEGER NOT NULL DEFAULT 0,

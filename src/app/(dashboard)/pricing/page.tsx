@@ -64,7 +64,7 @@ export default function PricingPage() {
   };
 
   return (
-    <div className="p-8 max-w-5xl mx-auto">
+    <div className="p-8 max-w-6xl mx-auto">
       <div className="text-center mb-12">
         <h1 className="text-3xl font-bold">料金プラン</h1>
         <p className="text-muted-foreground mt-2">
@@ -72,7 +72,7 @@ export default function PricingPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {PLAN_LIST.map((plan) => {
           const isCurrentPlan = currentPlan === plan.key;
           return (

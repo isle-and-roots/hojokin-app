@@ -19,7 +19,7 @@ interface QuotaData {
 }
 
 function isPlanKey(v: unknown): v is PlanKey {
-  return v === "free" || v === "pro" || v === "business";
+  return v === "free" || v === "starter" || v === "pro" || v === "business";
 }
 
 export function CreditDisplay({
