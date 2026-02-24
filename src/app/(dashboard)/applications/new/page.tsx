@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import type { BusinessProfile, SubsidyInfo } from "@/types";
@@ -60,6 +60,7 @@ function NewApplicationContent() {
   const [activeSectionIndex, setActiveSectionIndex] = useState<number>(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [quotaExhausted, setQuotaExhausted] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
 
   // Load profile from Supabase
   useEffect(() => {
@@ -114,9 +115,23 @@ function NewApplicationContent() {
     }
   }, [subsidyId]);
 
+  const cancelGeneration = () => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setIsGenerating(false);
+    setSections((prev) =>
+      prev.map((s) =>
+        s.status === "generating" ? { ...s, status: "pending", content: "" } : s
+      )
+    );
+    toast.info("生成をキャンセルしました");
+  };
+
   const generateSection = async (index: number) => {
     if (!profile) return;
     const section = sections[index];
+    const controller = new AbortController();
+    abortRef.current = controller;
     setIsGenerating(true);
     setSections((prev) =>
       prev.map((s, i) => (i === index ? { ...s, status: "generating" } : s))
@@ -132,11 +147,15 @@ function NewApplicationContent() {
           subsidyId: subsidyId || undefined,
           additionalContext: section.additionalContext || undefined,
         }),
+        signal: controller.signal,
       });
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || "Generation failed");
+        if (res.status === 429 && err.error?.includes("上限")) {
+          setQuotaExhausted(true);
+        }
+        throw new Error(err.error || "生成に失敗しました");
       }
 
       const data = await res.json();
@@ -153,14 +172,16 @@ function NewApplicationContent() {
         )
       );
     } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") return;
+      const msg = error instanceof Error ? error.message : "生成に失敗しました";
       setSections((prev) =>
         prev.map((s, i) =>
-          i === index
-            ? { ...s, status: "error", content: String(error) }
-            : s
+          i === index ? { ...s, status: "error", content: msg } : s
         )
       );
+      toast.error(msg);
     } finally {
+      abortRef.current = null;
       setIsGenerating(false);
     }
   };
@@ -496,13 +517,27 @@ function NewApplicationContent() {
                 {activeSection.status === "generating" && (
                   <div className="text-center py-12">
                     <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3 text-primary" />
-                    <p className="text-muted-foreground">AI生成中...</p>
+                    <p className="text-muted-foreground mb-3">AI生成中...</p>
+                    <button
+                      onClick={cancelGeneration}
+                      className="text-sm text-muted-foreground hover:text-foreground underline transition-colors"
+                    >
+                      キャンセル
+                    </button>
                   </div>
                 )}
                 {activeSection.status === "error" && (
                   <div className="rounded-lg bg-destructive/10 p-4 text-sm text-destructive">
                     <p className="font-medium">エラーが発生しました</p>
                     <p className="mt-1">{activeSection.content}</p>
+                    <button
+                      onClick={() => generateSection(activeSectionIndex)}
+                      disabled={quotaExhausted}
+                      className="mt-3 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-destructive text-white text-xs font-medium hover:bg-destructive/90 transition-colors disabled:opacity-50"
+                    >
+                      <Sparkles className="h-3.5 w-3.5" />
+                      再試行
+                    </button>
                   </div>
                 )}
                 {activeSection.status === "done" && (

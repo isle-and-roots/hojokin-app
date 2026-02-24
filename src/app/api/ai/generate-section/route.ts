@@ -5,6 +5,15 @@ import { createClient } from "@/lib/supabase/server";
 import { getJizokukaPrompt } from "@/lib/ai/prompts/jizokuka";
 import { getPrompt } from "@/lib/ai/prompts";
 import { getSubsidyById } from "@/lib/subsidies";
+import type { PlanKey } from "@/lib/plans";
+import {
+  AI_CONFIG,
+  getModelForPlan,
+  classifyError,
+  getErrorMessage,
+  isRetryable,
+  type AiErrorKind,
+} from "@/lib/ai/config";
 
 const anthropic = new Anthropic();
 
@@ -41,6 +50,51 @@ const PLAN_LIMITS: Record<string, number> = {
   pro: 100,
   business: 500,
 };
+
+/** 指数バックオフ付きリトライで Anthropic API を呼び出す */
+async function callAnthropicWithRetry(
+  modelId: string,
+  prompt: string,
+  signal?: AbortSignal
+): Promise<Anthropic.Message> {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt <= AI_CONFIG.maxRetries; attempt++) {
+    try {
+      const message = await anthropic.messages.create(
+        {
+          model: modelId,
+          max_tokens: AI_CONFIG.maxTokens,
+          temperature: AI_CONFIG.temperature,
+          messages: [{ role: "user", content: prompt }],
+        },
+        {
+          timeout: AI_CONFIG.timeoutMs,
+          signal,
+        }
+      );
+      return message;
+    } catch (error) {
+      lastError = error;
+      const kind = classifyError(error);
+
+      // リトライ不可能なエラー or 最終試行 → 即座にスロー
+      if (!isRetryable(kind) || attempt === AI_CONFIG.maxRetries) {
+        throw error;
+      }
+
+      // 指数バックオフ: 1秒 → 3秒
+      const delay = AI_CONFIG.retryBaseDelayMs * (attempt === 0 ? 1 : 3);
+      console.warn(
+        `[AI] Retry ${attempt + 1}/${AI_CONFIG.maxRetries} after ${delay}ms (${kind})`,
+        error instanceof Error ? error.message : error
+      );
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+
+  throw lastError;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -128,22 +182,12 @@ export async function POST(request: NextRequest) {
       prompt = getJizokukaPrompt(sectionKey, profile, additionalContext);
     }
 
-    // Business プランは Opus を使用
-    const modelId =
-      userProfile?.plan === "business"
-        ? "claude-sonnet-4-20250514" // TODO: Opus 利用可能時に切替
-        : "claude-sonnet-4-20250514";
+    // プラン別モデル選択（Business → Opus, 他 → Sonnet）
+    const plan: PlanKey = (userProfile?.plan as PlanKey) ?? "free";
+    const modelId = getModelForPlan(plan);
 
-    const message = await anthropic.messages.create({
-      model: modelId,
-      max_tokens: 4096,
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-    });
+    // リトライ付き API 呼び出し
+    const message = await callAnthropicWithRetry(modelId, prompt, request.signal);
 
     const textContent = message.content.find((block) => block.type === "text");
     const content = textContent ? textContent.text : "";
@@ -167,7 +211,13 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("AI generation error:", error);
+    // 構造化エラーログ（将来の Sentry 対応準備）
+    const errorKind: AiErrorKind = classifyError(error);
+    console.error("[AI] Generation failed:", {
+      kind: errorKind,
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -176,14 +226,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // キャンセル（AbortController）
+    if (error instanceof Error && error.name === "AbortError") {
+      return NextResponse.json(
+        { error: "生成がキャンセルされました", errorKind: "cancelled" },
+        { status: 499 }
+      );
+    }
+
+    const statusMap: Record<AiErrorKind, number> = {
+      rate_limit: 429,
+      timeout: 504,
+      server_error: 502,
+      invalid_request: 400,
+      unknown: 500,
+    };
+
     return NextResponse.json(
       {
-        error:
-          error instanceof Error
-            ? error.message
-            : "申請書の生成に失敗しました。もう一度お試しください。",
+        error: getErrorMessage(errorKind),
+        errorKind,
       },
-      { status: 500 }
+      { status: statusMap[errorKind] }
     );
   }
 }
