@@ -9,6 +9,7 @@ import {
   Sparkles,
   Loader2,
   Check,
+  CheckCircle,
   ChevronRight,
   FileText,
   AlertCircle,
@@ -289,6 +290,10 @@ function NewApplicationContent() {
 
   const activeSection = sections[activeSectionIndex];
   const completedCount = sections.filter((s) => s.status === "done").length;
+  const allPending =
+    sections.length > 0 && sections.every((s) => s.status === "pending");
+  const allDone =
+    sections.length > 0 && sections.every((s) => s.status === "done");
 
   // Group sections by group field
   const groups = sections.reduce(
@@ -323,7 +328,7 @@ function NewApplicationContent() {
           <button
             onClick={generateAll}
             disabled={isGenerating || quotaExhausted}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 ${allPending ? "animate-pulse" : ""}`}
           >
             {isGenerating ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -361,6 +366,35 @@ function NewApplicationContent() {
           />
         </div>
       </div>
+
+      {/* 初回ガイドバナー */}
+      {allPending && (
+        <div className="mb-6 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-4">
+          <div className="flex items-start gap-3">
+            <span className="inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold w-6 h-6 shrink-0 mt-0.5">
+              3
+            </span>
+            <div>
+              <p className="text-sm font-medium">Step 3/3 — AI生成を開始しましょう</p>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                「全セクション一括生成」をクリックするとAIが申請書の下書きを作成します
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 全セクション完了メッセージ */}
+      {allDone && (
+        <div className="mb-6 rounded-xl bg-green-50 border border-green-200 p-4">
+          <div className="flex items-center gap-3">
+            <CheckCircle className="h-5 w-5 text-green-600 shrink-0" />
+            <p className="text-sm font-medium text-green-800">
+              申請書の下書きが完成しました！内容を確認して保存しましょう
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-12 gap-6">
         {/* セクションリスト */}

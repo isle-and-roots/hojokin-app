@@ -9,6 +9,25 @@ export async function GET(request: Request) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (user) {
+          const { count, error: profileError } = await supabase
+            .from("business_profiles")
+            .select("user_id", { count: "exact", head: true })
+            .eq("user_id", user.id);
+
+          if (!profileError && count === 0) {
+            return NextResponse.redirect(`${origin}/dashboard?welcome=true`);
+          }
+        }
+      } catch {
+        // プロフィールチェックが失敗しても認証フローを壊さない
+      }
+
       return NextResponse.redirect(`${origin}/dashboard`);
     }
   }

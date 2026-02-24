@@ -7,24 +7,99 @@ import {
   Sparkles,
   ArrowRight,
 } from "lucide-react";
-import { searchSubsidies } from "@/lib/subsidies";
+import { searchSubsidies, getRecommendedSubsidiesWithReasons } from "@/lib/subsidies";
 import {
   PROMPT_SUPPORT_CONFIG,
   DIFFICULTY_CONFIG,
 } from "@/lib/data/subsidy-categories";
 import { CreditDisplay } from "@/components/credit-display";
+import { RecommendedSubsidies } from "@/components/dashboard/recommended-subsidies";
+import { OnboardingStepper } from "@/components/dashboard/onboarding-stepper";
+import type { BusinessProfile, RecommendationResult } from "@/types";
 
 const stats = [
   { label: "申請中", value: "0", icon: FileText, color: "text-blue-600" },
   { label: "採択済", value: "0", icon: TrendingUp, color: "text-green-600" },
 ];
 
-export default async function Dashboard() {
+async function getProfile(): Promise<BusinessProfile | null> {
+  // Supabase が未設定の場合（ローカル開発）はスキップ
+  if (
+    !process.env.NEXT_PUBLIC_SUPABASE_URL?.startsWith("http") ||
+    !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  ) {
+    return null;
+  }
+
+  try {
+    const { createClient } = await import("@/lib/supabase/server");
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) return null;
+
+    const { getBusinessProfile } = await import("@/lib/db/business-profiles");
+    return await getBusinessProfile(user.id);
+  } catch {
+    return null;
+  }
+}
+
+async function getApplicationCount(): Promise<number> {
+  if (
+    !process.env.NEXT_PUBLIC_SUPABASE_URL?.startsWith("http") ||
+    !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  ) {
+    return 0;
+  }
+  try {
+    const { createClient } = await import("@/lib/supabase/server");
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return 0;
+    const { count, error } = await supabase
+      .from("applications")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id);
+    if (error) return 0;
+    return count ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+export default async function Dashboard({
+  searchParams,
+}: {
+  searchParams: Promise<{ welcome?: string }>;
+}) {
+  const params = await searchParams;
+  const isWelcome = params.welcome === "true";
+
   const { items: subsidies } = await searchSubsidies({});
   const activeSubsidies = subsidies.filter((s) => s.isActive);
   const aiSupported = activeSubsidies.filter(
     (s) => s.promptSupport !== "NONE"
   );
+
+  const profile = await getProfile();
+  const applicationCount = await getApplicationCount();
+
+  let recommendation: RecommendationResult | null = null;
+  if (profile) {
+    recommendation = getRecommendedSubsidiesWithReasons(profile);
+  }
+
+  // オンボーディング表示ロジック
+  // Step 1: プロフィールなし
+  // Step 3: プロフィールあり + 申請なし
+  // 非表示: プロフィールあり + 申請あり（全完了）
+  const showStepper = !profile || applicationCount === 0;
+  const stepperCurrentStep: 1 | 3 = profile ? 3 : 1;
 
   return (
     <div className="p-8">
@@ -105,6 +180,22 @@ export default async function Dashboard() {
           </Link>
         </div>
       </div>
+
+      {/* オンボーディングステッパー or レコメンドセクション */}
+      {showStepper && (
+        <OnboardingStepper
+          currentStep={stepperCurrentStep}
+          isWelcome={isWelcome && !profile}
+        />
+      )}
+
+      {recommendation && (
+        <RecommendedSubsidies
+          companyName={profile!.companyName}
+          items={recommendation.items}
+          profileCompleteness={recommendation.profileCompleteness}
+        />
+      )}
 
       {/* 対応補助金 */}
       <div>

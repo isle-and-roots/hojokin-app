@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import type { SubsidyInfo, SubsidySearchFilters } from "@/types";
 import { SearchFilters } from "@/components/subsidies/search-filters";
 import { SubsidyList } from "@/components/subsidies/subsidy-list";
 import { RecommendationBanner } from "@/components/subsidies/recommendation-banner";
+import { OnboardingBanner } from "@/components/subsidies/onboarding-banner";
 
 export default function SubsidiesPage() {
   const [filters, setFilters] = useState<SubsidySearchFilters>({});
@@ -40,6 +41,10 @@ export default function SubsidiesPage() {
           条件を指定して、活用できる補助金を探しましょう
         </p>
       </div>
+
+      <Suspense fallback={null}>
+        <OnboardingBanner />
+      </Suspense>
 
       <RecommendationBanner />
 
