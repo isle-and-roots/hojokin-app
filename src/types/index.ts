@@ -207,6 +207,25 @@ export const JIZOKUKA_SECTIONS = [
 
 export type JizokukaSectionKey = (typeof JIZOKUKA_SECTIONS)[number]["key"];
 
+// === 補助金レコメンド ===
+export interface MatchReason {
+  key: string;
+  label: string;
+  score: number;
+  detail?: string;
+}
+
+export interface ScoredSubsidy {
+  subsidy: SubsidyInfo;
+  totalScore: number;
+  reasons: MatchReason[];
+}
+
+export interface RecommendationResult {
+  items: ScoredSubsidy[];
+  profileCompleteness: number;
+}
+
 // === AI生成リクエスト ===
 export interface GenerateSectionRequest {
   profileId: string;
