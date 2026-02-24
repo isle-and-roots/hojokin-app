@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { BusinessProfile } from "@/types";
 import { Loader2, Save, CheckCircle } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
+import { trackProfileCompleted } from "@/lib/analytics";
 
 const INITIAL_PROFILE: Omit<BusinessProfile, "id" | "createdAt" | "updatedAt"> = {
   companyName: "",
@@ -91,6 +92,7 @@ export default function ProfilePage() {
       if (data.profile?.id) setProfileId(data.profile.id);
       setSaved(true);
       if (wasNewProfile) {
+        trackProfileCompleted();
         toastNotify.success("プロフィールを保存しました！次は補助金を選びましょう");
         setIsNewProfile(false);
         setTimeout(() => {

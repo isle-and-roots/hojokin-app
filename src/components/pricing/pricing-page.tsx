@@ -7,6 +7,7 @@ import { PLAN_LIST, type PlanKey } from "@/lib/plans";
 import { useToast } from "@/components/ui/toast";
 import { posthog } from "@/lib/posthog/client";
 import { EVENTS } from "@/lib/posthog/events";
+import { trackUpgradeClick, trackCheckoutStarted } from "@/lib/analytics";
 
 const FAQ_ITEMS = [
   {
@@ -60,6 +61,7 @@ export function PricingPageClient() {
       target_plan: planKey,
       current_plan: currentPlan,
     });
+    trackUpgradeClick("pricing_page", planKey);
     setLoading(planKey);
     try {
       const res = await fetch("/api/billing/checkout", {
@@ -70,6 +72,7 @@ export function PricingPageClient() {
 
       const data = await res.json();
       if (data.url) {
+        trackCheckoutStarted(planKey);
         window.location.href = data.url;
       } else {
         throw new Error(data.error || "チェックアウトの作成に失敗しました");

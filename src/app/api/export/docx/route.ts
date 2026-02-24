@@ -9,6 +9,8 @@ import {
   BorderStyle,
 } from "docx";
 import { createClient } from "@/lib/supabase/server";
+import { trackServerEvent } from "@/lib/posthog/track";
+import { EVENTS } from "@/lib/posthog/events";
 
 interface SectionData {
   sectionKey: string;
@@ -121,6 +123,11 @@ export async function POST(request: NextRequest) {
     });
 
     const buffer = await Packer.toBuffer(doc);
+
+    trackServerEvent(user.id, EVENTS.DOCX_EXPORTED, {
+      subsidy_name: subsidyName,
+      section_count: sections.length,
+    });
 
     return new NextResponse(new Uint8Array(buffer), {
       headers: {

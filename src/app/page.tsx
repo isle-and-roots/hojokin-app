@@ -26,6 +26,7 @@ import { StickyHeader } from "@/components/landing/sticky-header";
 import { AnimatedCounter } from "@/components/landing/animated-counter";
 import { CategoryTabs } from "@/components/landing/category-tabs";
 import { FaqAccordion } from "@/components/landing/faq-accordion";
+import { CtaLink } from "@/components/landing/cta-link";
 import { cn } from "@/lib/utils";
 
 const FAQ_ITEMS = [
@@ -143,13 +144,14 @@ export default async function LandingPage() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
-            <Link
+            <CtaLink
               href="/login"
+              location="hero"
               className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-semibold text-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30"
             >
               無料で申請書を作成する
               <ArrowRight className="h-5 w-5" />
-            </Link>
+            </CtaLink>
             <Link
               href="/subsidies"
               className="inline-flex items-center gap-2 px-8 py-4 rounded-xl border-2 border-border font-semibold text-lg hover:bg-accent transition-all"
@@ -547,13 +549,14 @@ export default async function LandingPage() {
             無料プランでまず品質をお確かめください。
           </p>
 
-          <Link
+          <CtaLink
             href="/login"
+            location="final_cta"
             className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-semibold text-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/25"
           >
             無料で申請書を作成する
             <ArrowRight className="h-5 w-5" />
-          </Link>
+          </CtaLink>
 
           <p className="mt-4 text-sm text-muted-foreground">
             クレジットカード不要 ・ 3分で最初の生成

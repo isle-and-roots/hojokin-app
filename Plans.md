@@ -8,10 +8,9 @@ Updated: 2026-02-25
 - 課金: Polar.sh (JPY対応済み)、本番セットアップ待ち
 - SEO: 10記事 + JSON-LD + OGメタデータ + サイトマップ
 - FULL AI対応補助金: 持続化(1) + IT導入(4) + ものづくり(1) = **6件**
-
-### 未デプロイ変更 (Phase 3.5)
-eslint.config.mjs, proxy.ts新規, middleware.ts削除, 各コンポーネント修正 (12ファイル)
-品質ゲート通過済み（tsc + lint + build）
+- Analytics: Vercel Analytics + SpeedInsights + PostHog 25イベント実装済み
+- LP: 11セクション構成のランディングページ完成
+- OGP: メイン + ブログ記事別の動的OG画像 + Twitter Card設定済み
 
 ---
 
@@ -22,22 +21,34 @@ eslint.config.mjs, proxy.ts新規, middleware.ts削除, 各コンポーネント
 
 ### 優先度マトリクス
 
-| 優先度 | タスク | 担当 | 見積 |
+| 優先度 | タスク | 担当 | 状態 |
 |--------|--------|------|------|
-| **Required** | Task 20: 未コミット変更デプロイ | cc | 5分 |
-| **Required** | Task 21: Polar本番セットアップ | pm | 10分 |
-| **Required** | Task 22: 本番動作確認 | pm | 15分 |
-| **Recommended** | Task 23: Vercel Analytics 導入 | cc | 30分 |
-| **Recommended** | Task 24: トップページ改善 (LP化) | cc | 1h |
-| **Recommended** | Task 25: OGP画像 + ソーシャルカード | cc | 30分 |
-| **Recommended** | Task 26: パフォーマンス最適化 | cc | 30分 |
-| **Optional** | Task 27: SNS投稿テンプレート20本 | cc | 1h |
-| **Optional** | Task 28: メールテンプレート準備 | cc | 1h |
-| **Optional** | Task 29: ローンチ週プレイブック | cc | 30分 |
+| **Required** | Task 20: 未コミット変更デプロイ | cc | done |
+| **Required** | Task 21: Polar本番セットアップ | pm | TODO |
+| **Required** | Task 22: 本番動作確認 | pm | TODO |
+| **Recommended** | Task 23: Analytics基盤 | cc | done |
+| **Recommended** | Task 24: トップページLP化 | cc | done |
+| **Recommended** | Task 25: OGP画像 + ソーシャルカード | cc | done |
+| **Recommended** | Task 26: パフォーマンス最適化 | cc | TODO |
+| **Optional** | Task 27: SNS投稿テンプレート20本 | cc | TODO |
+| **Optional** | Task 28: メールテンプレート準備 | cc | TODO |
+| **Optional** | Task 29: ローンチ週プレイブック | cc | TODO |
+
+### 実行順序（今回セッション）
+
+```
+Step 0: 未コミット変更をコミット（Task 23-25 実装分）
+  ↓
+Step 1: Task 26 パフォーマンス最適化
+  ↓
+Step 2: Task 27-29 コンテンツ生成（並列可能）
+  ↓
+Step 3: 全変更コミット + Plans.md 完了更新
+```
 
 ---
 
-### Task 20: 未コミット変更デプロイ `cc:TODO` [feature:security]
+### Task 20: 未コミット変更デプロイ `cc:done`
 Phase 3.5 の技術的負債修正（ESLint互換性、Zod型安全化、middleware→proxy移行、エラーハンドリング統一）をコミット＆プッシュ → Vercel 自動デプロイ。
 - 対象: 12ファイル（eslint.config.mjs, proxy.ts新規, middleware.ts削除, 各コンポーネント修正）
 - 品質ゲート再確認してからコミット
@@ -58,44 +69,47 @@ Phase 3.5 の技術的負債修正（ESLint互換性、Zod型安全化、middlew
 - [ ] 料金ページ → Polar チェックアウト（JPY表示）
 - [ ] Polar ダッシュボードで Webhook 配信ログ確認
 
-### Task 23: Vercel Analytics 導入 `cc:TODO`
-ユーザー行動とパフォーマンスを計測可能にする。
-- `@vercel/analytics` + `@vercel/speed-insights` インストール
-- `src/app/layout.tsx` に `<Analytics />` + `<SpeedInsights />` 追加
-- カスタムイベント: ai_generation, upgrade_clicked, checkout_started, profile_completed
-- イベント送信ヘルパー `src/lib/analytics.ts` 作成
+### Task 23: Analytics基盤（Vercel + PostHog） `cc:done`
+**実装済み内容:**
+- `@vercel/analytics` + `@vercel/speed-insights`: layout.tsx に配置
+- `src/lib/analytics.ts`: Vercel Analytics カスタムイベントヘルパー
+- PostHog: `src/lib/posthog/` (client.ts, server.ts, track.ts, events.ts) — 25イベント定義
+- PostHogProvider + IdentifyUser + CaptureClick コンポーネント
+- クライアント側: LP CTA, ログイン, 料金ページ, AI生成, DOCX, ブログ, クォータ
+- サーバー側: AI生成, チェックアウト, Webhook(購読), DOCX, 認証コールバック
 
-### Task 24: トップページ改善 (LP化) `cc:TODO`
-未ログインユーザー向けランディングページ化。
-- ファーストビュー: キャッチコピー + CTA「無料で始める」
-- 3ステップ説明 + 対応補助金数・記事数の実績表示
-- 料金プラン概要 → /pricing 誘導
-- ログイン済みはダッシュボードにリダイレクト
-- モバイルファースト設計
+### Task 24: トップページ改善 (LP化) `cc:done`
+**実装済み内容:**
+- 11セクション構成: StickyHeader, Hero, Stats Bar, How It Works, Category Tabs, Popular Subsidies, AI Feature Showcase, Pricing Preview, FAQ, Final CTA, Footer
+- モバイルファースト + レスポンシブ対応
+- ログイン済みユーザーはダッシュボードにリダイレクト
+- 動的データ: getLandingStats() で補助金数・カテゴリ数を自動反映
 
-### Task 25: OGP画像 + ソーシャルカード `cc:TODO`
-SNS シェア時の表示を最適化。
-- `public/og-default.png` (1200x630) メイン OG 画像
-- Twitter Card: summary_large_image 設定
-- 各ページの og:image メタデータ設定
+### Task 25: OGP画像 + ソーシャルカード `cc:done`
+**実装済み内容:**
+- `src/app/opengraph-image.tsx`: メイン動的OG画像（1200x630、ブランドカラー）
+- `src/app/blog/[slug]/opengraph-image.tsx`: ブログ記事別の動的OG画像（タイトル・タグ反映）
+- Twitter Card: summary_large_image 設定（layout.tsx metadata）
+- OpenGraph metadata: layout.tsx で ja_JP ロケール設定
 
-### Task 26: パフォーマンス最適化 `cc:TODO`
-Core Web Vitals 改善 → SEO ランキング向上。
-- next/image, next/font 最適化
-- 不要な Client Component の Server Component 化
-- Bundle size 分析 + Lighthouse スコア改善
+### Task 26: パフォーマンス最適化 `cc:done`
+- Noto Sans JP フォント追加（preload: false）
+- Viewport メタデータエクスポート追加
+- next.config.ts: compress + 静的アセットキャッシュヘッダー（1年immutable）
 
-### Task 27: SNS投稿テンプレート20本 `cc:TODO`
-X/Twitter 向け投稿テンプレート（MK0 コンテンツ戦略）。
-- 補助金締切リマインダー × 5、ブログ記事紹介 × 5、サービス紹介 × 5、Tips × 5
-- 出力: `content/social/twitter-templates.md`
+### Task 27: SNS投稿テンプレート20本 `cc:done`
+- content/social/twitter-templates.md（4カテゴリ × 5本 = 20本）
 
-### Task 28: メールテンプレート準備 `cc:TODO`
-MK1 ナーチャリングシーケンス（Day 0〜30 の 7通）。
-- ウェルカム → 教育 → 試用促進 → Pro訴求 → 締切緊急性 → 成功事例 → オファー
+### Task 28: メールテンプレート準備 `cc:done`
+- content/emails/nurture-sequence.md（Day 0〜30、7通シーケンス）
+- Day 0: ウェルカム + クイックスタート
+- Day 1: 「補助金選びのコツ」教育コンテンツ
+- Day 3: 「AI 生成を試しましょう」直接リンク付き
+- Day 7: Pro 機能ハイライト + 社会的証明
+- Day 14: 締切の緊急性（該当補助金があれば）
+- Day 21: 成功パターン / 事例
+- Day 30: 期間限定アップグレードオファー
 - 出力: `content/emails/nurture-sequence.md`
 
-### Task 29: ローンチ週プレイブック `cc:TODO`
-ソフトローンチの日別アクションプラン（MK4 ローンチ管理）。
-- ProductHunt/BOXIL掲載、SNS投稿、note.comクロスポスト、はてブ対策
-- 出力: `content/marketing/launch-playbook.md`
+### Task 29: ローンチ週プレイブック `cc:done`
+- content/marketing/launch-playbook.md（Day別アクション + チェックリスト + 成功基準）

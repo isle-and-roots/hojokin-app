@@ -19,6 +19,7 @@ import { CreditDisplay } from "@/components/credit-display";
 import { useToast } from "@/components/ui/toast";
 import { posthog } from "@/lib/posthog/client";
 import { EVENTS } from "@/lib/posthog/events";
+import { trackAiGeneration, trackApplicationSaved } from "@/lib/analytics";
 
 export default function NewApplicationPage() {
   return (
@@ -150,6 +151,7 @@ function NewApplicationContent() {
       section_key: section.key,
       subsidy_id: subsidyId || "jizokuka-001",
     });
+    trackAiGeneration(subsidyId || "jizokuka-001", section.key);
 
     try {
       const res = await fetch("/api/ai/generate-section", {
@@ -245,6 +247,7 @@ function NewApplicationContent() {
         throw new Error(data.error || "保存に失敗しました");
       }
 
+      trackApplicationSaved(sid);
       router.push("/applications");
     } catch (error) {
       toast.error("保存に失敗しました: " + String(error));
