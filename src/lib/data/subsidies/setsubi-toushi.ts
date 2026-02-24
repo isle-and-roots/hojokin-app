@@ -96,12 +96,12 @@ export const setsubiToushiSubsidies: SubsidyInfo[] = [
         estimatedLength: "400〜600字",
       },
     ],
-    promptSupport: "GENERIC",
+    promptSupport: "FULL",
     subsidyType: "MONODZUKURI",
     popularity: 9,
     difficulty: "MEDIUM",
     isActive: true,
-    lastUpdated: "2026-02-23",
+    lastUpdated: "2026-02-24",
   },
 
   // ============================================================
