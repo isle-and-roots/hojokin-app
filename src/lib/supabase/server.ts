@@ -19,7 +19,7 @@ export async function createClient() {
             );
           } catch {
             // setAll は Server Component から呼ばれる場合は無視
-            // middleware でセッション更新が行われるため問題なし
+            // proxy でセッション更新が行われるため問題なし
           }
         },
       },

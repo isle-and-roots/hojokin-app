@@ -5,7 +5,6 @@ import {
   useContext,
   useState,
   useCallback,
-  useEffect,
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
@@ -32,13 +31,10 @@ export function useConfirm(): ConfirmContextValue {
 }
 
 export function ConfirmProvider({ children }: { children: ReactNode }) {
-  const [mounted, setMounted] = useState(false);
   const [state, setState] = useState<{
     options: ConfirmOptions;
     resolve: (v: boolean) => void;
   } | null>(null);
-
-  useEffect(() => setMounted(true), []);
 
   const confirm = useCallback((options: ConfirmOptions): Promise<boolean> => {
     return new Promise<boolean>((resolve) => {
@@ -59,8 +55,8 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
   return (
     <ConfirmContext.Provider value={{ confirm }}>
       {children}
-      {mounted &&
-        state &&
+      {state &&
+        typeof document !== "undefined" &&
         createPortal(
           <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div

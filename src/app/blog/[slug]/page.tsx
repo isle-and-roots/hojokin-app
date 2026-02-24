@@ -7,6 +7,7 @@ import {
   getPostBySlug,
   renderMarkdown,
 } from "@/lib/blog";
+import { BlogPostTracker, BlogCtaLink } from "./tracker";
 
 export async function generateStaticParams() {
   return getAllSlugs().map((slug) => ({ slug }));
@@ -114,6 +115,7 @@ export default async function BlogPostPage({
       </header>
 
       <main className="max-w-3xl mx-auto px-4 py-10">
+        <BlogPostTracker slug={slug} title={post.title} />
         {/* JSON-LD */}
         <script
           type="application/ld+json"
@@ -183,13 +185,7 @@ export default async function BlogPostPage({
           <p className="text-sm text-muted-foreground mb-4">
             プロフィールを登録するだけで、AIが審査に通りやすい申請書の下書きを作成します。まずは無料でお試しください。
           </p>
-          <Link
-            href="/login"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-sm font-medium"
-          >
-            <Sparkles className="h-4 w-4" />
-            無料で始める
-          </Link>
+          <BlogCtaLink slug={slug} />
         </div>
 
         {/* 戻るリンク */}

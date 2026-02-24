@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { CreditDisplay } from "@/components/credit-display";
 import { useToast } from "@/components/ui/toast";
+import { posthog } from "@/lib/posthog/client";
+import { EVENTS } from "@/lib/posthog/events";
 
 export default function NewApplicationPage() {
   return (
@@ -60,6 +62,7 @@ function NewApplicationContent() {
   const [activeSectionIndex, setActiveSectionIndex] = useState<number>(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [quotaExhausted, setQuotaExhausted] = useState(false);
+  const [profileLoadError, setProfileLoadError] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
   // Load profile from Supabase
@@ -72,9 +75,15 @@ function NewApplicationContent() {
           setProfileId(data.profile.id);
         }
       })
-      .catch(console.error)
+      .catch(() => {
+        setProfileLoadError(true);
+      })
       .finally(() => setLoadingProfile(false));
   }, []);
+
+  useEffect(() => {
+    if (profileLoadError) toast.error("プロフィールの読み込みに失敗しました");
+  }, [profileLoadError, toast]);
 
   // Load subsidy and set sections
   useEffect(() => {
@@ -137,6 +146,11 @@ function NewApplicationContent() {
       prev.map((s, i) => (i === index ? { ...s, status: "generating" } : s))
     );
 
+    posthog.capture(EVENTS.AI_GENERATION_STARTED, {
+      section_key: section.key,
+      subsidy_id: subsidyId || "jizokuka-001",
+    });
+
     try {
       const res = await fetch("/api/ai/generate-section", {
         method: "POST",
@@ -171,6 +185,10 @@ function NewApplicationContent() {
             : s
         )
       );
+      posthog.capture(EVENTS.AI_GENERATION_COMPLETED, {
+        section_key: section.key,
+        subsidy_id: subsidyId || "jizokuka-001",
+      });
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") return;
       const msg = error instanceof Error ? error.message : "生成に失敗しました";
@@ -179,6 +197,11 @@ function NewApplicationContent() {
           i === index ? { ...s, status: "error", content: msg } : s
         )
       );
+      posthog.capture(EVENTS.AI_GENERATION_FAILED, {
+        section_key: section.key,
+        subsidy_id: subsidyId || "jizokuka-001",
+        error: msg,
+      });
       toast.error(msg);
     } finally {
       abortRef.current = null;

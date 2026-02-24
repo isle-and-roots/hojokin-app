@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Sparkles, ArrowUpRight } from "lucide-react";
 import { type PlanKey, getAiLimit } from "@/lib/plans";
+import { posthog } from "@/lib/posthog/client";
+import { EVENTS } from "@/lib/posthog/events";
 
 interface CreditDisplayProps {
   variant?: "card" | "compact";
@@ -27,6 +29,7 @@ export function CreditDisplay({
   onQuotaLoaded,
 }: CreditDisplayProps) {
   const [quota, setQuota] = useState<QuotaData | null>(null);
+  const quotaWarningFired = useRef(false);
 
   useEffect(() => {
     fetch("/api/user/plan")
@@ -49,6 +52,14 @@ export function CreditDisplay({
           const resetMonth = `${resetDate.getMonth() + 1}月`;
 
           setQuota({ plan, used, limit, remaining, resetMonth });
+          if (remaining <= 2 && !quotaWarningFired.current) {
+            quotaWarningFired.current = true;
+            posthog.capture(EVENTS.QUOTA_WARNING_SHOWN, {
+              plan,
+              remaining,
+              limit,
+            });
+          }
           onQuotaLoaded?.(remaining);
         }
       )

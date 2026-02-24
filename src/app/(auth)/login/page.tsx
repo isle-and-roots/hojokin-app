@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Loader2 } from "lucide-react";
+import { posthog } from "@/lib/posthog/client";
+import { EVENTS } from "@/lib/posthog/events";
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
@@ -11,6 +13,7 @@ export default function LoginPage() {
   const handleGoogleLogin = async () => {
     setLoading(true);
     setError(null);
+    posthog.capture(EVENTS.LOGIN_STARTED, { provider: "google" });
 
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({

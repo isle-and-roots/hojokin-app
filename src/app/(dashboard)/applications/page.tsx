@@ -5,6 +5,8 @@ import Link from "next/link";
 import { FileText, PlusCircle, Download, Trash2, Sparkles, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm-dialog";
+import { posthog } from "@/lib/posthog/client";
+import { EVENTS } from "@/lib/posthog/events";
 
 interface AppSection {
   section_key: string;
@@ -35,6 +37,7 @@ export default function ApplicationsPage() {
   const { confirm } = useConfirm();
   const [applications, setApplications] = useState<ApplicationData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     fetch("/api/applications")
@@ -44,9 +47,15 @@ export default function ApplicationsPage() {
           setApplications(data.applications);
         }
       })
-      .catch(console.error)
+      .catch(() => {
+        setLoadError(true);
+      })
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (loadError) toast.error("申請一覧の読み込みに失敗しました");
+  }, [loadError, toast]);
 
   const handleDelete = async (id: string) => {
     const ok = await confirm({
@@ -59,6 +68,7 @@ export default function ApplicationsPage() {
     try {
       await fetch(`/api/applications?id=${id}`, { method: "DELETE" });
       setApplications((prev) => prev.filter((a) => a.id !== id));
+      posthog.capture(EVENTS.APPLICATION_DELETED);
       toast.success("申請書を削除しました");
     } catch (error) {
       toast.error("削除に失敗しました: " + String(error));
@@ -66,6 +76,9 @@ export default function ApplicationsPage() {
   };
 
   const handleExport = async (app: ApplicationData) => {
+    posthog.capture(EVENTS.DOCX_EXPORT_ATTEMPTED, {
+      subsidy_name: app.subsidy_name,
+    });
     try {
       const exportData = {
         subsidyName: app.subsidy_name,

@@ -8,12 +8,15 @@ import { getSubsidyById } from "@/lib/subsidies";
 import type { PlanKey } from "@/lib/plans";
 import {
   AI_CONFIG,
+  SYSTEM_PROMPT,
   getModelForPlan,
   classifyError,
   getErrorMessage,
   isRetryable,
   type AiErrorKind,
 } from "@/lib/ai/config";
+import { trackServerEvent } from "@/lib/posthog/track";
+import { EVENTS } from "@/lib/posthog/events";
 
 const anthropic = new Anthropic();
 
@@ -36,8 +39,8 @@ const generateSectionSchema = z.object({
     salesChannels: z.string().optional().default(""),
     strengths: z.string().optional().default(""),
     challenges: z.string().optional().default(""),
-    recentRevenue: z.any().nullable().optional(),
-    recentProfit: z.any().nullable().optional(),
+    recentRevenue: z.array(z.object({ year: z.number(), amount: z.number() })).nullable().optional(),
+    recentProfit: z.array(z.object({ year: z.number(), amount: z.number() })).nullable().optional(),
   }),
   subsidyId: z.string().optional(),
   additionalContext: z.string().optional(),
@@ -66,6 +69,13 @@ async function callAnthropicWithRetry(
           model: modelId,
           max_tokens: AI_CONFIG.maxTokens,
           temperature: AI_CONFIG.temperature,
+          system: [
+            {
+              type: "text" as const,
+              text: SYSTEM_PROMPT,
+              cache_control: { type: "ephemeral" as const },
+            },
+          ],
           messages: [{ role: "user", content: prompt }],
         },
         {
@@ -130,6 +140,11 @@ export async function POST(request: NextRequest) {
 
       const limit = PLAN_LIMITS[userProfile.plan] ?? 3;
       if (userProfile.ai_generations_used >= limit) {
+        trackServerEvent(user.id, EVENTS.QUOTA_EXCEEDED, {
+          plan: userProfile.plan,
+          limit,
+          used: userProfile.ai_generations_used,
+        });
         return NextResponse.json(
           {
             error: `今月の AI 生成回数の上限（${limit}回）に達しました。${
@@ -202,6 +217,15 @@ export async function POST(request: NextRequest) {
         .eq("id", user.id);
     }
 
+    trackServerEvent(user.id, EVENTS.AI_GENERATION_SUCCESS, {
+      model: modelId,
+      input_tokens: message.usage.input_tokens,
+      output_tokens: message.usage.output_tokens,
+      section_key: sectionKey,
+      subsidy_id: subsidyId || "jizokuka-001",
+      plan,
+    });
+
     return NextResponse.json({
       content,
       modelUsed: modelId,
@@ -213,6 +237,21 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     // 構造化エラーログ（将来の Sentry 対応準備）
     const errorKind: AiErrorKind = classifyError(error);
+
+    // PostHog サーバーサイドエラートラッキング（userId が取れる場合のみ）
+    try {
+      const supabaseForError = await createClient();
+      const { data: { user: errorUser } } = await supabaseForError.auth.getUser();
+      if (errorUser) {
+        trackServerEvent(errorUser.id, EVENTS.AI_GENERATION_FAILED, {
+          error_kind: errorKind,
+          error_message: error instanceof Error ? error.message : String(error),
+        });
+      }
+    } catch {
+      // エラートラッキング自体の失敗は無視
+    }
+
     console.error("[AI] Generation failed:", {
       kind: errorKind,
       message: error instanceof Error ? error.message : String(error),

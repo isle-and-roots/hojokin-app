@@ -4,130 +4,98 @@ Updated: 2026-02-25
 
 ## 現状サマリー
 
-- Phase 1 完了、Vercel デプロイ済み
-- Phase 2 オンボーディングフロー — 完了
-- **Phase 2.5 プロダクト品質向上 — 完了**
-  - 統一トースト通知 + 確認ダイアログ
-  - AI生成リトライ（指数バックオフ）+ エラー分類
-  - Business → Opus モデル切替
-  - 温度パラメータ最適化（0.3）
-  - ものづくり補助金 FULL プロンプト対応
-- FULL 対応補助金: 持続化(1) + IT導入(4) + ものづくり(1) = **6件**
+- **Phase 1〜3.5 全完了** — プロダクト開発完了、Vercel デプロイ済み
+- 課金: Polar.sh (JPY対応済み)、本番セットアップ待ち
+- SEO: 10記事 + JSON-LD + OGメタデータ + サイトマップ
+- FULL AI対応補助金: 持続化(1) + IT導入(4) + ものづくり(1) = **6件**
+
+### 未デプロイ変更 (Phase 3.5)
+eslint.config.mjs, proxy.ts新規, middleware.ts削除, 各コンポーネント修正 (12ファイル)
+品質ゲート通過済み（tsc + lint + build）
 
 ---
 
-## Phase 1.5: 本番安定化
+## Phase 4: 本番完全稼働 + ソフトローンチ準備
 
-### Task 1: 未コミット変更をコミット `cc:done`
-### Task 2: 決済基盤 Polar.sh 移行 `cc:done`
-- Stripe → Polar.sh に全面移行完了
-- Webhook: `POST /api/webhooks/polar`（subscription.created/active/updated/canceled/revoked）
-- DB: `stripe_customer_id` → `polar_customer_id`, `stripe_subscription_id` → `polar_subscription_id`
-### Task 3: AI 生成の動作確認 `pm:依頼中`
+**目標**: 課金機能が動く本番環境を完成させ、最初のユーザー獲得を開始する
+**期間目安**: 1-2週間（週2-3時間ペース）
 
----
+### 優先度マトリクス
 
-## Phase 2: オンボーディングフロー ✅ 完了
-
-**目標**: 初回ユーザーがログインから3分以内にAI生成を体験
-**結果**: 3ステップオンボーディング（プロフィール→補助金→AI生成）実装完了
-
-### Task 4-10: 全完了
-
----
-
-## Phase 2.5: プロダクト品質向上 ✅ 完了
-
-### Task A: 統一トースト通知システム `cc:done`
-### Task B: AI生成リトライ + エラーハンドリング強化 `cc:done`
-### Task C: Business向けOpusモデル切替 + パラメータ最適化 `cc:done`
-### Task D: ものづくり補助金 FULL プロンプト対応 `cc:done`
+| 優先度 | タスク | 担当 | 見積 |
+|--------|--------|------|------|
+| **Required** | Task 20: 未コミット変更デプロイ | cc | 5分 |
+| **Required** | Task 21: Polar本番セットアップ | pm | 10分 |
+| **Required** | Task 22: 本番動作確認 | pm | 15分 |
+| **Recommended** | Task 23: Vercel Analytics 導入 | cc | 30分 |
+| **Recommended** | Task 24: トップページ改善 (LP化) | cc | 1h |
+| **Recommended** | Task 25: OGP画像 + ソーシャルカード | cc | 30分 |
+| **Recommended** | Task 26: パフォーマンス最適化 | cc | 30分 |
+| **Optional** | Task 27: SNS投稿テンプレート20本 | cc | 1h |
+| **Optional** | Task 28: メールテンプレート準備 | cc | 1h |
+| **Optional** | Task 29: ローンチ週プレイブック | cc | 30分 |
 
 ---
 
-## 本番確認ガイド（ユーザー作業）
+### Task 20: 未コミット変更デプロイ `cc:TODO` [feature:security]
+Phase 3.5 の技術的負債修正（ESLint互換性、Zod型安全化、middleware→proxy移行、エラーハンドリング統一）をコミット＆プッシュ → Vercel 自動デプロイ。
+- 対象: 12ファイル（eslint.config.mjs, proxy.ts新規, middleware.ts削除, 各コンポーネント修正）
+- 品質ゲート再確認してからコミット
 
-### 1. Polar.sh Webhook 設定
-1. [Polar Dashboard](https://dashboard.polar.sh) → Settings → Webhooks
-2. エンドポイント URL: `https://hojokin.isle-and-roots.com/api/webhooks/polar`
-3. イベント選択: `subscription.created`, `subscription.active`, `subscription.updated`, `subscription.canceled`, `subscription.revoked`
-4. 表示される Webhook シークレットを Vercel 環境変数 `POLAR_WEBHOOK_SECRET` に設定
-5. Vercel で再デプロイ
+### Task 21: Polar本番セットアップ `pm:TODO`
+ユーザー作業（約10分、スクリプト自動化済み）:
+1. https://polar.sh → Settings → Developers → Personal Access Tokens で本番トークン取得
+2. `.env.local` に `POLAR_ACCESS_TOKEN=polar_oat_PRODUCTION_TOKEN` を設定
+3. `npm run setup:polar:production` 実行（Products 3つ + Webhook 自動作成）
+4. `npm run setup:polar:vercel` 実行（Vercel 環境変数を自動同期）
+5. `vercel --prod` で再デプロイ
 
-### 2. Polar Product ID 設定
-1. Polar Dashboard → Products で各プランの Product を作成
-2. Vercel 環境変数に設定:
-   - `POLAR_STARTER_PRODUCT_ID` — Starter ¥980/月
-   - `POLAR_PRO_PRODUCT_ID` — Pro ¥2,980/月
-   - `POLAR_BUSINESS_PRODUCT_ID` — Business ¥9,800/月
-   - `POLAR_ACCESS_TOKEN` — Organization Access Token
-   - `POLAR_MODE` — `production`
+### Task 22: 本番動作確認 `pm:TODO`
+ユーザーが本番環境で以下を確認:
+- [ ] Google ログイン動作
+- [ ] プロフィール入力 → 保存
+- [ ] AI 生成動作（持続化補助金・企業概要セクション）
+- [ ] 料金ページ → Polar チェックアウト（JPY表示）
+- [ ] Polar ダッシュボードで Webhook 配信ログ確認
 
-### 3. AI生成 動作確認チェックリスト
-- [ ] ログインしてプロフィールを入力
-- [ ] 補助金一覧から「持続化補助金」を選択し申請作成へ
-- [ ] 「企業概要」セクションで AI 生成をクリック → テキストが生成される
-- [ ] 生成中に「キャンセル」ボタンが表示される
-- [ ] 全セクション一括生成が完了する
-- [ ] 「保存」ボタンで申請書が保存される
-- [ ] 申請一覧に保存した申請書が表示される
-- [ ] 削除ボタン → 確認ダイアログが表示される（alert ではない）
-- [ ] 料金ページでプラン変更ボタンが動作する
+### Task 23: Vercel Analytics 導入 `cc:TODO`
+ユーザー行動とパフォーマンスを計測可能にする。
+- `@vercel/analytics` + `@vercel/speed-insights` インストール
+- `src/app/layout.tsx` に `<Analytics />` + `<SpeedInsights />` 追加
+- カスタムイベント: ai_generation, upgrade_clicked, checkout_started, profile_completed
+- イベント送信ヘルパー `src/lib/analytics.ts` 作成
 
-### 4. 今回の変更をデプロイ
-```bash
-git push origin main
-```
-Vercel が自動デプロイします。
+### Task 24: トップページ改善 (LP化) `cc:TODO`
+未ログインユーザー向けランディングページ化。
+- ファーストビュー: キャッチコピー + CTA「無料で始める」
+- 3ステップ説明 + 対応補助金数・記事数の実績表示
+- 料金プラン概要 → /pricing 誘導
+- ログイン済みはダッシュボードにリダイレクト
+- モバイルファースト設計
 
----
+### Task 25: OGP画像 + ソーシャルカード `cc:TODO`
+SNS シェア時の表示を最適化。
+- `public/og-default.png` (1200x630) メイン OG 画像
+- Twitter Card: summary_large_image 設定
+- 各ページの og:image メタデータ設定
 
-## Phase 3: グロース
+### Task 26: パフォーマンス最適化 `cc:TODO`
+Core Web Vitals 改善 → SEO ランキング向上。
+- next/image, next/font 最適化
+- 不要な Client Component の Server Component 化
+- Bundle size 分析 + Lighthouse スコア改善
 
-### Task 11: SEO メタデータ最適化 `cc:done`
-- JSON-LD（Organization + GovernmentService）、OGメタデータ、サイトマップ拡充
-- Server Component wrapper パターンでメタデータ対応
+### Task 27: SNS投稿テンプレート20本 `cc:TODO`
+X/Twitter 向け投稿テンプレート（MK0 コンテンツ戦略）。
+- 補助金締切リマインダー × 5、ブログ記事紹介 × 5、サービス紹介 × 5、Tips × 5
+- 出力: `content/social/twitter-templates.md`
 
-### Task 12: ブログ SEO 記事追加 `cc:done`
-- ものづくり補助金ガイド 2026年版
-- キャリアアップ助成金 活用ガイド
-- 補助金と助成金の違い完全解説
-- 補助金申請 初めての準備チェックリスト
-- 省エネ補助金・環境系補助金ガイド 2026
-- 合計10記事（既存5 + 新規5）
+### Task 28: メールテンプレート準備 `cc:TODO`
+MK1 ナーチャリングシーケンス（Day 0〜30 の 7通）。
+- ウェルカム → 教育 → 試用促進 → Pro訴求 → 締切緊急性 → 成功事例 → オファー
+- 出力: `content/emails/nurture-sequence.md`
 
-### Task 13: コンバージョン最適化 `cc:done`
-- アップグレード誘導強化（残り2回以下で警告、0回でCTA）
-- 料金ページFAQ追加、pricing-page.tsx SC分離
-
-### Task 14: アカウント設定ページ + Polar本番セットアップ `cc:done`
-- /settings: サブスクリプション管理UI（プラン表示・AIクォータ・Polar顧客ポータル連携）
-- ダッシュボードにPlanBadgeCard追加
-- 料金ページに有料ユーザー向けバナー・管理リンク追加
-- setup-polar.ts Production対応、sync-vercel-env.ts追加
-
----
-
-## Phase 3.5: 技術的負債の解消
-
-### Task 15: ESLint 互換性修正 `cc:done`
-- eslint-plugin-react v7.37 + ESLint 10 非互換を `settings.react.version: "19"` で回避
-- React 19 `set-state-in-effect` エラー3件を修正（onboarding-banner, recommendation-banner, confirm-dialog）
-- `ignoreRestSiblings: true` で rest pattern の未使用変数警告を解消
-- **結果**: `npm run lint` がエラーゼロ・警告ゼロで通過
-
-### Task 16: Zod スキーマの `z.any()` 除去 `cc:done`
-- `recentRevenue`/`recentProfit` を `z.array(z.object({ year, amount }))` に変更
-
-### Task 17: JSON.parse 安全化 `cc:done`
-- recommendation-banner を useState initializer + try-catch パターンにリファクタリング
-
-### Task 18: Next.js 16 middleware → proxy 移行 `cc:done`
-- `src/middleware.ts` → `src/proxy.ts` リネーム、関数名を `proxy` に変更
-- ビルド時の非推奨警告が解消
-
-### Task 19: .catch(console.error) パターンの統一 `cc:done`
-- pricing-page: silent catch（free プランデフォルト表示のまま）
-- applications/page: エラー状態 → toast 通知に変更
-- applications/new/page: エラー状態 → toast 通知に変更
-- exhaustive-deps 警告も解消（エラー状態分離パターン）
+### Task 29: ローンチ週プレイブック `cc:TODO`
+ソフトローンチの日別アクションプラン（MK4 ローンチ管理）。
+- ProductHunt/BOXIL掲載、SNS投稿、note.comクロスポスト、はてブ対策
+- 出力: `content/marketing/launch-playbook.md`

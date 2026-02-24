@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Check, Loader2, Crown, Sparkles, ChevronDown, ExternalLink } from "lucide-react";
 import { PLAN_LIST, type PlanKey } from "@/lib/plans";
 import { useToast } from "@/components/ui/toast";
+import { posthog } from "@/lib/posthog/client";
+import { EVENTS } from "@/lib/posthog/events";
 
 const FAQ_ITEMS = [
   {
@@ -36,6 +38,8 @@ export function PricingPageClient() {
   const [hasCustomerId, setHasCustomerId] = useState(false);
 
   useEffect(() => {
+    posthog.capture(EVENTS.PRICING_PAGE_VIEWED);
+
     fetch("/api/user/plan")
       .then((res) => res.json())
       .then((data) => {
@@ -44,12 +48,18 @@ export function PricingPageClient() {
           setHasCustomerId(!!data.userProfile.polar_customer_id);
         }
       })
-      .catch(console.error);
+      .catch(() => {
+        // plan API 失敗時は free プランのデフォルト表示のまま
+      });
   }, []);
 
   const handleSubscribe = async (planKey: PlanKey) => {
     if (planKey === "free" || planKey === currentPlan) return;
 
+    posthog.capture(EVENTS.UPGRADE_BUTTON_CLICKED, {
+      target_plan: planKey,
+      current_plan: currentPlan,
+    });
     setLoading(planKey);
     try {
       const res = await fetch("/api/billing/checkout", {
@@ -72,6 +82,9 @@ export function PricingPageClient() {
   };
 
   const handleManage = async () => {
+    posthog.capture(EVENTS.MANAGE_SUBSCRIPTION_CLICKED, {
+      current_plan: currentPlan,
+    });
     setLoading("pro");
     try {
       const res = await fetch("/api/billing/portal", {

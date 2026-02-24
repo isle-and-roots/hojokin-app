@@ -2,6 +2,8 @@ import { Webhooks } from "@polar-sh/nextjs";
 import { createClient } from "@supabase/supabase-js";
 import { getPolarWebhookSecret } from "@/lib/polar/config";
 import { getPlanKeyByProductId } from "@/lib/plans";
+import { trackServerEvent, identifyUser } from "@/lib/posthog/track";
+import { EVENTS } from "@/lib/posthog/events";
 
 // Webhook には Service Role Key を使用（RLS バイパス）
 function getSupabaseAdmin() {
@@ -60,6 +62,12 @@ export const POST = Webhooks({
 
     if (error) {
       console.error("subscription.created DB update error:", error);
+    } else {
+      trackServerEvent(userId, EVENTS.SUBSCRIPTION_CREATED, {
+        plan: planKey,
+        product_id: productId,
+      });
+      identifyUser(userId, { plan: planKey });
     }
   },
 
@@ -134,6 +142,11 @@ export const POST = Webhooks({
 
     if (error) {
       console.error("subscription.canceled DB update error:", error);
+    } else {
+      trackServerEvent(userId, EVENTS.SUBSCRIPTION_CANCELLED, {
+        previous_subscription_id: payload.data.id,
+      });
+      identifyUser(userId, { plan: "free" });
     }
   },
 

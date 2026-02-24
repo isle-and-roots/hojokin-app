@@ -6,26 +6,33 @@ import { Sparkles, ArrowRight } from "lucide-react";
 import type { SubsidyInfo, BusinessProfile } from "@/types";
 import { PROMPT_SUPPORT_CONFIG } from "@/lib/data/subsidy-categories";
 
+function readProfileFromStorage(): BusinessProfile | null {
+  if (typeof window === "undefined") return null;
+  const stored = localStorage.getItem("businessProfile");
+  if (!stored) return null;
+  try {
+    return JSON.parse(stored) as BusinessProfile;
+  } catch {
+    return null;
+  }
+}
+
 export function RecommendationBanner() {
   const [recommendations, setRecommendations] = useState<SubsidyInfo[]>([]);
-  const [profile, setProfile] = useState<BusinessProfile | null>(null);
+  const [profile] = useState<BusinessProfile | null>(readProfileFromStorage);
 
   useEffect(() => {
-    const stored = localStorage.getItem("businessProfile");
-    if (!stored) return;
-
-    const p: BusinessProfile = JSON.parse(stored);
-    setProfile(p);
+    if (!profile) return;
 
     fetch("/api/subsidies/recommended", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ profile: p }),
+      body: JSON.stringify({ profile }),
     })
       .then((res) => res.json())
       .then((data) => setRecommendations(data.items ?? []))
       .catch(() => {});
-  }, []);
+  }, [profile]);
 
   if (!profile || recommendations.length === 0) return null;
 

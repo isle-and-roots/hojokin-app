@@ -1,19 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 
 export function OnboardingBanner() {
   const searchParams = useSearchParams();
   const fromOnboarding = searchParams.get("from") === "onboarding";
-  const [dismissed, setDismissed] = useState(false);
-
-  useEffect(() => {
-    if (localStorage.getItem("onboarding-banner-dismissed") === "true") {
-      setDismissed(true);
-    }
-  }, []);
+  const [dismissed, setDismissed] = useState(
+    () => typeof window !== "undefined" && localStorage.getItem("onboarding-banner-dismissed") === "true"
+  );
 
   if (!fromOnboarding || dismissed) return null;
 

@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getPolar } from "@/lib/polar/config";
 import { PLAN_LIST } from "@/lib/plans";
 import { rateLimit } from "@/lib/rate-limit";
+import { trackServerEvent } from "@/lib/posthog/track";
+import { EVENTS } from "@/lib/posthog/events";
 
 const CHECKOUT_RATE_LIMIT = 5; // 1時間あたり最大5回
 const CHECKOUT_WINDOW_MS = 60 * 60 * 1000; // 1時間
@@ -61,6 +63,11 @@ export async function POST(request: Request) {
       successUrl: `${origin}/pricing?success=true`,
       metadata: { plan },
       currency: "jpy",
+    });
+
+    trackServerEvent(user.id, EVENTS.CHECKOUT_INITIATED, {
+      plan,
+      product_id: planInfo.productId,
     });
 
     return NextResponse.json({ url: checkout.url });

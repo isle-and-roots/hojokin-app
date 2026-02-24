@@ -1,8 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-export async function middleware(request: NextRequest) {
-  // 環境変数未設定・プレースホルダーの場合はミドルウェアをスキップ（Supabase未設定の開発環境用）
+export async function proxy(request: NextRequest) {
+  // 環境変数未設定・プレースホルダーの場合はスキップ（Supabase未設定の開発環境用）
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL?.startsWith("http") || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     return NextResponse.next({ request });
   }
