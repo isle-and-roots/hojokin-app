@@ -91,7 +91,7 @@ export default function PrivacyPage() {
                 </td>
               </tr>
               <tr className="border-b border-border">
-                <td className="py-2 pr-4">Stripe, Inc.</td>
+                <td className="py-2 pr-4">Polar Software Inc.</td>
                 <td className="py-2 pr-4">決済処理</td>
                 <td className="py-2">メールアドレス、課金情報</td>
               </tr>

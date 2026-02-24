@@ -4,7 +4,7 @@ export interface PlanInfo {
   key: PlanKey;
   name: string;
   price: number;
-  priceId: string;
+  productId: string;
   aiLimit: number;
   docxExport: boolean;
   maxApplications: number;
@@ -17,7 +17,7 @@ export const PLAN_LIST: PlanInfo[] = [
     key: "free",
     name: "Free",
     price: 0,
-    priceId: "",
+    productId: "",
     aiLimit: 3,
     docxExport: false,
     maxApplications: 1,
@@ -32,7 +32,7 @@ export const PLAN_LIST: PlanInfo[] = [
     key: "starter",
     name: "Starter",
     price: 980,
-    priceId: process.env.STRIPE_STARTER_PRICE_ID ?? "",
+    productId: process.env.POLAR_STARTER_PRODUCT_ID ?? "",
     aiLimit: 15,
     docxExport: true,
     maxApplications: 5,
@@ -48,7 +48,7 @@ export const PLAN_LIST: PlanInfo[] = [
     key: "pro",
     name: "Pro",
     price: 2980,
-    priceId: process.env.STRIPE_PRO_PRICE_ID ?? "",
+    productId: process.env.POLAR_PRO_PRODUCT_ID ?? "",
     aiLimit: 100,
     docxExport: true,
     maxApplications: -1,
@@ -65,7 +65,7 @@ export const PLAN_LIST: PlanInfo[] = [
     key: "business",
     name: "Business",
     price: 9800,
-    priceId: process.env.STRIPE_BUSINESS_PRICE_ID ?? "",
+    productId: process.env.POLAR_BUSINESS_PRODUCT_ID ?? "",
     aiLimit: 500,
     docxExport: true,
     maxApplications: -1,
@@ -80,6 +80,12 @@ export const PLAN_LIST: PlanInfo[] = [
     ],
   },
 ];
+
+/** Polar Product ID → PlanKey 逆引き（Webhook用） */
+export function getPlanKeyByProductId(productId: string): PlanKey | null {
+  const plan = PLAN_LIST.find((p) => p.productId && p.productId === productId);
+  return plan?.key ?? null;
+}
 
 export function canUseFeature(
   plan: PlanKey,

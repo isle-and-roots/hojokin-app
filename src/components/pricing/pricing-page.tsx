@@ -24,7 +24,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "請求書や領収書は発行できますか？",
-    a: "Stripe の顧客ポータルから請求書・領収書をダウンロードできます。料金ページの「プラン管理」ボタンからアクセスしてください。",
+    a: "顧客ポータルから請求書・領収書をダウンロードできます。料金ページの「プラン管理」ボタンからアクセスしてください。",
   },
 ];
 
@@ -40,7 +40,7 @@ export function PricingPageClient() {
       .then((data) => {
         if (data.userProfile) {
           setCurrentPlan(data.userProfile.plan || "free");
-          setHasCustomerId(!!data.userProfile.stripe_customer_id);
+          setHasCustomerId(!!data.userProfile.polar_customer_id);
         }
       })
       .catch(console.error);
@@ -206,7 +206,7 @@ export function PricingPageClient() {
       <div className="mt-12 text-center text-sm text-muted-foreground space-y-2">
         <p>すべてのプランは月額制（税込）です。いつでもキャンセルできます。</p>
         <p>
-          お支払いは Stripe の安全な決済システムで処理されます。
+          お支払いは Polar の安全な決済システムで処理されます。
         </p>
         <p className="flex flex-wrap justify-center gap-3 pt-2">
           <a href="/legal/tokushoho" className="underline hover:text-foreground">

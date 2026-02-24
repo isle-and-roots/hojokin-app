@@ -19,7 +19,10 @@ Updated: 2026-02-24
 ## Phase 1.5: 本番安定化
 
 ### Task 1: 未コミット変更をコミット `cc:done`
-### Task 2: Stripe Webhook 本番設定 `pm:依頼中`
+### Task 2: 決済基盤 Polar.sh 移行 `cc:done`
+- Stripe → Polar.sh に全面移行完了
+- Webhook: `POST /api/webhooks/polar`（subscription.created/active/updated/canceled/revoked）
+- DB: `stripe_customer_id` → `polar_customer_id`, `stripe_subscription_id` → `polar_subscription_id`
 ### Task 3: AI 生成の動作確認 `pm:依頼中`
 
 ---
@@ -44,20 +47,21 @@ Updated: 2026-02-24
 
 ## 本番確認ガイド（ユーザー作業）
 
-### 1. Stripe Webhook 本番設定
-1. [Stripe Dashboard](https://dashboard.stripe.com/webhooks) → 「エンドポイントを追加」
-2. エンドポイント URL: `https://hojokin.isle-and-roots.com/api/webhooks/stripe`
-3. イベント選択: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`
-4. 「エンドポイントを追加」をクリック
-5. 表示される Webhook シークレット (`whsec_...`) を Vercel 環境変数 `STRIPE_WEBHOOK_SECRET` に設定
-6. Vercel で再デプロイ
+### 1. Polar.sh Webhook 設定
+1. [Polar Dashboard](https://dashboard.polar.sh) → Settings → Webhooks
+2. エンドポイント URL: `https://hojokin.isle-and-roots.com/api/webhooks/polar`
+3. イベント選択: `subscription.created`, `subscription.active`, `subscription.updated`, `subscription.canceled`, `subscription.revoked`
+4. 表示される Webhook シークレットを Vercel 環境変数 `POLAR_WEBHOOK_SECRET` に設定
+5. Vercel で再デプロイ
 
-### 2. Stripe 価格 ID 設定
-1. Stripe Dashboard → Products で各プランの Price ID を確認
+### 2. Polar Product ID 設定
+1. Polar Dashboard → Products で各プランの Product を作成
 2. Vercel 環境変数に設定:
-   - `STRIPE_STARTER_PRICE_ID` — Starter ¥980/月
-   - `STRIPE_PRO_PRICE_ID` — Pro ¥2,980/月
-   - `STRIPE_BUSINESS_PRICE_ID` — Business ¥9,800/月
+   - `POLAR_STARTER_PRODUCT_ID` — Starter ¥980/月
+   - `POLAR_PRO_PRODUCT_ID` — Pro ¥2,980/月
+   - `POLAR_BUSINESS_PRODUCT_ID` — Business ¥9,800/月
+   - `POLAR_ACCESS_TOKEN` — Organization Access Token
+   - `POLAR_MODE` — `production`
 
 ### 3. AI生成 動作確認チェックリスト
 - [ ] ログインしてプロフィールを入力
@@ -80,6 +84,12 @@ Vercel が自動デプロイします。
 
 ## Phase 3: グロース
 
-### Task 11: SEO メタデータ最適化 `cc:TODO`
+### Task 11: SEO メタデータ最適化 `cc:done`
+- JSON-LD（Organization + GovernmentService）、OGメタデータ、サイトマップ拡充
+- Server Component wrapper パターンでメタデータ対応
+
 ### Task 12: ブログ SEO 記事追加 `cc:TODO`
-### Task 13: コンバージョン最適化 `cc:TODO`
+
+### Task 13: コンバージョン最適化 `cc:done`
+- アップグレード誘導強化（残り2回以下で警告、0回でCTA）
+- 料金ページFAQ追加、pricing-page.tsx SC分離

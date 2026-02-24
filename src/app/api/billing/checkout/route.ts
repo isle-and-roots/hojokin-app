@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { createCheckoutSession } from "@/lib/stripe/helpers";
+import { getPolar } from "@/lib/polar/config";
+import { PLAN_LIST } from "@/lib/plans";
 import { rateLimit } from "@/lib/rate-limit";
 
 const CHECKOUT_RATE_LIMIT = 5; // 1時間あたり最大5回
@@ -42,23 +43,26 @@ export async function POST(request: Request) {
       );
     }
 
-    // 既存の Stripe 顧客 ID を取得（重複防止）
-    const { data: profile } = await supabase
-      .from("user_profiles")
-      .select("stripe_customer_id")
-      .eq("id", user.id)
-      .single();
+    const planInfo = PLAN_LIST.find((p) => p.key === plan);
+    if (!planInfo || !planInfo.productId) {
+      return NextResponse.json(
+        { error: "プランの Product ID が未設定です" },
+        { status: 500 }
+      );
+    }
 
     const origin = request.headers.get("origin") || "http://localhost:3000";
-    const session = await createCheckoutSession(
-      user.id,
-      user.email || "",
-      plan,
-      `${origin}/pricing`,
-      profile?.stripe_customer_id || undefined
-    );
 
-    return NextResponse.json({ url: session.url });
+    const polar = getPolar();
+    const checkout = await polar.checkouts.create({
+      products: [planInfo.productId],
+      externalCustomerId: user.id,
+      customerEmail: user.email ?? undefined,
+      successUrl: `${origin}/pricing?success=true`,
+      metadata: { plan },
+    });
+
+    return NextResponse.json({ url: checkout.url });
   } catch (error) {
     console.error("Checkout error:", error);
     return NextResponse.json(

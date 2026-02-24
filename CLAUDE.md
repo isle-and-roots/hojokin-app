@@ -20,7 +20,7 @@ npx tsc --noEmit     # 型チェックのみ（出力なし）
 
 **補助金サポート** — AI（Claude）で中小企業の補助金申請書類を自動生成する SaaS アプリ。
 
-**技術スタック:** Next.js 16 App Router / React 19 / TypeScript (strict) / Tailwind 4 / Supabase (DB + Auth) / Stripe (課金) / Anthropic Claude API
+**技術スタック:** Next.js 16 App Router / React 19 / TypeScript (strict) / Tailwind 4 / Supabase (DB + Auth) / Polar.sh (課金) / Anthropic Claude API
 
 ### ルートグループ
 
@@ -36,15 +36,15 @@ npx tsc --noEmit     # 型チェックのみ（出力なし）
 
 **AI 生成:** `POST /api/ai/generate-section` → Zod バリデーション → 月間クォータチェック（DB: `user_profiles.ai_generations_used`）→ プロンプトルーターが専用プロンプト（JIZOKUKA, IT_DONYU）または GENERIC を `src/lib/ai/prompts/` から選択 → Claude API (Sonnet) → 使用回数をインクリメント → レスポンス返却。
 
-**課金:** `/pricing` ページ → `POST /api/billing/checkout` で Stripe Checkout セッション作成 → ユーザー決済 → Stripe Webhook（`POST /api/webhooks/stripe`）が Supabase Service Role Key（RLS バイパス）で `user_profiles.plan` を更新。ポータルは `POST /api/billing/portal`。
+**課金:** `/pricing` ページ → `POST /api/billing/checkout` で Polar Checkout セッション作成 → ユーザー決済 → Polar Webhook（`POST /api/webhooks/polar`）が Supabase Service Role Key（RLS バイパス）で `user_profiles.plan` を更新。ポータルは `POST /api/billing/portal`。
 
 **補助金データ:** `src/lib/data/subsidies/` の静的 TypeScript ファイル（DB ではない）。15件以上、`index.ts` でインデックス。検索・フィルタロジックは `src/lib/subsidies.ts`。
 
 ### 重要なパターン
 
 - **Supabase クライアント:** `src/lib/supabase/client.ts`（ブラウザ用）、`src/lib/supabase/server.ts`（SSR + Cookie 処理）。Webhook は Service Role Key を直接使用。
-- **Stripe シングルトン:** `src/lib/stripe/config.ts` — 遅延初期化、リクエスト間で再利用。
-- **プラン制御:** `src/lib/plans.ts` で Free/Pro/Business の制限を定義。`canUseFeature(plan, feature)` と `getAiLimit(plan)` がゲート関数。AI クォータは月次自動リセット。
+- **Polar シングルトン:** `src/lib/polar/config.ts` — 遅延初期化、リクエスト間で再利用。`getPolar()` で SDK クライアント取得。
+- **プラン制御:** `src/lib/plans.ts` で Free/Starter/Pro/Business の制限を定義。`canUseFeature(plan, feature)` と `getAiLimit(plan)` がゲート関数。`getPlanKeyByProductId()` で Polar Product ID → PlanKey 逆引き。AI クォータは月次自動リセット。
 - **レート制限:** `src/lib/rate-limit.ts` — インメモリ Map + 時間窓制御。現在は Checkout API で使用。AI 生成にも拡大予定。
 - **バリデーション:** 全 API 入力を `src/lib/validations/` の Zod スキーマで検証。
 - **プロンプト体系:** `src/lib/ai/prompts/index.ts` が `SubsidyType` でルーティング。JIZOKUKA と IT_DONYU は FULL 対応（専用プロンプト）、その他は GENERIC。ペルソナは常に「中小企業診断士」。
@@ -53,7 +53,7 @@ npx tsc --noEmit     # 型チェックのみ（出力なし）
 
 ### 環境変数
 
-`.env.local.example` を参照。必須: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_PRO_PRICE_ID`, `STRIPE_BUSINESS_PRICE_ID`, `NEXT_PUBLIC_SITE_URL`。Supabase 環境変数が未設定の場合、middleware は認証チェックをスキップ（DB なしのローカル開発に対応）。
+`.env.local.example` を参照。必須: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `ANTHROPIC_API_KEY`, `POLAR_ACCESS_TOKEN`, `POLAR_WEBHOOK_SECRET`, `POLAR_MODE`, `POLAR_STARTER_PRODUCT_ID`, `POLAR_PRO_PRODUCT_ID`, `POLAR_BUSINESS_PRODUCT_ID`, `NEXT_PUBLIC_SITE_URL`。Supabase 環境変数が未設定の場合、middleware は認証チェックをスキップ（DB なしのローカル開発に対応）。
 
 ## コーディング規約
 
@@ -157,7 +157,7 @@ hojokin-app を月4万円以上の利益を生む SaaS プロダクトに成長�
     - Supabase Auth の Google OAuth プロバイダーを使用
     - パスワードリセット・メール確認フロー不要
     - ワンクリック認証でオンボーディング摩擦を最小化
-  - 課金: Stripe（Checkout + Customer Portal + Webhooks）
+  - 課金: Polar.sh（Checkout + Customer Portal + Webhooks）
   - 環境変数: `.env.local`（ローカル）、Vercel 環境変数（本番）
   - エラーハンドリング: 全 API ルートで try-catch + 適切な HTTP ステータス
 - **起動条件**: API 設計・実装、DB スキーマ変更、認証・課金の実装
@@ -423,7 +423,7 @@ HK（開発）と区別するため **MK（Marketing/経営）** プレフィッ
 |-----------|------|
 | 機能追加、優先度、ロードマップ、UX、ユーザー体験 | HK0 |
 | UI、コンポーネント、ページ、レスポンシブ、Tailwind、デザイン | HK1 |
-| API、DB、Supabase、認証、課金、Stripe、スキーマ | HK2 |
+| API、DB、Supabase、認証、課金、Polar、スキーマ | HK2 |
 | プロンプト、AI生成、補助金データ、テンプレート、生成品質 | HK3 |
 | テスト、バグ、セキュリティ、エラー、ビルド、パフォーマンス | HK4 |
 | SEO実装、分析実装、トラッキングコード、メタタグ実装 | HK5 |
@@ -443,7 +443,7 @@ HK（開発）と区別するため **MK（Marketing/経営）** プレフィッ
 | タスクパターン | 担当 |
 |--------------|------|
 | 新機能の設計→実装 | HK0(要件) → HK1(UI) + HK2(API) → HK4(検証) |
-| 課金機能の実装 | HK0(プラン設計) + HK2(Stripe) + HK1(UI) → HK4(検証) |
+| 課金機能の実装 | HK0(プラン設計) + HK2(Polar) + HK1(UI) → HK4(検証) |
 | 新補助金テンプレート追加 | HK3(プロンプト) + HK2(データ) → HK4(品質検証) |
 | デプロイ準備 | HK2(インフラ) + HK4(セキュリティ) + HK5(SEO) |
 
@@ -463,7 +463,7 @@ HK（開発）と区別するため **MK（Marketing/経営）** プレフィッ
 
 ### Phase 1: 課金基盤（最優先 — これなしに収益はゼロ）
 1. Supabase 統合（DB + Auth）
-2. Stripe 課金実装（Free / Pro / Business）
+2. Polar.sh 課金実装（Free / Starter / Pro / Business）
 3. ユーザー認証（Google OAuth のみ — Supabase Auth 経由）
 4. 使用量トラッキング（AI 生成回数の制限）
 5. Vercel デプロイ
@@ -502,7 +502,7 @@ src/
 │   │   ├── export/docx/route.ts            # DOCX エクスポート
 │   │   ├── auth/                           # [Phase 1] 認証 API
 │   │   ├── billing/                        # [Phase 1] 課金 API
-│   │   └── webhooks/stripe/               # [Phase 1] Stripe Webhook
+│   │   └── webhooks/polar/                # Polar Webhook
 │   ├── (auth)/                             # 認証ページ群（Google OAuth のみ）
 │   ├── (dashboard)/                        # メインアプリ
 │   │   ├── page.tsx                        # ダッシュボード
@@ -519,7 +519,7 @@ src/
 ├── lib/
 │   ├── ai/prompts/                         # AI プロンプト
 │   ├── supabase/                           # Supabase クライアント
-│   ├── stripe/                             # [Phase 1] Stripe
+│   ├── polar/                              # Polar.sh SDK
 │   └── utils/                              # ユーティリティ
 └── types/                                  # TypeScript 型定義
 ```
@@ -578,14 +578,17 @@ src/
   - `NEXT_PUBLIC_SUPABASE_URL`: Supabase プロジェクト URL
   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Supabase 匿名キー
   - `SUPABASE_SERVICE_ROLE_KEY`: Supabase サービスロールキー
-  - `STRIPE_SECRET_KEY`: Stripe シークレットキー
-  - `STRIPE_WEBHOOK_SECRET`: Stripe Webhook シークレット
-  - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`: Stripe 公開キー
+  - `POLAR_ACCESS_TOKEN`: Polar アクセストークン
+  - `POLAR_WEBHOOK_SECRET`: Polar Webhook シークレット
+  - `POLAR_MODE`: Polar 環境（sandbox / production）
+  - `POLAR_STARTER_PRODUCT_ID`: Starter プラン Product ID
+  - `POLAR_PRO_PRODUCT_ID`: Pro プラン Product ID
+  - `POLAR_BUSINESS_PRODUCT_ID`: Business プラン Product ID
 
 ### 本番チェックリスト
 - [ ] 全環境変数が設定されている
 - [ ] Supabase RLS が全テーブルで有効
-- [ ] Stripe Webhook エンドポイントが登録されている
+- [ ] Polar Webhook エンドポイントが登録されている
 - [ ] `npm run build` がエラーなしで完了
 - [ ] モバイル / デスクトップで動作確認済み
 - [ ] エラーモニタリングが有効（Sentry or Vercel）

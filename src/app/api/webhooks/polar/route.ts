@@ -1,0 +1,161 @@
+import { Webhooks } from "@polar-sh/nextjs";
+import { createClient } from "@supabase/supabase-js";
+import { getPolarWebhookSecret } from "@/lib/polar/config";
+import { getPlanKeyByProductId } from "@/lib/plans";
+
+// Webhook には Service Role Key を使用（RLS バイパス）
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
+
+// 簡易冪等性チェック（処理済みイベントIDを保持）
+const processedEvents = new Set<string>();
+const MAX_PROCESSED_EVENTS = 1000;
+
+function markEventProcessed(eventId: string): boolean {
+  if (processedEvents.has(eventId)) {
+    return false; // 既に処理済み
+  }
+  if (processedEvents.size >= MAX_PROCESSED_EVENTS) {
+    const firstEntry = processedEvents.values().next().value;
+    if (firstEntry) processedEvents.delete(firstEntry);
+  }
+  processedEvents.add(eventId);
+  return true;
+}
+
+export const POST = Webhooks({
+  webhookSecret: getPolarWebhookSecret(),
+
+  onSubscriptionCreated: async (payload) => {
+    const eventId = `created-${payload.data.id}`;
+    if (!markEventProcessed(eventId)) return;
+
+    const supabaseAdmin = getSupabaseAdmin();
+    const userId = payload.data.customer.externalId;
+    const productId = payload.data.productId;
+
+    if (!userId) {
+      console.error("Webhook: externalId (userId) が見つかりません");
+      return;
+    }
+
+    const planKey = getPlanKeyByProductId(productId);
+    if (!planKey) {
+      console.error(`Webhook: 不明な productId: ${productId}`);
+      return;
+    }
+
+    const { error } = await supabaseAdmin
+      .from("user_profiles")
+      .update({
+        plan: planKey,
+        polar_customer_id: payload.data.customerId,
+        polar_subscription_id: payload.data.id,
+      })
+      .eq("id", userId);
+
+    if (error) {
+      console.error("subscription.created DB update error:", error);
+    }
+  },
+
+  onSubscriptionActive: async (payload) => {
+    const eventId = `active-${payload.data.id}-${payload.data.modifiedAt?.toISOString() ?? ""}`;
+    if (!markEventProcessed(eventId)) return;
+
+    const supabaseAdmin = getSupabaseAdmin();
+    const userId = payload.data.customer.externalId;
+    const productId = payload.data.productId;
+
+    if (!userId) return;
+
+    const planKey = getPlanKeyByProductId(productId);
+    if (!planKey) return;
+
+    const { error } = await supabaseAdmin
+      .from("user_profiles")
+      .update({
+        plan: planKey,
+        polar_customer_id: payload.data.customerId,
+        polar_subscription_id: payload.data.id,
+      })
+      .eq("id", userId);
+
+    if (error) {
+      console.error("subscription.active DB update error:", error);
+    }
+  },
+
+  onSubscriptionUpdated: async (payload) => {
+    const eventId = `updated-${payload.data.id}-${payload.data.modifiedAt?.toISOString() ?? ""}`;
+    if (!markEventProcessed(eventId)) return;
+
+    const supabaseAdmin = getSupabaseAdmin();
+    const userId = payload.data.customer.externalId;
+
+    if (!userId) return;
+
+    // active 以外のステータス（past_due, unpaid 等）は free に戻す
+    if (payload.data.status !== "active" && payload.data.status !== "trialing") {
+      const { error } = await supabaseAdmin
+        .from("user_profiles")
+        .update({
+          plan: "free",
+          polar_subscription_id: null,
+        })
+        .eq("id", userId);
+
+      if (error) {
+        console.error("subscription.updated DB update error:", error);
+      }
+    }
+  },
+
+  onSubscriptionCanceled: async (payload) => {
+    const eventId = `canceled-${payload.data.id}`;
+    if (!markEventProcessed(eventId)) return;
+
+    const supabaseAdmin = getSupabaseAdmin();
+    const userId = payload.data.customer.externalId;
+
+    if (!userId) return;
+
+    const { error } = await supabaseAdmin
+      .from("user_profiles")
+      .update({
+        plan: "free",
+        polar_subscription_id: null,
+      })
+      .eq("id", userId);
+
+    if (error) {
+      console.error("subscription.canceled DB update error:", error);
+    }
+  },
+
+  onSubscriptionRevoked: async (payload) => {
+    const eventId = `revoked-${payload.data.id}`;
+    if (!markEventProcessed(eventId)) return;
+
+    const supabaseAdmin = getSupabaseAdmin();
+    const userId = payload.data.customer.externalId;
+
+    if (!userId) return;
+
+    const { error } = await supabaseAdmin
+      .from("user_profiles")
+      .update({
+        plan: "free",
+        polar_subscription_id: null,
+      })
+      .eq("id", userId);
+
+    if (error) {
+      console.error("subscription.revoked DB update error:", error);
+    }
+  },
+});
