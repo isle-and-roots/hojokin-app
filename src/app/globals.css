@@ -35,3 +35,76 @@ body {
   background: var(--background);
   color: var(--foreground);
 }
+
+/* ===== Landing Page Animations ===== */
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.glass-header {
+  background: rgba(248, 250, 252, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.hero-gradient {
+  background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 40%, #f0fdf4 100%);
+}
+
+.gradient-text {
+  background: linear-gradient(90deg, #2563eb, #3b82f6, #1d4ed8);
+  background-size: 200% 200%;
+  animation: gradient-shift 4s ease infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.1);
+}
+
+.step-connector {
+  position: relative;
+}
+.step-connector::after {
+  content: '';
+  position: absolute;
+  top: 24px;
+  right: -1rem;
+  width: 2rem;
+  height: 2px;
+  background: linear-gradient(to right, var(--primary), transparent);
+}
+@media (max-width: 768px) {
+  .step-connector::after {
+    display: none;
+  }
+}
+
+/* Hide scrollbar for category tabs */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

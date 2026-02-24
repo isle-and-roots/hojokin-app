@@ -1,0 +1,82 @@
+import { ALL_SUBSIDIES } from "@/lib/data/subsidies";
+import {
+  CATEGORY_LABELS,
+  CATEGORY_COLORS,
+  PROMPT_SUPPORT_CONFIG,
+} from "@/lib/data/subsidy-categories";
+import type { SubsidyCategory, PromptSupport } from "@/types";
+
+export interface CategoryStat {
+  key: SubsidyCategory;
+  label: string;
+  count: number;
+  aiCount: number;
+  fullCount: number;
+  topSubsidies: {
+    name: string;
+    nameShort: string;
+    promptSupport: PromptSupport;
+    maxAmount: number | null;
+    subsidyRate: string;
+  }[];
+  colorClass: string;
+}
+
+const CATEGORY_ORDER: SubsidyCategory[] = [
+  "HANBAI_KAIKAKU",
+  "IT_DIGITAL",
+  "SETSUBI_TOUSHI",
+  "CHIIKI_KASSEIKA",
+  "JINZAI_IKUSEI",
+  "SOUZOU_TENKAN",
+  "KANKYOU_ENERGY",
+  "KENKYUU_KAIHATSU",
+  "OTHER",
+];
+
+export function getLandingStats() {
+  const total = ALL_SUBSIDIES.length;
+  const aiSupported = ALL_SUBSIDIES.filter(
+    (s) => s.promptSupport !== "NONE"
+  ).length;
+  const fullSupport = ALL_SUBSIDIES.filter(
+    (s) => s.promptSupport === "FULL"
+  ).length;
+  const categoryCount = CATEGORY_ORDER.length;
+
+  const categories: CategoryStat[] = CATEGORY_ORDER.map((cat) => {
+    const subsidies = ALL_SUBSIDIES.filter((s) => s.categories.includes(cat));
+    const sorted = [...subsidies].sort((a, b) => b.popularity - a.popularity);
+    return {
+      key: cat,
+      label: CATEGORY_LABELS[cat],
+      count: subsidies.length,
+      aiCount: subsidies.filter((s) => s.promptSupport !== "NONE").length,
+      fullCount: subsidies.filter((s) => s.promptSupport === "FULL").length,
+      topSubsidies: sorted.slice(0, 4).map((s) => ({
+        name: s.name,
+        nameShort: s.nameShort,
+        promptSupport: s.promptSupport,
+        maxAmount: s.maxAmount,
+        subsidyRate: s.subsidyRate,
+      })),
+      colorClass: CATEGORY_COLORS[cat],
+    };
+  });
+
+  const topSubsidies = [...ALL_SUBSIDIES]
+    .sort((a, b) => b.popularity - a.popularity)
+    .slice(0, 4);
+
+  return {
+    total,
+    aiSupported,
+    fullSupport,
+    categoryCount,
+    categories,
+    topSubsidies,
+    promptSupportConfig: PROMPT_SUPPORT_CONFIG,
+    categoryLabels: CATEGORY_LABELS,
+    categoryColors: CATEGORY_COLORS,
+  };
+}
