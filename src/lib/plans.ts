@@ -1,0 +1,83 @@
+export type PlanKey = "free" | "pro" | "business";
+
+export interface PlanInfo {
+  key: PlanKey;
+  name: string;
+  price: number;
+  aiLimit: number;
+  docxExport: boolean;
+  maxApplications: number;
+  features: string[];
+  highlighted: boolean;
+}
+
+export const PLAN_LIST: PlanInfo[] = [
+  {
+    key: "free",
+    name: "Free",
+    price: 0,
+    aiLimit: 3,
+    docxExport: false,
+    maxApplications: 1,
+    highlighted: false,
+    features: [
+      "AI申請書生成 3回/月",
+      "補助金検索・閲覧",
+      "申請書 1件まで",
+    ],
+  },
+  {
+    key: "pro",
+    name: "Pro",
+    price: 2980,
+    aiLimit: 100,
+    docxExport: true,
+    maxApplications: -1,
+    highlighted: true,
+    features: [
+      "AI申請書生成 100回/月",
+      "Word(DOCX)エクスポート",
+      "申請書 無制限",
+      "全補助金 AI対応",
+      "メールサポート",
+    ],
+  },
+  {
+    key: "business",
+    name: "Business",
+    price: 9800,
+    aiLimit: 500,
+    docxExport: true,
+    maxApplications: -1,
+    highlighted: false,
+    features: [
+      "AI申請書生成 500回/月",
+      "Word(DOCX)エクスポート",
+      "申請書 無制限",
+      "高精度AIモデル",
+      "複数事業者プロフィール",
+      "優先サポート",
+    ],
+  },
+];
+
+export function canUseFeature(
+  plan: PlanKey,
+  feature: "docxExport" | "aiGeneration" | "multipleProfiles"
+): boolean {
+  switch (feature) {
+    case "docxExport":
+      return plan === "pro" || plan === "business";
+    case "aiGeneration":
+      return true; // すべてのプランで利用可能（回数制限あり）
+    case "multipleProfiles":
+      return plan === "business";
+    default:
+      return false;
+  }
+}
+
+export function getAiLimit(plan: PlanKey): number {
+  const limits: Record<PlanKey, number> = { free: 3, pro: 100, business: 500 };
+  return limits[plan] ?? 3;
+}

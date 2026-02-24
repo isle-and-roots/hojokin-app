@@ -1,0 +1,437 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import type { BusinessProfile } from "@/types";
+import { Loader2, Save, CheckCircle } from "lucide-react";
+
+const INITIAL_PROFILE: Omit<BusinessProfile, "id" | "createdAt" | "updatedAt"> = {
+  companyName: "",
+  representative: "",
+  address: "",
+  phone: "",
+  email: "",
+  industry: "",
+  employeeCount: 0,
+  annualRevenue: null,
+  foundedYear: null,
+  businessDescription: "",
+  products: "",
+  targetCustomers: "",
+  salesChannels: "",
+  strengths: "",
+  challenges: "",
+  recentRevenue: null,
+  recentProfit: null,
+};
+
+type Step = "basic" | "business" | "financial" | "confirm";
+
+const STEPS: { key: Step; label: string }[] = [
+  { key: "basic", label: "基本情報" },
+  { key: "business", label: "事業内容" },
+  { key: "financial", label: "財務情報" },
+  { key: "confirm", label: "確認" },
+];
+
+export default function ProfilePage() {
+  const [profile, setProfile] = useState(INITIAL_PROFILE);
+  const [profileId, setProfileId] = useState<string | null>(null);
+  const [currentStep, setCurrentStep] = useState<Step>("basic");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // Supabase からプロフィールを読み込み
+  useEffect(() => {
+    fetch("/api/profile")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.profile) {
+          setProfileId(data.profile.id);
+          const { id, createdAt, updatedAt, ...rest } = data.profile;
+          setProfile(rest);
+        }
+      })
+      .catch(() => {
+        setError("プロフィールの読み込みに失敗しました");
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const update = (
+    field: keyof typeof profile,
+    value: string | number | null
+  ) => {
+    setProfile((prev) => ({ ...prev, [field]: value }));
+    setSaved(false);
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setError("");
+    try {
+      const res = await fetch("/api/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...profile, profileId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      if (data.profile?.id) setProfileId(data.profile.id);
+      setSaved(true);
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const stepIndex = STEPS.findIndex((s) => s.key === currentStep);
+
+  if (loading) {
+    return (
+      <div className="p-8 max-w-3xl">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-8 max-w-3xl">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold">企業プロフィール</h1>
+        <p className="text-muted-foreground mt-1">
+          補助金申請書類の基盤となる事業者情報を入力してください
+        </p>
+      </div>
+
+      {error && (
+        <div className="mb-6 bg-destructive/10 text-destructive text-sm p-3 rounded-lg">
+          {error}
+        </div>
+      )}
+
+      {/* ステップインジケーター */}
+      <div className="flex items-center gap-2 mb-8">
+        {STEPS.map((step, i) => (
+          <div key={step.key} className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentStep(step.key)}
+              className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                currentStep === step.key
+                  ? "bg-primary text-primary-foreground"
+                  : i < stepIndex
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-accent"
+              }`}
+            >
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-current/10 text-xs">
+                {i + 1}
+              </span>
+              {step.label}
+            </button>
+            {i < STEPS.length - 1 && (
+              <div className="h-px w-8 bg-border" />
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* ステップコンテンツ */}
+      <div className="rounded-xl border border-border bg-card p-6">
+        {currentStep === "basic" && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold mb-4">基本情報</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  事業者名 *
+                </label>
+                <input
+                  type="text"
+                  value={profile.companyName}
+                  onChange={(e) => update("companyName", e.target.value)}
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm"
+                  placeholder="例: ISLE & ROOTS"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  代表者名 *
+                </label>
+                <input
+                  type="text"
+                  value={profile.representative}
+                  onChange={(e) => update("representative", e.target.value)}
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">所在地</label>
+              <input
+                type="text"
+                value={profile.address}
+                onChange={(e) => update("address", e.target.value)}
+                className="w-full rounded-lg border border-border px-3 py-2 text-sm"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  電話番号
+                </label>
+                <input
+                  type="tel"
+                  value={profile.phone}
+                  onChange={(e) => update("phone", e.target.value)}
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  メールアドレス
+                </label>
+                <input
+                  type="email"
+                  value={profile.email}
+                  onChange={(e) => update("email", e.target.value)}
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  業種 *
+                </label>
+                <input
+                  type="text"
+                  value={profile.industry}
+                  onChange={(e) => update("industry", e.target.value)}
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm"
+                  placeholder="例: 飲料製造・販売業"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  従業員数 *
+                </label>
+                <input
+                  type="number"
+                  value={profile.employeeCount}
+                  onChange={(e) =>
+                    update("employeeCount", parseInt(e.target.value) || 0)
+                  }
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {currentStep === "business" && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold mb-4">事業内容</h2>
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                事業概要 *
+              </label>
+              <textarea
+                value={profile.businessDescription}
+                onChange={(e) => update("businessDescription", e.target.value)}
+                rows={4}
+                className="w-full rounded-lg border border-border px-3 py-2 text-sm"
+                placeholder="事業の概要を記述してください"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                主な商品・サービス *
+              </label>
+              <textarea
+                value={profile.products}
+                onChange={(e) => update("products", e.target.value)}
+                rows={4}
+                className="w-full rounded-lg border border-border px-3 py-2 text-sm"
+                placeholder="商品やサービスを記述してください"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                主な顧客層
+              </label>
+              <textarea
+                value={profile.targetCustomers}
+                onChange={(e) => update("targetCustomers", e.target.value)}
+                rows={3}
+                className="w-full rounded-lg border border-border px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                販売チャネル
+              </label>
+              <textarea
+                value={profile.salesChannels}
+                onChange={(e) => update("salesChannels", e.target.value)}
+                rows={2}
+                className="w-full rounded-lg border border-border px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                自社の強み *
+              </label>
+              <textarea
+                value={profile.strengths}
+                onChange={(e) => update("strengths", e.target.value)}
+                rows={3}
+                className="w-full rounded-lg border border-border px-3 py-2 text-sm"
+                placeholder="競合と比較した自社の強み"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                経営上の課題
+              </label>
+              <textarea
+                value={profile.challenges}
+                onChange={(e) => update("challenges", e.target.value)}
+                rows={3}
+                className="w-full rounded-lg border border-border px-3 py-2 text-sm"
+              />
+            </div>
+          </div>
+        )}
+
+        {currentStep === "financial" && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold mb-4">財務情報</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  年間売上（万円）
+                </label>
+                <input
+                  type="number"
+                  value={profile.annualRevenue ?? ""}
+                  onChange={(e) =>
+                    update(
+                      "annualRevenue",
+                      e.target.value ? parseInt(e.target.value) : null
+                    )
+                  }
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  設立年
+                </label>
+                <input
+                  type="number"
+                  value={profile.foundedYear ?? ""}
+                  onChange={(e) =>
+                    update(
+                      "foundedYear",
+                      e.target.value ? parseInt(e.target.value) : null
+                    )
+                  }
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm"
+                  placeholder="例: 2020"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {currentStep === "confirm" && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold mb-4">入力内容の確認</h2>
+            <div className="space-y-3 text-sm">
+              <div className="grid grid-cols-3 gap-2 py-2 border-b border-border">
+                <span className="text-muted-foreground">事業者名</span>
+                <span className="col-span-2 font-medium">
+                  {profile.companyName || "（未入力）"}
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 py-2 border-b border-border">
+                <span className="text-muted-foreground">業種</span>
+                <span className="col-span-2">
+                  {profile.industry || "（未入力）"}
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 py-2 border-b border-border">
+                <span className="text-muted-foreground">従業員数</span>
+                <span className="col-span-2">{profile.employeeCount}名</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 py-2 border-b border-border">
+                <span className="text-muted-foreground">事業概要</span>
+                <span className="col-span-2 whitespace-pre-wrap">
+                  {profile.businessDescription || "（未入力）"}
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 py-2 border-b border-border">
+                <span className="text-muted-foreground">商品・サービス</span>
+                <span className="col-span-2 whitespace-pre-wrap">
+                  {profile.products || "（未入力）"}
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 py-2 border-b border-border">
+                <span className="text-muted-foreground">自社の強み</span>
+                <span className="col-span-2 whitespace-pre-wrap">
+                  {profile.strengths || "（未入力）"}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ナビゲーションボタン */}
+        <div className="flex justify-between mt-6 pt-4 border-t border-border">
+          <button
+            onClick={() => {
+              const prev = STEPS[stepIndex - 1];
+              if (prev) setCurrentStep(prev.key);
+            }}
+            disabled={stepIndex === 0}
+            className="px-4 py-2 text-sm rounded-lg border border-border hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            戻る
+          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg border border-primary text-primary hover:bg-primary/5 transition-colors disabled:opacity-50"
+            >
+              {saving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : saved ? (
+                <CheckCircle className="h-4 w-4" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              {saving ? "保存中..." : saved ? "保存済み" : "保存"}
+            </button>
+            {stepIndex < STEPS.length - 1 && (
+              <button
+                onClick={() => {
+                  const next = STEPS[stepIndex + 1];
+                  if (next) setCurrentStep(next.key);
+                }}
+                className="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                次へ
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
