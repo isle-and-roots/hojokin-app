@@ -1,9 +1,32 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Check, Loader2, Crown, Sparkles } from "lucide-react";
+import { Check, Loader2, Crown, Sparkles, ChevronDown } from "lucide-react";
 import { PLAN_LIST, type PlanKey } from "@/lib/plans";
 import { useToast } from "@/components/ui/toast";
+
+const FAQ_ITEMS = [
+  {
+    q: "無料プランでどこまで使えますか？",
+    a: "補助金の検索・閲覧は無制限です。AI申請書生成は月3回まで、申請書の保存は1件までご利用いただけます。まずは無料でお試しください。",
+  },
+  {
+    q: "プランの変更やキャンセルはいつでもできますか？",
+    a: "はい、いつでも変更・キャンセルが可能です。アップグレードは即時反映、ダウングレードは次回請求日から適用されます。",
+  },
+  {
+    q: "AI生成の回数は翌月に繰り越せますか？",
+    a: "未使用の生成回数は翌月に繰り越されません。毎月1日にリセットされます。",
+  },
+  {
+    q: "Businessプランの「高精度AIモデル」とは何ですか？",
+    a: "最新の Claude Opus モデルを使用し、より高品質な申請書を生成します。他のプランでは Claude Sonnet を使用しています。",
+  },
+  {
+    q: "請求書や領収書は発行できますか？",
+    a: "Stripe の顧客ポータルから請求書・領収書をダウンロードできます。料金ページの「プラン管理」ボタンからアクセスしてください。",
+  },
+];
 
 export function PricingPageClient() {
   const toast = useToast();
@@ -168,6 +191,18 @@ export function PricingPageClient() {
         })}
       </div>
 
+      {/* FAQ */}
+      <div className="mt-16 max-w-2xl mx-auto">
+        <h2 className="text-xl font-bold text-center mb-6">
+          よくある質問
+        </h2>
+        <div className="space-y-2">
+          {FAQ_ITEMS.map((item) => (
+            <FaqItem key={item.q} question={item.q} answer={item.a} />
+          ))}
+        </div>
+      </div>
+
       <div className="mt-12 text-center text-sm text-muted-foreground space-y-2">
         <p>すべてのプランは月額制（税込）です。いつでもキャンセルできます。</p>
         <p>
@@ -185,6 +220,28 @@ export function PricingPageClient() {
           </a>
         </p>
       </div>
+    </div>
+  );
+}
+
+function FaqItem({ question, answer }: { question: string; answer: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-lg border border-border">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center justify-between w-full px-4 py-3 text-sm font-medium text-left hover:bg-accent/50 transition-colors"
+      >
+        {question}
+        <ChevronDown
+          className={`h-4 w-4 shrink-0 ml-2 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open && (
+        <div className="px-4 pb-3 text-sm text-muted-foreground">
+          {answer}
+        </div>
+      )}
     </div>
   );
 }

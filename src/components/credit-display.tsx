@@ -83,12 +83,12 @@ export function CreditDisplay({
             style={{ width: `${percent}%` }}
           />
         </div>
-        {quota.remaining === 0 && (
+        {quota.remaining <= 1 && quota.plan !== "business" && (
           <Link
             href="/pricing"
-            className="text-xs text-primary hover:underline flex items-center gap-0.5"
+            className="text-xs text-primary hover:underline flex items-center gap-0.5 font-medium"
           >
-            アップグレード
+            {quota.remaining === 0 ? "アップグレード" : "残り1回"}
             <ArrowUpRight className="h-3 w-3" />
           </Link>
         )}
@@ -96,8 +96,20 @@ export function CreditDisplay({
     );
   }
 
+  const isLow = quota.remaining <= 2 && quota.remaining > 0;
+  const isExhausted = quota.remaining === 0;
+  const showUpgrade = quota.plan !== "business";
+
   return (
-    <div className="rounded-xl border border-border bg-card p-6">
+    <div
+      className={`rounded-xl border bg-card p-6 ${
+        isExhausted
+          ? "border-red-200 bg-red-50/50"
+          : isLow
+            ? "border-yellow-200 bg-yellow-50/50"
+            : "border-border"
+      }`}
+    >
       <div className="flex items-center gap-3 mb-3">
         <Sparkles className="h-5 w-5 text-primary" />
         <span className="text-sm text-muted-foreground">
@@ -116,12 +128,27 @@ export function CreditDisplay({
           style={{ width: `${percent}%` }}
         />
       </div>
-      {quota.remaining === 0 && (
+      {isExhausted && showUpgrade && (
+        <div className="mt-4 rounded-lg bg-primary/5 border border-primary/20 p-3">
+          <p className="text-sm font-medium text-primary mb-2">
+            今月の生成回数を使い切りました
+          </p>
+          <Link
+            href="/pricing"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            プランをアップグレード
+            <ArrowUpRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+      )}
+      {isLow && showUpgrade && (
         <Link
           href="/pricing"
-          className="mt-3 inline-flex items-center gap-1 text-sm text-primary hover:underline"
+          className="mt-3 inline-flex items-center gap-1 text-sm text-yellow-700 hover:underline"
         >
-          プランをアップグレード
+          残りわずか — アップグレードで増やす
           <ArrowUpRight className="h-3.5 w-3.5" />
         </Link>
       )}
