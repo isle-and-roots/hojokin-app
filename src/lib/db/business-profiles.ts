@@ -10,6 +10,7 @@ interface DbBusinessProfile {
   phone: string | null;
   email: string | null;
   industry: string | null;
+  prefecture: string | null;
   employee_count: number | null;
   annual_revenue: number | null;
   founded_year: number | null;
@@ -32,6 +33,7 @@ function toBusinessProfile(row: DbBusinessProfile): BusinessProfile {
     phone: row.phone ?? "",
     email: row.email ?? "",
     industry: row.industry ?? "",
+    prefecture: row.prefecture ?? "",
     employeeCount: row.employee_count ?? 0,
     annualRevenue: row.annual_revenue,
     foundedYear: row.founded_year,
@@ -79,6 +81,7 @@ export async function upsertBusinessProfile(
     phone: profile.phone || null,
     email: profile.email || null,
     industry: profile.industry || null,
+    prefecture: profile.prefecture || null,
     employee_count: profile.employeeCount ?? null,
     annual_revenue: profile.annualRevenue ?? null,
     founded_year: profile.foundedYear ?? null,

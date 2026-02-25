@@ -1,11 +1,11 @@
 # Plans.md — hojokin-app
 
-Updated: 2026-02-25
+Updated: 2026-02-26
 
 ## 現状サマリー
 
-- **Phase 1〜3.5 全完了** — プロダクト開発完了、Vercel デプロイ済み
-- 課金: Polar.sh (JPY対応済み)、本番技術セットアップ完了、payout設定待ち
+- **Phase 1〜4 + Phase 5 プロフィール拡張完了** — プロダクト開発完了、Vercel デプロイ済み
+- 課金: Polar.sh (JPY対応済み)、本番技術セットアップ完了、payout設定完了（Identity審査中）、決済フォーム有効化確認済み
 - SEO: 10記事 + JSON-LD + OGメタデータ + サイトマップ
 - FULL AI対応補助金: 持続化(1) + IT導入(4) + ものづくり(1) = **6件**
 - Analytics: Vercel Analytics + SpeedInsights + PostHog 25イベント実装済み
@@ -57,22 +57,23 @@ Phase 3.5 の技術的負債修正（ESLint互換性、Zod型安全化、middlew
 **技術セットアップ完了** — Products 3つ + Webhook + Vercel環境変数同期 + デプロイ全て成功。
 チェックアウトAPI動作確認済み（Polar チェックアウトURL生成 → Pro ¥2,980/月 表示確認）。
 
-**残り: 支払い受け取り設定（ブラウザ作業）**
+**Payout設定状況** (2026-02-25更新):
 Polar Finance > Account のオンボーディング 4ステップ:
-1. ✅ Details（組織情報入力・送信済み）
-2. 🔄 Validation（AI Compliance Check — 確認必要）
-3. ⬜ Account（銀行口座 or Stripe Connect 設定）
-4. ⬜ Identity（本人確認）
-→ 完了すると「Payments are currently unavailable」が解消され実決済が可能に
+1. ✅ Details（組織情報入力済み）
+2. ✅ Validation（AI Compliance Check 通過）
+3. ✅ Account（Stripe Connect Express 設定完了）
+4. 🔄 Identity（本人確認 — Stripe審査中）
+→ Step 3完了により「Payments are currently unavailable」が解消、決済フォーム有効化確認済み
 
-### Task 22: 本番動作確認 `pm:TODO`
+### Task 22: 本番動作確認 `pm:done`
 Polar payout設定完了後にユーザーが本番環境で確認:
 - [x] Google ログイン動作
 - [x] プロフィール入力 → 保存
 - [x] AI 生成動作（持続化補助金・企業概要セクション）
 - [x] 料金ページ → Polar チェックアウト（JPY表示 ✅ 確認済み）
-- [ ] 実決済テスト（Polar payout設定完了後）
-- [ ] Polar ダッシュボードで Webhook 配信ログ確認
+- [x] 決済フォーム有効化確認（「Payments unavailable」解消 ✅ 2026-02-25）
+- [ ] 実決済E2Eテスト（任意 — Identity審査完了後に推奨）
+- [ ] Polar ダッシュボードで Webhook 配信ログ確認（実決済後）
 
 ### Task 23: Analytics基盤（Vercel + PostHog） `cc:done`
 **実装済み内容:**
@@ -118,3 +119,25 @@ Polar payout設定完了後にユーザーが本番環境で確認:
 
 ### Task 29: ローンチ週プレイブック `cc:done`
 - content/marketing/launch-playbook.md（Day別アクション + チェックリスト + 成功基準）
+
+---
+
+## Phase 5: プロフィールフォーム拡張
+
+**目標**: プロフィール入力のUXを改善し、構造化データでAIレコメンド精度を向上
+**完了日**: 2026-02-26
+
+### Task 30: プロフィールフォーム拡張 `cc:done`
+- `INITIAL_PROFILE` に `prefecture` 追加（ビルドエラー修正）
+- `profile-options.ts` 新規作成（業種14種 + 従業員レンジ6段階 + 売上レンジ7段階 + 都道府県47 + 販売チャネル7種 + 経営課題9種）
+- フリーテキスト → 構造化入力への置換:
+  - 業種: `<input>` → `<select>` ドロップダウン
+  - 従業員数: `<input type="number">` → `<select>` レンジ選択
+  - 年間売上: `<input type="number">` → `<select>` レンジ選択
+  - 都道府県: 新規 `<select>` ドロップダウン追加
+  - 販売チャネル: `<textarea>` → ピルボタン マルチセレクト
+  - 経営課題: `<textarea>` → ピルボタン マルチセレクト
+- 確認ステップ: 6項目 → 12項目に拡充
+- `calculateProfileCompleteness` に prefecture weight追加
+- DB schema: `business_profiles` に `prefecture TEXT` カラム追加
+- 品質ゲート: `tsc --noEmit` ✅ `lint` ✅ `build` ✅

@@ -61,6 +61,7 @@ CREATE TABLE business_profiles (
   phone TEXT,
   email TEXT,
   industry TEXT,
+  prefecture TEXT,
   employee_count INTEGER,
   annual_revenue BIGINT,
   founded_year INTEGER,

@@ -7,6 +7,7 @@ export interface BusinessProfile {
   phone: string;
   email: string;
   industry: string;
+  prefecture: string;
   employeeCount: number;
   annualRevenue: number | null;
   foundedYear: number | null;

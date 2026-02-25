@@ -210,6 +210,7 @@ export function calculateProfileCompleteness(profile: BusinessProfile): number {
     { key: "phone", weight: 3 },
     { key: "email", weight: 3 },
     { key: "industry", weight: 10 },
+    { key: "prefecture", weight: 3 },
     { key: "employeeCount", weight: 8 },
     { key: "annualRevenue", weight: 8 },
     { key: "foundedYear", weight: 5 },

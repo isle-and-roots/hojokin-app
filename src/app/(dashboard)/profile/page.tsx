@@ -8,6 +8,10 @@ import { useToast } from "@/components/ui/toast";
 import { trackProfileCompleted } from "@/lib/analytics";
 import { posthog } from "@/lib/posthog/client";
 import { EVENTS } from "@/lib/posthog/events";
+import {
+  INDUSTRY_OPTIONS, EMPLOYEE_RANGES, REVENUE_RANGES,
+  PREFECTURES, SALES_CHANNEL_OPTIONS, CHALLENGE_OPTIONS,
+} from "@/lib/data/profile-options";
 
 const INITIAL_PROFILE: Omit<BusinessProfile, "id" | "createdAt" | "updatedAt"> = {
   companyName: "",
@@ -16,6 +20,7 @@ const INITIAL_PROFILE: Omit<BusinessProfile, "id" | "createdAt" | "updatedAt"> =
   phone: "",
   email: "",
   industry: "",
+  prefecture: "",
   employeeCount: 0,
   annualRevenue: null,
   foundedYear: null,
@@ -194,14 +199,29 @@ export default function ProfilePage() {
                 />
               </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">所在地</label>
-              <input
-                type="text"
-                value={profile.address}
-                onChange={(e) => update("address", e.target.value)}
-                className="w-full rounded-lg border border-border px-3 py-2 text-sm"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">都道府県</label>
+                <select
+                  value={profile.prefecture}
+                  onChange={(e) => update("prefecture", e.target.value)}
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm bg-card"
+                >
+                  <option value="">選択してください</option>
+                  {PREFECTURES.map((pref) => (
+                    <option key={pref} value={pref}>{pref}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">所在地（市区町村以降）</label>
+                <input
+                  type="text"
+                  value={profile.address}
+                  onChange={(e) => update("address", e.target.value)}
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm"
+                />
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -232,26 +252,31 @@ export default function ProfilePage() {
                 <label className="block text-sm font-medium mb-1">
                   業種 *
                 </label>
-                <input
-                  type="text"
+                <select
                   value={profile.industry}
                   onChange={(e) => update("industry", e.target.value)}
-                  className="w-full rounded-lg border border-border px-3 py-2 text-sm"
-                  placeholder="例: 飲料製造・販売業"
-                />
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm bg-card"
+                >
+                  <option value="">選択してください</option>
+                  {INDUSTRY_OPTIONS.map((ind) => (
+                    <option key={ind} value={ind}>{ind}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">
                   従業員数 *
                 </label>
-                <input
-                  type="number"
+                <select
                   value={profile.employeeCount}
-                  onChange={(e) =>
-                    update("employeeCount", parseInt(e.target.value) || 0)
-                  }
-                  className="w-full rounded-lg border border-border px-3 py-2 text-sm"
-                />
+                  onChange={(e) => update("employeeCount", parseInt(e.target.value) || 0)}
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm bg-card"
+                >
+                  <option value={0}>選択してください</option>
+                  {EMPLOYEE_RANGES.map((range) => (
+                    <option key={range.value} value={range.value}>{range.label}</option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
@@ -299,12 +324,32 @@ export default function ProfilePage() {
               <label className="block text-sm font-medium mb-1">
                 販売チャネル
               </label>
-              <textarea
-                value={profile.salesChannels}
-                onChange={(e) => update("salesChannels", e.target.value)}
-                rows={2}
-                className="w-full rounded-lg border border-border px-3 py-2 text-sm"
-              />
+              <div className="flex flex-wrap gap-1.5">
+                {SALES_CHANNEL_OPTIONS.map((ch) => {
+                  const selected = profile.salesChannels
+                    .split(",").map((s) => s.trim()).filter(Boolean);
+                  const isActive = selected.includes(ch);
+                  return (
+                    <button
+                      key={ch}
+                      type="button"
+                      onClick={() => {
+                        const next = isActive
+                          ? selected.filter((s) => s !== ch)
+                          : [...selected, ch];
+                        update("salesChannels", next.join(","));
+                      }}
+                      className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                        isActive
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground hover:bg-accent"
+                      }`}
+                    >
+                      {ch}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">
@@ -322,12 +367,32 @@ export default function ProfilePage() {
               <label className="block text-sm font-medium mb-1">
                 経営上の課題
               </label>
-              <textarea
-                value={profile.challenges}
-                onChange={(e) => update("challenges", e.target.value)}
-                rows={3}
-                className="w-full rounded-lg border border-border px-3 py-2 text-sm"
-              />
+              <div className="flex flex-wrap gap-1.5">
+                {CHALLENGE_OPTIONS.map((ch) => {
+                  const selected = profile.challenges
+                    .split(",").map((s) => s.trim()).filter(Boolean);
+                  const isActive = selected.includes(ch);
+                  return (
+                    <button
+                      key={ch}
+                      type="button"
+                      onClick={() => {
+                        const next = isActive
+                          ? selected.filter((s) => s !== ch)
+                          : [...selected, ch];
+                        update("challenges", next.join(","));
+                      }}
+                      className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                        isActive
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground hover:bg-accent"
+                      }`}
+                    >
+                      {ch}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}
@@ -338,10 +403,9 @@ export default function ProfilePage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">
-                  年間売上（万円）
+                  年間売上
                 </label>
-                <input
-                  type="number"
+                <select
                   value={profile.annualRevenue ?? ""}
                   onChange={(e) =>
                     update(
@@ -349,8 +413,13 @@ export default function ProfilePage() {
                       e.target.value ? parseInt(e.target.value) : null
                     )
                   }
-                  className="w-full rounded-lg border border-border px-3 py-2 text-sm"
-                />
+                  className="w-full rounded-lg border border-border px-3 py-2 text-sm bg-card"
+                >
+                  <option value="">選択してください</option>
+                  {REVENUE_RANGES.map((range) => (
+                    <option key={range.value} value={range.value}>{range.label}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">
@@ -377,40 +446,27 @@ export default function ProfilePage() {
           <div className="space-y-4">
             <h2 className="text-lg font-semibold mb-4">入力内容の確認</h2>
             <div className="space-y-3 text-sm">
-              <div className="grid grid-cols-3 gap-2 py-2 border-b border-border">
-                <span className="text-muted-foreground">事業者名</span>
-                <span className="col-span-2 font-medium">
-                  {profile.companyName || "（未入力）"}
-                </span>
-              </div>
-              <div className="grid grid-cols-3 gap-2 py-2 border-b border-border">
-                <span className="text-muted-foreground">業種</span>
-                <span className="col-span-2">
-                  {profile.industry || "（未入力）"}
-                </span>
-              </div>
-              <div className="grid grid-cols-3 gap-2 py-2 border-b border-border">
-                <span className="text-muted-foreground">従業員数</span>
-                <span className="col-span-2">{profile.employeeCount}名</span>
-              </div>
-              <div className="grid grid-cols-3 gap-2 py-2 border-b border-border">
-                <span className="text-muted-foreground">事業概要</span>
-                <span className="col-span-2 whitespace-pre-wrap">
-                  {profile.businessDescription || "（未入力）"}
-                </span>
-              </div>
-              <div className="grid grid-cols-3 gap-2 py-2 border-b border-border">
-                <span className="text-muted-foreground">商品・サービス</span>
-                <span className="col-span-2 whitespace-pre-wrap">
-                  {profile.products || "（未入力）"}
-                </span>
-              </div>
-              <div className="grid grid-cols-3 gap-2 py-2 border-b border-border">
-                <span className="text-muted-foreground">自社の強み</span>
-                <span className="col-span-2 whitespace-pre-wrap">
-                  {profile.strengths || "（未入力）"}
-                </span>
-              </div>
+              {([
+                ["事業者名", profile.companyName],
+                ["都道府県", profile.prefecture],
+                ["所在地", profile.address],
+                ["業種", profile.industry],
+                ["従業員数", profile.employeeCount ? `${EMPLOYEE_RANGES.find((r) => r.value === profile.employeeCount)?.label ?? profile.employeeCount + "名"}` : ""],
+                ["事業概要", profile.businessDescription],
+                ["商品・サービス", profile.products],
+                ["販売チャネル", profile.salesChannels.split(",").filter(Boolean).join("、")],
+                ["自社の強み", profile.strengths],
+                ["経営上の課題", profile.challenges.split(",").filter(Boolean).join("、")],
+                ["年間売上", profile.annualRevenue ? (REVENUE_RANGES.find((r) => r.value === profile.annualRevenue)?.label ?? `${profile.annualRevenue}万円`) : ""],
+                ["設立年", profile.foundedYear ? `${profile.foundedYear}年` : ""],
+              ] as [string, string | number | null][]).map(([label, value]) => (
+                <div key={label} className="grid grid-cols-3 gap-2 py-2 border-b border-border">
+                  <span className="text-muted-foreground">{label}</span>
+                  <span className="col-span-2 whitespace-pre-wrap">
+                    {value || "（未入力）"}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         )}
