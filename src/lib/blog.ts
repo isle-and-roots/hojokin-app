@@ -102,6 +102,21 @@ export async function renderMarkdown(content: string): Promise<string> {
   return result.toString();
 }
 
+export function getAllTags(): string[] {
+  const posts = getAllPosts();
+  const tagSet = new Set<string>();
+  for (const post of posts) {
+    for (const tag of post.tags) {
+      tagSet.add(tag);
+    }
+  }
+  return Array.from(tagSet).sort();
+}
+
+export function getPostsByTag(tag: string): BlogPostMeta[] {
+  return getAllPosts().filter((p) => p.tags.includes(tag));
+}
+
 export function getAllSlugs(): string[] {
   if (!ensureBlogDir()) return [];
 

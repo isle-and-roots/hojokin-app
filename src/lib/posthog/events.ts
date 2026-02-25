@@ -24,8 +24,19 @@ export const EVENTS = {
   DOCX_EXPORTED: "docx_exported",
   APPLICATION_DELETED: "application_deleted",
 
-  // ─── クォータ ───
+  // ─── クォータ / アップセル ───
   QUOTA_WARNING_SHOWN: "quota_warning_shown",
+  UPGRADE_MODAL_SHOWN: "upgrade_modal_shown",
+  UPGRADE_MODAL_CLICKED: "upgrade_modal_clicked",
+  UPGRADE_MODAL_DISMISSED: "upgrade_modal_dismissed",
+  PROGRESSIVE_UPSELL_SHOWN: "progressive_upsell_shown",
+  EXPORT_PAYWALLED: "export_paywalled",
+  EXPORT_PAYWALL_UPGRADE_CLICKED: "export_paywall_upgrade_clicked",
+
+  // ─── コンバージョン ───
+  PROFILE_CREATED: "profile_created",
+  ONBOARDING_STEP_COMPLETED: "onboarding_step_completed",
+  SIGNUP_COMPLETED: "signup_completed",
 
   // ─── ブログ ───
   BLOG_POST_VIEWED: "blog_post_viewed",

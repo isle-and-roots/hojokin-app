@@ -16,6 +16,8 @@ import {
   Search,
 } from "lucide-react";
 import { CreditDisplay } from "@/components/credit-display";
+import { UpgradeModal } from "@/components/upgrade-modal";
+import { QuotaProgressBanner } from "@/components/quota-progress-banner";
 import { useToast } from "@/components/ui/toast";
 import { posthog } from "@/lib/posthog/client";
 import { EVENTS } from "@/lib/posthog/events";
@@ -63,8 +65,31 @@ function NewApplicationContent() {
   const [activeSectionIndex, setActiveSectionIndex] = useState<number>(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [quotaExhausted, setQuotaExhausted] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [quotaInfo, setQuotaInfo] = useState<{
+    remaining: number;
+    limit: number;
+    plan: string;
+  } | null>(null);
   const [profileLoadError, setProfileLoadError] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+
+  // Load quota info
+  useEffect(() => {
+    fetch("/api/user/plan")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { userProfile?: { plan: string; ai_generations_used: number } } | null) => {
+        if (!data?.userProfile) return;
+        const p = data.userProfile;
+        const plan = p.plan || "free";
+        const limitMap: Record<string, number> = { free: 3, starter: 15, pro: 100, business: 500 };
+        const limit = limitMap[plan] ?? 3;
+        const used = p.ai_generations_used ?? 0;
+        const remaining = Math.max(0, limit - used);
+        setQuotaInfo({ remaining, limit, plan });
+      })
+      .catch(() => { /* ignore */ });
+  }, []);
 
   // Load profile from Supabase
   useEffect(() => {
@@ -170,6 +195,7 @@ function NewApplicationContent() {
         const err = await res.json();
         if (res.status === 429 && err.error?.includes("上限")) {
           setQuotaExhausted(true);
+          setShowUpgradeModal(true);
         }
         throw new Error(err.error || "生成に失敗しました");
       }
@@ -191,6 +217,10 @@ function NewApplicationContent() {
         section_key: section.key,
         subsidy_id: subsidyId || "jizokuka-001",
       });
+      // Update quota info after successful generation
+      setQuotaInfo((prev) =>
+        prev ? { ...prev, remaining: Math.max(0, prev.remaining - 1) } : prev
+      );
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") return;
       const msg = error instanceof Error ? error.message : "生成に失敗しました";
@@ -416,6 +446,17 @@ function NewApplicationContent() {
         </div>
       </div>
 
+      {/* クォータ進捗バナー */}
+      {quotaInfo && (
+        <div className="mb-6">
+          <QuotaProgressBanner
+            remaining={quotaInfo.remaining}
+            limit={quotaInfo.limit}
+            plan={quotaInfo.plan}
+          />
+        </div>
+      )}
+
       {/* 初回ガイドバナー */}
       {allPending && (
         <div className="mb-6 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-4">
@@ -587,6 +628,11 @@ function NewApplicationContent() {
           )}
         </div>
       </div>
+
+      <UpgradeModal
+        open={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+      />
     </div>
   );
 }

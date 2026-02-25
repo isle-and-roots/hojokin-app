@@ -1,34 +1,36 @@
 # Checkpoint
-Updated: 2026-02-24 18:30
+Updated: 2026-02-25 12:00
 
 ## Goal
-認証を Google OAuth のみに変更 — 完了
+Phase 5 ソフトローンチ実行計画 — 全CCタスク完了
 
 ## Done
-- [x] MKエージェント組織構築（MK0-MK4 → CLAUDE.md追記済）
-- [x] 12週マーケティングスケジュール策定
-- [x] Week 1-2: ブログ基盤・SEO・コンテンツ生成
-- [x] CLAUDE.md の認証方針を Google OAuth のみに更新
-- [x] ログインページを Google OAuth のみに簡素化
-- [x] ミドルウェアから /signup を /login にリダイレクト
-- [x] auth/callback を /dashboard にリダイレクト
-- [x] ビルド成功確認
+- [x] Task 33: GSC検証メタタグ追加
+- [x] Task 30: クォータ枯渇モーダル
+- [x] Task 31: 段階的アップセルバナー
+- [x] Task 32: DOCXペイウォール改善
+- [x] Task 34: 料金ページ信頼性向上
+- [x] Task 35: ブログ関連記事セクション
+- [x] Task 36: コンバージョン分析イベント追加
+- [x] Task 37: ブログタグページ
+- [x] Task 38: 料金ページSEO強化
+- [x] 品質ゲート: tsc ✓ lint ✓ build ✓
 
 ## Pending
-- [ ] 記事4本レビュー → content/blog/ に移動
-- [ ] Vercelデプロイ
-- [ ] Week 3 SNS投稿
+- [ ] コミット + プッシュ（ユーザー承認待ち）
+- [ ] PM-1〜PM-4（ユーザー手動作業）
 
 ## Files
-- CLAUDE.md - 認証方針を Google OAuth のみに更新
-- src/app/(auth)/login/page.tsx - Google ボタンのみ
-- src/middleware.ts - /signup リダイレクト、publicPaths整理
-- src/app/(auth)/auth/callback/route.ts - /dashboard にリダイレクト
+- src/components/upgrade-modal.tsx — クォータ枯渇モーダル
+- src/components/quota-progress-banner.tsx — 段階的バナー
+- src/components/docx-paywall-modal.tsx — DOCXペイウォール
+- src/components/blog/related-posts.tsx — 関連記事
+- src/components/dashboard/signup-tracker.tsx — サインアップ追跡
+- src/app/blog/tag/[tag]/page.tsx — タグ別記事一覧
 
 ## Decisions
-- Google OAuth のみ（メール/パスワードは不使用）
-- signup は /login にリダイレクト（互換性維持）
-- Opus vs Sonnet は運用データ後に判断保留
+- DOCXペイウォールはAPI呼び出し前にクライアント判定
+- クォータ情報はapplications/newで独立取得
 
 ## Next
-記事レビュー → Vercelデプロイ → Week 3 実行
+コミット→プッシュ→PM作業（GSC/X投稿/note.com）

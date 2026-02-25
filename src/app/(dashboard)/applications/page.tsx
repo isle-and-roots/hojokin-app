@@ -5,6 +5,7 @@ import Link from "next/link";
 import { FileText, PlusCircle, Download, Trash2, Sparkles, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm-dialog";
+import { DocxPaywallModal } from "@/components/docx-paywall-modal";
 import { posthog } from "@/lib/posthog/client";
 import { EVENTS } from "@/lib/posthog/events";
 
@@ -38,6 +39,17 @@ export default function ApplicationsPage() {
   const [applications, setApplications] = useState<ApplicationData[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [userPlan, setUserPlan] = useState<string>("free");
+  const [paywallApp, setPaywallApp] = useState<ApplicationData | null>(null);
+
+  useEffect(() => {
+    fetch("/api/user/plan")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { userProfile?: { plan: string } } | null) => {
+        if (data?.userProfile?.plan) setUserPlan(data.userProfile.plan);
+      })
+      .catch(() => { /* ignore */ });
+  }, []);
 
   useEffect(() => {
     fetch("/api/applications")
@@ -76,6 +88,12 @@ export default function ApplicationsPage() {
   };
 
   const handleExport = async (app: ApplicationData) => {
+    // Free plan: show paywall instead of calling API
+    if (userPlan === "free") {
+      setPaywallApp(app);
+      return;
+    }
+
     posthog.capture(EVENTS.DOCX_EXPORT_ATTEMPTED, {
       subsidy_name: app.subsidy_name,
     });
@@ -195,6 +213,18 @@ export default function ApplicationsPage() {
           })}
         </div>
       )}
+
+      <DocxPaywallModal
+        open={!!paywallApp}
+        onClose={() => setPaywallApp(null)}
+        previewText={
+          paywallApp?.sections
+            .map((s) => s.final_content)
+            .filter(Boolean)
+            .join("\n\n")
+            .slice(0, 300) || undefined
+        }
+      />
     </div>
   );
 }

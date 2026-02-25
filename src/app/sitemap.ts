@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { DUMMY_SUBSIDIES } from "@/lib/data/subsidies";
-import { getAllPosts } from "@/lib/blog";
+import { getAllPosts, getAllTags } from "@/lib/blog";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://hojokin.isle-and-roots.com";
@@ -17,6 +17,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: new Date(post.date),
     changeFrequency: "monthly" as const,
     priority: 0.7,
+  }));
+
+  const tagPages = getAllTags().map((tag) => ({
+    url: `${baseUrl}/blog/tag/${encodeURIComponent(tag)}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.5,
   }));
 
   return [
@@ -76,5 +83,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     ...subsidyPages,
     ...blogPosts,
+    ...tagPages,
   ];
 }

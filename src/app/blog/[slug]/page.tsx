@@ -8,6 +8,7 @@ import {
   renderMarkdown,
 } from "@/lib/blog";
 import { BlogPostTracker, BlogCtaLink } from "./tracker";
+import { RelatedPosts } from "@/components/blog/related-posts";
 
 export async function generateStaticParams() {
   return getAllSlugs().map((slug) => ({ slug }));
@@ -158,13 +159,14 @@ export default async function BlogPostPage({
           {post.tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-3">
               {post.tags.map((tag) => (
-                <span
+                <Link
                   key={tag}
-                  className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground"
+                  href={`/blog/tag/${encodeURIComponent(tag)}`}
+                  className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
                 >
                   <Tag className="h-3 w-3" />
                   {tag}
-                </span>
+                </Link>
               ))}
             </div>
           )}
@@ -187,6 +189,28 @@ export default async function BlogPostPage({
           </p>
           <BlogCtaLink slug={slug} />
         </div>
+
+        {/* 関連する補助金 */}
+        {post.relatedSubsidyIds.length > 0 && (
+          <div className="mt-8">
+            <h3 className="text-lg font-bold mb-3">関連する補助金</h3>
+            <div className="flex flex-wrap gap-2">
+              {post.relatedSubsidyIds.map((id) => (
+                <Link
+                  key={id}
+                  href={`/subsidies/${id}`}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm hover:border-primary/50 hover:bg-primary/5 transition-all"
+                >
+                  <Sparkles className="h-3.5 w-3.5 text-primary" />
+                  {id}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 関連記事 */}
+        <RelatedPosts currentSlug={slug} currentTags={post.tags} />
 
         {/* 戻るリンク */}
         <div className="mt-8">

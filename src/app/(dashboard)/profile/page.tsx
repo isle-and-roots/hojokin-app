@@ -6,6 +6,8 @@ import type { BusinessProfile } from "@/types";
 import { Loader2, Save, CheckCircle } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { trackProfileCompleted } from "@/lib/analytics";
+import { posthog } from "@/lib/posthog/client";
+import { EVENTS } from "@/lib/posthog/events";
 
 const INITIAL_PROFILE: Omit<BusinessProfile, "id" | "createdAt" | "updatedAt"> = {
   companyName: "",
@@ -93,6 +95,7 @@ export default function ProfilePage() {
       setSaved(true);
       if (wasNewProfile) {
         trackProfileCompleted();
+        posthog.capture(EVENTS.PROFILE_CREATED);
         toastNotify.success("プロフィールを保存しました！次は補助金を選びましょう");
         setIsNewProfile(false);
         setTimeout(() => {
@@ -443,7 +446,13 @@ export default function ProfilePage() {
               <button
                 onClick={() => {
                   const next = STEPS[stepIndex + 1];
-                  if (next) setCurrentStep(next.key);
+                  if (next) {
+                    posthog.capture(EVENTS.ONBOARDING_STEP_COMPLETED, {
+                      step: currentStep,
+                      step_index: stepIndex,
+                    });
+                    setCurrentStep(next.key);
+                  }
                 }}
                 className="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
               >

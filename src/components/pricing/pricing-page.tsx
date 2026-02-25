@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Check, Loader2, Crown, Sparkles, ChevronDown, ExternalLink } from "lucide-react";
+import { Check, Loader2, Crown, Sparkles, ChevronDown, ExternalLink, Brain, Database, Zap, ShieldCheck } from "lucide-react";
 import { PLAN_LIST, type PlanKey } from "@/lib/plans";
 import { useToast } from "@/components/ui/toast";
 import { posthog } from "@/lib/posthog/client";
@@ -246,6 +246,57 @@ export function PricingPageClient() {
             </div>
           );
         })}
+      </div>
+
+      {/* 選ばれる理由 */}
+      <div className="mt-16 max-w-4xl mx-auto">
+        <h2 className="text-xl font-bold text-center mb-8">
+          補助金サポートが選ばれる理由
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            {
+              icon: Brain,
+              title: "AI専門知識",
+              description:
+                "中小企業診断士の知見をベースにしたAIが、審査に通りやすい申請書を生成",
+            },
+            {
+              icon: Database,
+              title: "豊富な補助金データ",
+              description:
+                "持続化補助金・IT導入補助金など主要補助金を網羅。最新情報を随時更新",
+            },
+            {
+              icon: Zap,
+              title: "最短3分で生成",
+              description:
+                "プロフィール登録後、ワンクリックでAIが申請書の下書きを自動作成",
+            },
+            {
+              icon: ShieldCheck,
+              title: "いつでもキャンセル可能",
+              description:
+                "月額制で契約の縛りなし。必要な時だけ利用して、いつでも解約できます",
+            },
+          ].map((item) => {
+            const Icon = item.icon;
+            return (
+              <div
+                key={item.title}
+                className="text-center p-4"
+              >
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mb-3">
+                  <Icon className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="font-semibold text-sm mb-1">{item.title}</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {item.description}
+                </p>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* FAQ */}
