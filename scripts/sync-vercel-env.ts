@@ -117,9 +117,9 @@ function main() {
         // 存在しない場合は無視
       }
 
-      // 新しい値を設定（echo でパイプ）
+      // 新しい値を設定（printf で末尾改行なし）
       execSync(
-        `echo "${value}" | vercel env add ${key} production`,
+        `printf '%s' "${value}" | vercel env add ${key} production`,
         { stdio: "pipe" }
       );
 

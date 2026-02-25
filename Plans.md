@@ -5,7 +5,7 @@ Updated: 2026-02-25
 ## 現状サマリー
 
 - **Phase 1〜3.5 全完了** — プロダクト開発完了、Vercel デプロイ済み
-- 課金: Polar.sh (JPY対応済み)、本番セットアップ待ち
+- 課金: Polar.sh (JPY対応済み)、本番技術セットアップ完了、payout設定待ち
 - SEO: 10記事 + JSON-LD + OGメタデータ + サイトマップ
 - FULL AI対応補助金: 持続化(1) + IT導入(4) + ものづくり(1) = **6件**
 - Analytics: Vercel Analytics + SpeedInsights + PostHog 25イベント実装済み
@@ -24,7 +24,7 @@ Updated: 2026-02-25
 | 優先度 | タスク | 担当 | 状態 |
 |--------|--------|------|------|
 | **Required** | Task 20: 未コミット変更デプロイ | cc | done |
-| **Required** | Task 21: Polar本番セットアップ | pm | TODO |
+| **Required** | Task 21: Polar本番セットアップ | pm | done |
 | **Required** | Task 22: 本番動作確認 | pm | TODO |
 | **Recommended** | Task 23: Analytics基盤 | cc | done |
 | **Recommended** | Task 24: トップページLP化 | cc | done |
@@ -53,20 +53,25 @@ Phase 3.5 の技術的負債修正（ESLint互換性、Zod型安全化、middlew
 - 対象: 12ファイル（eslint.config.mjs, proxy.ts新規, middleware.ts削除, 各コンポーネント修正）
 - 品質ゲート再確認してからコミット
 
-### Task 21: Polar本番セットアップ `pm:TODO`
-ユーザー作業（約10分、スクリプト自動化済み）:
-1. https://polar.sh → Settings → Developers → Personal Access Tokens で本番トークン取得
-2. `.env.local` に `POLAR_ACCESS_TOKEN=polar_oat_PRODUCTION_TOKEN` を設定
-3. `npm run setup:polar:production` 実行（Products 3つ + Webhook 自動作成）
-4. `npm run setup:polar:vercel` 実行（Vercel 環境変数を自動同期）
-5. `vercel --prod` で再デプロイ
+### Task 21: Polar本番セットアップ `pm:done`
+**技術セットアップ完了** — Products 3つ + Webhook + Vercel環境変数同期 + デプロイ全て成功。
+チェックアウトAPI動作確認済み（Polar チェックアウトURL生成 → Pro ¥2,980/月 表示確認）。
+
+**残り: 支払い受け取り設定（ブラウザ作業）**
+Polar Finance > Account のオンボーディング 4ステップ:
+1. ✅ Details（組織情報入力・送信済み）
+2. 🔄 Validation（AI Compliance Check — 確認必要）
+3. ⬜ Account（銀行口座 or Stripe Connect 設定）
+4. ⬜ Identity（本人確認）
+→ 完了すると「Payments are currently unavailable」が解消され実決済が可能に
 
 ### Task 22: 本番動作確認 `pm:TODO`
-ユーザーが本番環境で以下を確認:
-- [ ] Google ログイン動作
-- [ ] プロフィール入力 → 保存
-- [ ] AI 生成動作（持続化補助金・企業概要セクション）
-- [ ] 料金ページ → Polar チェックアウト（JPY表示）
+Polar payout設定完了後にユーザーが本番環境で確認:
+- [x] Google ログイン動作
+- [x] プロフィール入力 → 保存
+- [x] AI 生成動作（持続化補助金・企業概要セクション）
+- [x] 料金ページ → Polar チェックアウト（JPY表示 ✅ 確認済み）
+- [ ] 実決済テスト（Polar payout設定完了後）
 - [ ] Polar ダッシュボードで Webhook 配信ログ確認
 
 ### Task 23: Analytics基盤（Vercel + PostHog） `cc:done`

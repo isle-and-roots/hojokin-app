@@ -59,10 +59,10 @@ export async function POST(request: Request) {
     const checkout = await polar.checkouts.create({
       products: [planInfo.productId],
       externalCustomerId: user.id,
-      customerEmail: user.email ?? undefined,
       successUrl: `${origin}/pricing?success=true`,
       metadata: { plan },
       currency: "jpy",
+      ...(user.email ? { customerEmail: user.email } : {}),
     });
 
     trackServerEvent(user.id, EVENTS.CHECKOUT_INITIATED, {
