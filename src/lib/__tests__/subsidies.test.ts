@@ -9,11 +9,11 @@ describe("searchSubsidies", () => {
   });
 
   it("filters by keyword", async () => {
-    const result = await searchSubsidies({ keyword: "IT" });
+    const result = await searchSubsidies({ keyword: "持続化" });
     expect(result.items.length).toBeGreaterThan(0);
     result.items.forEach((item) => {
-      const text = `${item.name} ${item.summary} ${item.description} ${item.tags.join(" ")}`.toLowerCase();
-      expect(text).toContain("it");
+      const text = `${item.name} ${item.nameShort} ${item.summary} ${item.tags.join(" ")} ${item.department}`;
+      expect(text).toContain("持続化");
     });
   });
 
