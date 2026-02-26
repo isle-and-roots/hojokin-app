@@ -117,6 +117,30 @@ export function getPostsByTag(tag: string): BlogPostMeta[] {
   return getAllPosts().filter((p) => p.tags.includes(tag));
 }
 
+export function getPostsBySubsidyId(subsidyId: string): BlogPostMeta[] {
+  if (!ensureBlogDir()) return [];
+
+  const files = fs.readdirSync(BLOG_DIR).filter((f) => f.endsWith(".md"));
+
+  const posts = files
+    .map((fileName) => {
+      const post = parsePost(fileName);
+      if (!post) return null;
+      if (!post.relatedSubsidyIds.includes(subsidyId)) return null;
+      return {
+        slug: post.slug,
+        title: post.title,
+        date: post.date,
+        description: post.description,
+        tags: post.tags,
+        author: post.author,
+      };
+    })
+    .filter((p): p is BlogPostMeta => p !== null);
+
+  return posts.sort((a, b) => (a.date > b.date ? -1 : 1));
+}
+
 export function getAllSlugs(): string[] {
   if (!ensureBlogDir()) return [];
 

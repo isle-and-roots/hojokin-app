@@ -12,8 +12,10 @@ import {
   FileText,
   ClipboardList,
   Building2,
+  BookOpen,
 } from "lucide-react";
 import { getSubsidyById } from "@/lib/subsidies";
+import { getPostsBySubsidyId } from "@/lib/blog";
 import { DUMMY_SUBSIDIES } from "@/lib/data/subsidies";
 import {
   CATEGORY_LABELS,
@@ -95,6 +97,7 @@ export default async function SubsidyDetailPage({
     ...(subsidy.url ? { sameAs: subsidy.url } : {}),
   };
 
+  const relatedPosts = getPostsBySubsidyId(id);
   const difficultyConf = DIFFICULTY_CONFIG[subsidy.difficulty];
   const promptConf = PROMPT_SUPPORT_CONFIG[subsidy.promptSupport];
 
@@ -311,6 +314,32 @@ export default async function SubsidyDetailPage({
                   </span>
                 )}
               </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 関連ブログ記事 */}
+      {relatedPosts.length > 0 && (
+        <section className="rounded-xl border border-border bg-card p-5 mb-6">
+          <h2 className="font-semibold mb-3 flex items-center gap-2">
+            <BookOpen className="h-4 w-4 text-primary" />
+            関連する記事
+          </h2>
+          <div className="space-y-3">
+            {relatedPosts.map((post) => (
+              <Link
+                key={post.slug}
+                href={`/blog/${post.slug}`}
+                className="block rounded-lg bg-muted/50 px-4 py-3 hover:bg-muted transition-colors"
+              >
+                <p className="text-sm font-medium hover:text-primary transition-colors">
+                  {post.title}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                  {post.description}
+                </p>
+              </Link>
             ))}
           </div>
         </section>

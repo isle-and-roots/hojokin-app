@@ -29,6 +29,7 @@ import { FaqAccordion } from "@/components/landing/faq-accordion";
 import { CtaLink } from "@/components/landing/cta-link";
 import { EmailCaptureSection } from "@/components/landing/email-capture-section";
 import { ExitIntentModal } from "@/components/landing/exit-intent-modal";
+import { HeroCtaButton } from "@/components/landing/hero-cta";
 import { cn } from "@/lib/utils";
 
 const FAQ_ITEMS = [
@@ -61,6 +62,21 @@ const FAQ_ITEMS = [
     question: "解約はいつでもできますか？",
     answer:
       "はい、いつでも解約可能です。顧客ポータルからワンクリックで解約できます。解約後も現在の請求期間の終了までサービスをご利用いただけます。",
+  },
+  {
+    question: "専門家（中小企業診断士）に依頼するのと何が違いますか？",
+    answer:
+      "中小企業診断士への依頼は通常10〜30万円以上の費用と2〜4週間の期間が必要です。補助金サポートではAIが数分で下書きを生成するため、費用は月額2,980円から、時間も大幅に短縮できます。生成された内容を基に専門家にレビューを依頼することも可能で、両者を組み合わせる使い方もおすすめです。",
+  },
+  {
+    question: "入力した企業情報はどのように管理されますか？",
+    answer:
+      "お客様の企業情報はSupabaseの安全なデータベースに暗号化して保存されます。AI生成時にAnthropicのAPIに送信されますが、Anthropicはユーザーデータをモデル学習に使用しません。また、第三者への情報販売や共有は一切行っておりません。ISLE & ROOTSのプライバシーポリシーに基づき厳格に管理しています。",
+  },
+  {
+    question: "補助金に採択されなかった場合、返金はありますか？",
+    answer:
+      "補助金サポートは申請書の下書き作成ツールであり、採択を保証するサービスではありません。そのため採択結果による返金は行っておりません。ただし、サービス自体にご満足いただけない場合はいつでも解約可能です。まずは無料プランで品質をご確認いただくことをおすすめします。",
   },
 ];
 
@@ -149,14 +165,7 @@ export default async function LandingPage() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
-            <CtaLink
-              href="/login"
-              location="hero"
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-semibold text-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30"
-            >
-              無料で申請書を作成する
-              <ArrowRight className="h-5 w-5" />
-            </CtaLink>
+            <HeroCtaButton />
             <Link
               href="/subsidies"
               className="inline-flex items-center gap-2 px-8 py-4 rounded-xl border-2 border-border font-semibold text-lg hover:bg-accent transition-all"
@@ -406,14 +415,19 @@ export default async function LandingPage() {
               <div className="rounded-xl border-2 border-primary/30 bg-card p-5 shadow-lg shadow-primary/5">
                 <p className="text-xs text-primary font-semibold mb-3 flex items-center gap-1">
                   <Sparkles className="h-3 w-3" />
-                  AI生成結果
+                  AI生成結果（持続化補助金 経営計画書より）
                 </p>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  &ldquo;当社は2015年の創業以来、地域密着型の飲食業として事業を展開してまいりました。代表者の15年にわたる料理人経験を活かし、地元産食材を使った...&rdquo;
+                  &ldquo;当社は2015年の創業以来、地域密着型の飲食業として事業を展開してまいりました。代表者の15年にわたる料理人経験を活かし、地元産食材を使った季節料理を提供し、地域の食文化の継承に貢献してきました。現在、従業員5名体制で月間来客数約800名を維持しており...&rdquo;
                 </p>
-                <p className="text-xs text-green-600 mt-3 font-medium">
-                  所要時間: 約3分
-                </p>
+                <div className="flex items-center justify-between mt-3">
+                  <p className="text-xs text-green-600 font-medium">
+                    所要時間: 約3分
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    ※ 実際のAI出力例です
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -617,6 +631,14 @@ export default async function LandingPage() {
                     ブログ
                   </Link>
                 </li>
+                <li>
+                  <Link
+                    href="/faq"
+                    className="hover:text-foreground transition-colors"
+                  >
+                    よくある質問
+                  </Link>
+                </li>
               </ul>
             </div>
 
@@ -651,15 +673,46 @@ export default async function LandingPage() {
             </div>
 
             <div>
-              <h3 className="font-semibold mb-3 text-sm">運営</h3>
+              <h3 className="font-semibold mb-3 text-sm">運営会社</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>ISLE &amp; ROOTS</li>
+                <li className="font-medium text-foreground">ISLE &amp; ROOTS 合同会社</li>
+                <li>設立: 2022年</li>
+                <li>
+                  <Link
+                    href="/legal/tokushoho"
+                    className="hover:text-foreground transition-colors"
+                  >
+                    会社概要・特定商取引法
+                  </Link>
+                </li>
               </ul>
             </div>
           </div>
 
+          {/* セキュリティ・信頼性バッジ */}
+          <div className="border-t border-border pt-6 mb-6">
+            <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1.5">
+                <Shield className="h-4 w-4 text-green-600" />
+                SSL/TLS 暗号化通信
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Shield className="h-4 w-4 text-green-600" />
+                データ学習利用なし
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Shield className="h-4 w-4 text-green-600" />
+                第三者への情報共有なし
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Shield className="h-4 w-4 text-blue-600" />
+                Powered by Anthropic Claude
+              </span>
+            </div>
+          </div>
+
           <div className="border-t border-border pt-6 text-center text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} ISLE &amp; ROOTS. All rights
+            &copy; {new Date().getFullYear()} ISLE &amp; ROOTS 合同会社. All rights
             reserved.
           </div>
         </div>
