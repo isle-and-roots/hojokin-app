@@ -141,6 +141,21 @@ CREATE TRIGGER update_application_sections_updated_at
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 -- =============================================
+-- 5. email_leads（メールリード）
+-- =============================================
+CREATE TABLE email_leads (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT UNIQUE NOT NULL,
+  source TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE email_leads ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Service role can manage email leads" ON email_leads
+  FOR ALL USING (true);
+
+-- =============================================
 -- インデックス
 -- =============================================
 CREATE INDEX idx_business_profiles_user_id ON business_profiles(user_id);

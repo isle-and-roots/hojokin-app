@@ -38,6 +38,12 @@ export const EVENTS = {
   ONBOARDING_STEP_COMPLETED: "onboarding_step_completed",
   SIGNUP_COMPLETED: "signup_completed",
 
+  // ─── メールキャプチャー ───
+  EMAIL_CAPTURE_SHOWN: "email_capture_shown",
+  EMAIL_CAPTURE_SUBMITTED: "email_capture_submitted",
+  EMAIL_CAPTURE_DISMISSED: "email_capture_dismissed",
+  EXIT_INTENT_SHOWN: "exit_intent_shown",
+
   // ─── ブログ ───
   BLOG_POST_VIEWED: "blog_post_viewed",
   BLOG_CTA_CLICKED: "blog_cta_clicked",

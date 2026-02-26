@@ -23,7 +23,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     url: `${baseUrl}/blog/tag/${encodeURIComponent(tag)}`,
     lastModified: new Date(),
     changeFrequency: "weekly" as const,
-    priority: 0.5,
+    priority: 0.7,
   }));
 
   return [

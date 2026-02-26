@@ -27,6 +27,8 @@ import { AnimatedCounter } from "@/components/landing/animated-counter";
 import { CategoryTabs } from "@/components/landing/category-tabs";
 import { FaqAccordion } from "@/components/landing/faq-accordion";
 import { CtaLink } from "@/components/landing/cta-link";
+import { EmailCaptureSection } from "@/components/landing/email-capture-section";
+import { ExitIntentModal } from "@/components/landing/exit-intent-modal";
 import { cn } from "@/lib/utils";
 
 const FAQ_ITEMS = [
@@ -115,6 +117,9 @@ export default async function LandingPage() {
 
   return (
     <div className="min-h-screen">
+      {/* Exit Intent Modal */}
+      <ExitIntentModal />
+
       {/* 1. Sticky Header */}
       <StickyHeader />
 
@@ -263,6 +268,9 @@ export default async function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* 4.5. Email Capture */}
+      <EmailCaptureSection />
 
       {/* 5. Category Showcase */}
       <section className="py-20 px-6 bg-muted/30">
