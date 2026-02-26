@@ -107,8 +107,27 @@ export const POST = Webhooks({
 
     if (!userId) return;
 
-    // active 以外のステータス（past_due, unpaid 等）は free に戻す
-    if (payload.data.status !== "active" && payload.data.status !== "trialing") {
+    if (payload.data.status === "active" || payload.data.status === "trialing") {
+      // プラン変更（例: Starter → Pro）を反映
+      const productId = payload.data.productId;
+      const planKey = getPlanKeyByProductId(productId);
+
+      if (planKey) {
+        const { error } = await supabaseAdmin
+          .from("user_profiles")
+          .update({
+            plan: planKey,
+            polar_customer_id: payload.data.customerId,
+            polar_subscription_id: payload.data.id,
+          })
+          .eq("id", userId);
+
+        if (error) {
+          console.error("subscription.updated (plan change) DB update error:", error);
+        }
+      }
+    } else {
+      // active 以外のステータス（past_due, unpaid 等）は free に戻す
       const { error } = await supabaseAdmin
         .from("user_profiles")
         .update({
