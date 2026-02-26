@@ -108,6 +108,9 @@ export type SubsidyType =
   | "IT_DONYU"
   | "JIGYOU_SAIKOUCHIKU"
   | "MONODZUKURI"
+  | "SHOURYOKUKA"
+  | "SHINJIGYO_SHINSHUTSU"
+  | "SEICHOU_KASOKUKA"
   | "OTHER";
 
 export type ApplicationStatus =

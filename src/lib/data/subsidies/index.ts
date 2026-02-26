@@ -10,6 +10,9 @@ import { chiikiKasseikaSubsidies } from "./chiiki-kasseika";
 import { souzouTenkanSubsidies } from "./souzou-tenkan";
 import { kankyouEnergySubsidies } from "./kankyou-energy";
 import { otherSubsidies } from "./other";
+import { shouryokukaSubsidies } from "./shouryokuka";
+import { shinjiyoShinshutsuSubsidies } from "./shinjigyo-shinshutsu";
+import { seichouKasokukaSubsidies } from "./seichou-kasokuka";
 
 /**
  * 全補助金データの統合配列
@@ -25,6 +28,9 @@ export const ALL_SUBSIDIES: SubsidyInfo[] = [
   ...souzouTenkanSubsidies,
   ...kankyouEnergySubsidies,
   ...otherSubsidies,
+  ...shouryokukaSubsidies,
+  ...shinjiyoShinshutsuSubsidies,
+  ...seichouKasokukaSubsidies,
 ];
 
 // 後方互換性のため DUMMY_SUBSIDIES としてもエクスポート
@@ -41,4 +47,7 @@ export {
   souzouTenkanSubsidies,
   kankyouEnergySubsidies,
   otherSubsidies,
+  shouryokukaSubsidies,
+  shinjiyoShinshutsuSubsidies,
+  seichouKasokukaSubsidies,
 };

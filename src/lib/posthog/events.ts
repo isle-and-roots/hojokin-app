@@ -63,6 +63,10 @@ export const EVENTS = {
   CHECKOUT_INITIATED: "checkout_initiated",
   SUBSCRIPTION_CREATED: "subscription_created",
   SUBSCRIPTION_CANCELLED: "subscription_cancelled",
+
+  // ─── アップセルバナー ───
+  UPSELL_BANNER_SHOWN: "upsell_banner_shown",
+  UPSELL_BANNER_CLICKED: "upsell_banner_clicked",
 } as const;
 
 export type PostHogEventName = (typeof EVENTS)[keyof typeof EVENTS];

@@ -18,6 +18,7 @@ import {
 import { CreditDisplay } from "@/components/credit-display";
 import { UpgradeModal } from "@/components/upgrade-modal";
 import { QuotaProgressBanner } from "@/components/quota-progress-banner";
+import { GenerationUpsellBanner } from "@/components/generation-upsell-banner";
 import { useToast } from "@/components/ui/toast";
 import { posthog } from "@/lib/posthog/client";
 import { EVENTS } from "@/lib/posthog/events";
@@ -72,6 +73,7 @@ function NewApplicationContent() {
     plan: string;
   } | null>(null);
   const [profileLoadError, setProfileLoadError] = useState(false);
+  const [generationCompleted, setGenerationCompleted] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
   // Load quota info
@@ -221,6 +223,7 @@ function NewApplicationContent() {
       setQuotaInfo((prev) =>
         prev ? { ...prev, remaining: Math.max(0, prev.remaining - 1) } : prev
       );
+      setGenerationCompleted(true);
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") return;
       const msg = error instanceof Error ? error.message : "生成に失敗しました";
@@ -455,6 +458,11 @@ function NewApplicationContent() {
             plan={quotaInfo.plan}
           />
         </div>
+      )}
+
+      {/* AI生成結果後アップセルバナー */}
+      {generationCompleted && quotaInfo && (
+        <GenerationUpsellBanner plan={quotaInfo.plan} />
       )}
 
       {/* 初回ガイドバナー */}

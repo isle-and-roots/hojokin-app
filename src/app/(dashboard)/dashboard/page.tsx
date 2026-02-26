@@ -12,12 +12,14 @@ import {
   PROMPT_SUPPORT_CONFIG,
   DIFFICULTY_CONFIG,
 } from "@/lib/data/subsidy-categories";
-import { CreditDisplay } from "@/components/credit-display";
 import { PlanBadgeCard } from "@/components/dashboard/plan-badge";
 import { RecommendedSubsidies } from "@/components/dashboard/recommended-subsidies";
 import { OnboardingStepper } from "@/components/dashboard/onboarding-stepper";
 import { SignupTracker } from "@/components/dashboard/signup-tracker";
 import { WelcomeModal } from "@/components/dashboard/welcome-modal";
+import { QuotaWidget } from "@/components/dashboard/quota-widget";
+import { ProfileCompletenessBanner } from "@/components/dashboard/profile-completeness-banner";
+import { calculateProfileCompleteness } from "@/lib/subsidies";
 import type { BusinessProfile, RecommendationResult } from "@/types";
 
 const stats = [
@@ -47,6 +49,31 @@ async function getProfile(): Promise<BusinessProfile | null> {
     return await getBusinessProfile(user.id);
   } catch {
     return null;
+  }
+}
+
+async function getUserPlan(): Promise<string> {
+  if (
+    !process.env.NEXT_PUBLIC_SUPABASE_URL?.startsWith("http") ||
+    !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  ) {
+    return "free";
+  }
+  try {
+    const { createClient } = await import("@/lib/supabase/server");
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return "free";
+    const { data } = await supabase
+      .from("user_profiles")
+      .select("plan")
+      .eq("id", user.id)
+      .single();
+    return (data?.plan as string) ?? "free";
+  } catch {
+    return "free";
   }
 }
 
@@ -89,12 +116,17 @@ export default async function Dashboard({
     (s) => s.promptSupport !== "NONE"
   );
 
-  const profile = await getProfile();
-  const applicationCount = await getApplicationCount();
+  const [profile, applicationCount, userPlan] = await Promise.all([
+    getProfile(),
+    getApplicationCount(),
+    getUserPlan(),
+  ]);
 
   let recommendation: RecommendationResult | null = null;
+  let profileCompleteness = 0;
   if (profile) {
     recommendation = getRecommendedSubsidiesWithReasons(profile);
+    profileCompleteness = calculateProfileCompleteness(profile);
   }
 
   // オンボーディング表示ロジック
@@ -140,9 +172,17 @@ export default async function Dashboard({
           </div>
           <p className="mt-2 text-3xl font-bold">{aiSupported.length}件</p>
         </div>
-        <CreditDisplay variant="card" />
+        <QuotaWidget />
         <PlanBadgeCard />
       </div>
+
+      {/* プロフィール充実度バナー */}
+      {profile && (
+        <ProfileCompletenessBanner
+          completeness={profileCompleteness}
+          plan={userPlan}
+        />
+      )}
 
       {/* クイックアクション */}
       <div className="mb-8">
