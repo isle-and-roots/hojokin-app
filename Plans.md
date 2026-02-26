@@ -40,7 +40,7 @@ Updated: 2026-02-26
 | **Required** | Task 34: 料金ページ改善（年間プラン + アンカープラン + FAQ強化） | cc | done | 3h |
 | **Recommended** | Task 35: 2026年新補助金 FULL AI対応追加（省力化・新事業進出・成長加速化） | cc | done | 4h |
 | **Recommended** | Task 36: アップセル導線強化（複数トリガー + パーソナライズ） | cc | done | 3h |
-| **Recommended** | Task 37: サインアップ後メールシーケンス実装 | cc | TODO | 2h |
+| **Recommended** | Task 37: サインアップ後メールシーケンス実装 | cc | done | 2h |
 | **Optional** | Task 38: PostHog A/Bテスト基盤 | cc | TODO | 3h |
 | **Optional** | Task 39: ソーシャルプルーフ + 信頼性要素追加 | cc | TODO | 2h |
 
@@ -145,14 +145,14 @@ Day 5: Task 38 (A/Bテスト) + Task 39 (信頼性) + 品質ゲート
 
 ---
 
-### Task 37: サインアップ後メールシーケンス実装 `cc:TODO`
+### Task 37: サインアップ後メールシーケンス実装 `cc:done`
 
 **目的**: content/emails/nurture-sequence.md は作成済みだが未実装。自動メールでアクティベーション促進。
 
-- [ ] `[feature:security]` メール送信API: Resend or Supabase Edge Functions 経由 `cc:TODO`
-- [ ] Day 0: ウェルカム + 「今すぐ初回AI生成」CTA `cc:TODO`
-- [ ] Day 3: 「プロフィールを完成させましょう」リマインダー `cc:TODO`
-- [ ] Day 7: Pro 機能ハイライト + 期間限定オファー `cc:TODO`
+- [x] `[feature:security]` メール送信API: Resend or Supabase Edge Functions 経由 `cc:done`
+- [x] Day 0: ウェルカム + 「今すぐ初回AI生成」CTA `cc:done`
+- [x] Day 3: 「プロフィールを完成させましょう」リマインダー `cc:done`
+- [x] Day 7: Pro 機能ハイライト + 期間限定オファー `cc:done`
 
 **KPI**: メール開封率 30%以上、CTA クリック率 5%以上
 

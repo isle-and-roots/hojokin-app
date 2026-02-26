@@ -67,6 +67,11 @@ export const EVENTS = {
   // ─── アップセルバナー ───
   UPSELL_BANNER_SHOWN: "upsell_banner_shown",
   UPSELL_BANNER_CLICKED: "upsell_banner_clicked",
+
+  // ─── メールシーケンス ───
+  EMAIL_SEQUENCE_SENT: "email_sequence_sent",
+  EMAIL_SEQUENCE_FAILED: "email_sequence_failed",
+  EMAIL_SEQUENCE_SKIPPED: "email_sequence_skipped",
 } as const;
 
 export type PostHogEventName = (typeof EVENTS)[keyof typeof EVENTS];
