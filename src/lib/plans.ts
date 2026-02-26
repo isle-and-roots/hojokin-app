@@ -4,12 +4,14 @@ export interface PlanInfo {
   key: PlanKey;
   name: string;
   price: number;
+  annualPrice: number | null;
   productId: string;
   aiLimit: number;
   docxExport: boolean;
   maxApplications: number;
   features: string[];
   highlighted: boolean;
+  persona: string;
 }
 
 export const PLAN_LIST: PlanInfo[] = [
@@ -17,11 +19,13 @@ export const PLAN_LIST: PlanInfo[] = [
     key: "free",
     name: "Free",
     price: 0,
+    annualPrice: null,
     productId: "",
     aiLimit: 3,
     docxExport: false,
     maxApplications: 1,
     highlighted: false,
+    persona: "まずは試してみたい方",
     features: [
       "AI申請書生成 3回/月",
       "補助金検索・閲覧",
@@ -32,11 +36,13 @@ export const PLAN_LIST: PlanInfo[] = [
     key: "starter",
     name: "Starter",
     price: 980,
+    annualPrice: 9800,
     productId: process.env.POLAR_STARTER_PRODUCT_ID ?? "",
     aiLimit: 15,
     docxExport: true,
     maxApplications: 5,
     highlighted: false,
+    persona: "初めての補助金申請をする方",
     features: [
       "AI申請書生成 15回/月",
       "Word(DOCX)エクスポート",
@@ -48,11 +54,13 @@ export const PLAN_LIST: PlanInfo[] = [
     key: "pro",
     name: "Pro",
     price: 2980,
+    annualPrice: 29800,
     productId: process.env.POLAR_PRO_PRODUCT_ID ?? "",
     aiLimit: 100,
     docxExport: true,
     maxApplications: -1,
     highlighted: true,
+    persona: "複数の補助金に申請する方",
     features: [
       "AI申請書生成 100回/月",
       "Word(DOCX)エクスポート",
@@ -65,11 +73,13 @@ export const PLAN_LIST: PlanInfo[] = [
     key: "business",
     name: "Business",
     price: 9800,
+    annualPrice: 88200,
     productId: process.env.POLAR_BUSINESS_PRODUCT_ID ?? "",
     aiLimit: 500,
     docxExport: true,
     maxApplications: -1,
     highlighted: false,
+    persona: "複数事業者の申請を管理する方",
     features: [
       "AI申請書生成 500回/月",
       "Word(DOCX)エクスポート",

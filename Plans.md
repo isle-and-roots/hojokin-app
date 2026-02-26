@@ -34,10 +34,10 @@ Updated: 2026-02-26
 
 | 優先度 | タスク | 担当 | 状態 | 見積 |
 |--------|--------|------|------|------|
-| **Required** | Task 31: ブログ記事公開 + SEO最適化 | cc | TODO | 2h |
-| **Required** | Task 32: メールキャプチャー（LP + Exit Intent） | cc | TODO | 3h |
-| **Required** | Task 33: オンボーディング改善（プログレッシブプロファイリング） | cc | TODO | 3h |
-| **Required** | Task 34: 料金ページ改善（年間プラン + アンカープラン + FAQ強化） | cc | TODO | 3h |
+| **Required** | Task 31: ブログ記事公開 + SEO最適化 | cc | done | 2h |
+| **Required** | Task 32: メールキャプチャー（LP + Exit Intent） | cc | done | 3h |
+| **Required** | Task 33: オンボーディング改善（プログレッシブプロファイリング） | cc | done | 3h |
+| **Required** | Task 34: 料金ページ改善（年間プラン + アンカープラン + FAQ強化） | cc | done | 3h |
 | **Recommended** | Task 35: 2026年新補助金 FULL AI対応追加（省力化・新事業進出・成長加速化） | cc | TODO | 4h |
 | **Recommended** | Task 36: アップセル導線強化（複数トリガー + パーソナライズ） | cc | TODO | 3h |
 | **Recommended** | Task 37: サインアップ後メールシーケンス実装 | cc | TODO | 2h |
@@ -89,28 +89,28 @@ Day 5: Task 38 (A/Bテスト) + Task 39 (信頼性) + 品質ゲート
 
 ---
 
-### Task 33: オンボーディング改善 `cc:TODO`
+### Task 33: オンボーディング改善 `cc:done`
 
 **目的**: サインアップ→初回AI生成の到達率を最大化。現在プロフィール全入力が壁になっている。
 
-- [ ] `[feature:a11y]` プログレッシブプロファイリング: 必須3項目（会社名・業種・従業員数）で即AI生成可能に `cc:TODO`
-- [ ] `[feature:a11y]` ウェルカムモーダル: 「3分でAI申請書を体験」ガイド表示（?welcome=true時） `cc:TODO`
+- [x] `[feature:a11y]` プログレッシブプロファイリング: 必須3項目（会社名・業種・従業員数）で即AI生成可能に `cc:done`
+- [x] `[feature:a11y]` ウェルカムモーダル: 「3分でAI申請書を体験」ガイド表示（?welcome=true時） `cc:done`
 - [ ] 初回AI生成前にサンプル出力プレビュー表示（「こんな文章がAIで生成されます」） `cc:TODO`
-- [ ] PostHog イベント: `ONBOARDING_STEP_VIEWED`, `FIRST_GENERATION_ATTEMPTED` `cc:TODO`
+- [x] PostHog イベント: `WELCOME_MODAL_SHOWN/CTA`, `QUICK_PROFILE_SAVED`, `FIRST_GENERATION_ATTEMPTED` 等 `cc:done`
 
 **KPI**: サインアップ→初回AI生成率 50%以上
 
 ---
 
-### Task 34: 料金ページ改善 `cc:TODO`
+### Task 34: 料金ページ改善 `cc:done`
 
 **目的**: 有料プランの魅力度向上。年間割引でLTV増加、アンカー価格で Pro の心理的ハードルを下げる。
 
-- [ ] `[feature:a11y]` 年間/月間トグル追加（年間: Starter 17%OFF、Pro 16%OFF、Business 25%OFF） `cc:TODO`
-- [ ] アンカープラン: Enterprise ¥29,800/月 表示追加（Pro が割安に見える効果） `cc:TODO`
-- [ ] Pro に「人気No.1」バッジ追加 `cc:TODO`
-- [ ] FAQ拡充: 「AIの品質は？」「コンサルとの違いは？」「返金は？」の3問追加 `cc:TODO`
-- [ ] 各プランに「こんな方におすすめ」ペルソナ文追加 `cc:TODO`
+- [x] `[feature:a11y]` 年間/月間トグル追加（年間: Starter 17%OFF、Pro 16%OFF、Business 25%OFF） `cc:done`
+- [x] アンカープラン: Enterprise ¥29,800/月 表示追加（Pro が割安に見える効果） `cc:done`
+- [x] Pro に「人気No.1」バッジ追加 `cc:done`
+- [x] FAQ拡充: 「AIの品質は？」「コンサルとの違いは？」「返金は？」の3問追加 `cc:done`
+- [x] 各プランに「こんな方におすすめ」ペルソナ文追加 `cc:done`
 
 **KPI**: 料金ページ→チェックアウト率 改善
 

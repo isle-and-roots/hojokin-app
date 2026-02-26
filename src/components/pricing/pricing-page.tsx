@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Check, Loader2, Crown, Sparkles, ChevronDown, ExternalLink, Brain, Database, Zap, ShieldCheck } from "lucide-react";
+import { Check, Loader2, Crown, Sparkles, ChevronDown, ExternalLink, Brain, Database, Zap, ShieldCheck, Star, Building } from "lucide-react";
 import { PLAN_LIST, type PlanKey } from "@/lib/plans";
 import { useToast } from "@/components/ui/toast";
 import { posthog } from "@/lib/posthog/client";
@@ -30,6 +30,29 @@ const FAQ_ITEMS = [
     q: "請求書や領収書は発行できますか？",
     a: "顧客ポータルから請求書・領収書をダウンロードできます。アカウント設定ページの「サブスクリプション管理」ボタン、または「請求書・領収書」カードからアクセスしてください。",
   },
+  {
+    q: "AIが生成する申請書の品質はどの程度ですか？",
+    a: "中小企業診断士の知見をベースにしたプロンプトで、審査員に「具体的で実現可能」と評価される品質を目指しています。生成後にお客様自身で内容を確認・修正していただくことを前提としています。",
+  },
+  {
+    q: "コンサルタントに依頼する場合との違いは？",
+    a: "コンサルタントへの依頼は一般的に10〜30万円程度かかります。当サービスはAIによる下書き自動生成で、月額¥980〜¥9,800で何度でも利用できます。ただし、最終的な内容確認はお客様ご自身で行っていただく必要があります。",
+  },
+  {
+    q: "返金はできますか？",
+    a: "サブスクリプションはいつでもキャンセル可能で、キャンセル後は次回請求日まで引き続きご利用いただけます。日割り返金には対応しておりませんが、1ヶ月単位で気軽にお試しいただけます。",
+  },
+];
+
+const ENTERPRISE_FEATURES = [
+  "AI申請書生成 無制限",
+  "Word(DOCX)エクスポート",
+  "申請書 無制限",
+  "高精度AIモデル",
+  "複数事業者プロフィール 無制限",
+  "専任サポート担当",
+  "カスタムプロンプト対応",
+  "SLA保証",
 ];
 
 export function PricingPageClient() {
@@ -37,6 +60,7 @@ export function PricingPageClient() {
   const [currentPlan, setCurrentPlan] = useState<PlanKey>("free");
   const [loading, setLoading] = useState<PlanKey | null>(null);
   const [hasCustomerId, setHasCustomerId] = useState(false);
+  const [isAnnual, setIsAnnual] = useState(false);
 
   useEffect(() => {
     posthog.capture(EVENTS.PRICING_PAGE_VIEWED);
@@ -60,6 +84,7 @@ export function PricingPageClient() {
     posthog.capture(EVENTS.UPGRADE_BUTTON_CLICKED, {
       target_plan: planKey,
       current_plan: currentPlan,
+      billing_interval: isAnnual ? "annual" : "monthly",
     });
     trackUpgradeClick("pricing_page", planKey);
     setLoading(planKey);
@@ -104,13 +129,59 @@ export function PricingPageClient() {
     }
   };
 
+  const handleToggle = (annual: boolean) => {
+    setIsAnnual(annual);
+    posthog.capture(annual ? EVENTS.PRICING_TOGGLE_ANNUAL : EVENTS.PRICING_TOGGLE_MONTHLY);
+  };
+
+  const getDisplayPrice = (plan: (typeof PLAN_LIST)[number]) => {
+    if (plan.price === 0) return 0;
+    if (isAnnual && plan.annualPrice) {
+      return Math.round(plan.annualPrice / 12);
+    }
+    return plan.price;
+  };
+
+  const getSavingsPercent = (plan: (typeof PLAN_LIST)[number]) => {
+    if (!plan.annualPrice || plan.price === 0) return 0;
+    const monthlyTotal = plan.price * 12;
+    return Math.round((1 - plan.annualPrice / monthlyTotal) * 100);
+  };
+
   return (
     <div className="p-8 max-w-6xl mx-auto">
-      <div className="text-center mb-12">
+      <div className="text-center mb-8">
         <h1 className="text-3xl font-bold">料金プラン</h1>
         <p className="text-muted-foreground mt-2">
           ビジネスに合ったプランを選択してください
         </p>
+      </div>
+
+      {/* 年間/月間トグル */}
+      <div className="flex items-center justify-center gap-3 mb-10">
+        <span className={`text-sm font-medium ${!isAnnual ? "text-foreground" : "text-muted-foreground"}`}>
+          月額
+        </span>
+        <button
+          onClick={() => handleToggle(!isAnnual)}
+          className="relative inline-flex h-7 w-12 items-center rounded-full transition-colors bg-primary/20"
+          role="switch"
+          aria-checked={isAnnual}
+        >
+          <span
+            className={`inline-block h-5 w-5 rounded-full bg-primary transition-transform ${
+              isAnnual ? "translate-x-6" : "translate-x-1"
+            }`}
+          />
+        </button>
+        <span className={`text-sm font-medium ${isAnnual ? "text-foreground" : "text-muted-foreground"}`}>
+          年額
+        </span>
+        {isAnnual && (
+          <span className="inline-flex items-center rounded-full bg-green-100 text-green-700 px-2.5 py-0.5 text-xs font-medium">
+            最大25%OFF
+          </span>
+        )}
       </div>
 
       {/* CurrentPlanBanner（有料ユーザー向け） */}
@@ -142,15 +213,18 @@ export function PricingPageClient() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* プランカード（4プラン + Enterprise） */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5">
         {PLAN_LIST.map((plan) => {
           const isCurrentPlan = currentPlan === plan.key;
+          const displayPrice = getDisplayPrice(plan);
+          const savings = getSavingsPercent(plan);
           return (
             <div
               key={plan.key}
               className={`relative rounded-2xl border p-6 ${
                 plan.highlighted
-                  ? "border-primary shadow-lg shadow-primary/10"
+                  ? "border-primary shadow-lg shadow-primary/10 lg:scale-105"
                   : isCurrentPlan
                     ? "border-primary/50 ring-1 ring-primary/20"
                     : "border-border"
@@ -159,21 +233,24 @@ export function PricingPageClient() {
               {plan.highlighted && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                   <span className="inline-flex items-center gap-1 rounded-full bg-primary text-primary-foreground px-3 py-1 text-xs font-medium">
-                    <Crown className="h-3 w-3" />
-                    おすすめ
+                    <Star className="h-3 w-3" />
+                    人気No.1
                   </span>
                 </div>
               )}
 
-              <div className="mb-6">
+              <div className="mb-4">
                 <h2 className="text-lg font-bold">{plan.name}</h2>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {plan.persona}
+                </p>
                 <div className="mt-3 flex items-baseline gap-1">
                   {plan.price === 0 ? (
                     <span className="text-3xl font-bold">無料</span>
                   ) : (
                     <>
                       <span className="text-3xl font-bold">
-                        {plan.price.toLocaleString()}
+                        {displayPrice.toLocaleString()}
                       </span>
                       <span className="text-muted-foreground text-sm">
                         円/月<span className="text-xs ml-1">(税込)</span>
@@ -181,9 +258,24 @@ export function PricingPageClient() {
                     </>
                   )}
                 </div>
+                {isAnnual && savings > 0 && (
+                  <div className="mt-1.5 flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground line-through">
+                      {plan.price.toLocaleString()}円/月
+                    </span>
+                    <span className="inline-flex items-center rounded-full bg-green-100 text-green-700 px-2 py-0.5 text-xs font-medium">
+                      {savings}%OFF
+                    </span>
+                  </div>
+                )}
+                {isAnnual && plan.annualPrice && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    年額 {plan.annualPrice.toLocaleString()}円
+                  </p>
+                )}
               </div>
 
-              <ul className="space-y-3 mb-8">
+              <ul className="space-y-2.5 mb-6">
                 {plan.features.map((feature) => (
                   <li key={feature} className="flex items-start gap-2 text-sm">
                     <Check className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
@@ -246,6 +338,39 @@ export function PricingPageClient() {
             </div>
           );
         })}
+
+        {/* Enterprise アンカープラン */}
+        <div className="relative rounded-2xl border border-border p-6 bg-gradient-to-b from-muted/30 to-transparent">
+          <div className="mb-4">
+            <h2 className="text-lg font-bold">Enterprise</h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              大規模な申請支援を行う法人の方
+            </p>
+            <div className="mt-3 flex items-baseline gap-1">
+              <span className="text-3xl font-bold">29,800</span>
+              <span className="text-muted-foreground text-sm">
+                円/月〜<span className="text-xs ml-1">(税込)</span>
+              </span>
+            </div>
+          </div>
+
+          <ul className="space-y-2.5 mb-6">
+            {ENTERPRISE_FEATURES.map((feature) => (
+              <li key={feature} className="flex items-start gap-2 text-sm">
+                <Check className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
+                <span>{feature}</span>
+              </li>
+            ))}
+          </ul>
+
+          <a
+            href="mailto:support@isle-and-roots.com?subject=Enterprise%E3%83%97%E3%83%A9%E3%83%B3%E3%81%AE%E3%81%8A%E5%95%8F%E3%81%84%E5%90%88%E3%82%8F%E3%81%9B"
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border border-border text-sm font-medium hover:bg-accent transition-colors"
+          >
+            <Building className="h-4 w-4" />
+            お問い合わせ
+          </a>
+        </div>
       </div>
 
       {/* 選ばれる理由 */}

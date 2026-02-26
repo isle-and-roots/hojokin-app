@@ -38,6 +38,17 @@ export const EVENTS = {
   ONBOARDING_STEP_COMPLETED: "onboarding_step_completed",
   SIGNUP_COMPLETED: "signup_completed",
 
+  // ─── オンボーディング ───
+  WELCOME_MODAL_SHOWN: "welcome_modal_shown",
+  WELCOME_MODAL_CTA_CLICKED: "welcome_modal_cta_clicked",
+  ONBOARDING_STEP_VIEWED: "onboarding_step_viewed",
+  QUICK_PROFILE_SAVED: "quick_profile_saved",
+  FIRST_GENERATION_ATTEMPTED: "first_generation_attempted",
+
+  // ─── 料金ページ ───
+  PRICING_TOGGLE_ANNUAL: "pricing_toggle_annual",
+  PRICING_TOGGLE_MONTHLY: "pricing_toggle_monthly",
+
   // ─── メールキャプチャー ───
   EMAIL_CAPTURE_SHOWN: "email_capture_shown",
   EMAIL_CAPTURE_SUBMITTED: "email_capture_submitted",

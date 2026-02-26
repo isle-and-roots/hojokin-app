@@ -17,6 +17,7 @@ import { PlanBadgeCard } from "@/components/dashboard/plan-badge";
 import { RecommendedSubsidies } from "@/components/dashboard/recommended-subsidies";
 import { OnboardingStepper } from "@/components/dashboard/onboarding-stepper";
 import { SignupTracker } from "@/components/dashboard/signup-tracker";
+import { WelcomeModal } from "@/components/dashboard/welcome-modal";
 import type { BusinessProfile, RecommendationResult } from "@/types";
 
 const stats = [
@@ -106,6 +107,7 @@ export default async function Dashboard({
   return (
     <div className="p-8">
       <SignupTracker isWelcome={isWelcome} />
+      <WelcomeModal show={isWelcome && !profile} />
       <div className="mb-8">
         <h1 className="text-2xl font-bold">ダッシュボード</h1>
         <p className="text-muted-foreground mt-1">

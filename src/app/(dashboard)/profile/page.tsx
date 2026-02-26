@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { BusinessProfile } from "@/types";
-import { Loader2, Save, CheckCircle } from "lucide-react";
+import { Loader2, Save, CheckCircle, Zap } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { trackProfileCompleted } from "@/lib/analytics";
 import { posthog } from "@/lib/posthog/client";
@@ -45,6 +45,7 @@ const STEPS: { key: Step; label: string }[] = [
 
 export default function ProfilePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const toastNotify = useToast();
   const [profile, setProfile] = useState(INITIAL_PROFILE);
   const [profileId, setProfileId] = useState<string | null>(null);
@@ -54,6 +55,7 @@ export default function ProfilePage() {
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const isQuickMode = searchParams.get("quick") === "true";
 
   // Supabase からプロフィールを読み込み
   useEffect(() => {
@@ -116,6 +118,39 @@ export default function ProfilePage() {
     }
   };
 
+  const canQuickSave =
+    profile.companyName.trim() !== "" &&
+    profile.industry !== "" &&
+    profile.employeeCount > 0;
+
+  const handleQuickSave = async () => {
+    if (!canQuickSave) return;
+    setSaving(true);
+    setError("");
+    try {
+      const res = await fetch("/api/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...profile, profileId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      if (data.profile?.id) setProfileId(data.profile.id);
+      posthog.capture(EVENTS.QUICK_PROFILE_SAVED);
+      posthog.capture(EVENTS.PROFILE_CREATED);
+      trackProfileCompleted();
+      toastNotify.success("プロフィールを保存しました！補助金を探しましょう");
+      setIsNewProfile(false);
+      setTimeout(() => {
+        router.push("/subsidies?from=onboarding");
+      }, 800);
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const stepIndex = STEPS.findIndex((s) => s.key === currentStep);
 
   if (loading) {
@@ -140,6 +175,38 @@ export default function ProfilePage() {
       {error && (
         <div className="mb-6 bg-destructive/10 text-destructive text-sm p-3 rounded-lg">
           {error}
+        </div>
+      )}
+
+      {/* クイックモードバナー */}
+      {isQuickMode && isNewProfile && (
+        <div className="mb-6 rounded-xl border-2 border-primary/30 bg-primary/5 p-5">
+          <div className="flex items-start gap-3">
+            <div className="rounded-full bg-primary/10 p-2 mt-0.5">
+              <Zap className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-sm">
+                まずは3項目だけでOK！
+              </h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                <span className="font-medium text-foreground">事業者名</span>・<span className="font-medium text-foreground">業種</span>・<span className="font-medium text-foreground">従業員数</span>を入力すれば、すぐにAI申請書を体験できます。
+                他の項目はあとから追加できます。
+              </p>
+              <button
+                onClick={handleQuickSave}
+                disabled={!canQuickSave || saving}
+                className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+              >
+                {saving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Zap className="h-4 w-4" />
+                )}
+                {saving ? "保存中..." : canQuickSave ? "クイック保存してAI生成へ" : "3項目を入力してください"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
