@@ -3,14 +3,35 @@ import type { Metadata } from "next";
 import { Calendar, Tag, ArrowRight, BookOpen } from "lucide-react";
 import { getAllPosts } from "@/lib/blog";
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://hojokin.isle-and-roots.com";
+
 export const metadata: Metadata = {
-  title: "補助金コラム",
+  title: "補助金コラム | 申請方法・書き方・採択のコツ",
   description:
-    "補助金の申請方法・書き方・採択のコツなど、中小企業経営者に役立つ情報を発信。持続化補助金・IT導入補助金・ものづくり補助金の最新情報も。",
+    "補助金の申請方法・書き方・採択のコツを中小企業診断士の観点で解説。持続化補助金・IT導入補助金・ものづくり補助金・事業再構築補助金の最新ガイドを無料公開。",
+  keywords: [
+    "補助金 申請方法",
+    "補助金 書き方",
+    "補助金 採択率",
+    "持続化補助金 ガイド",
+    "IT導入補助金 解説",
+    "補助金 中小企業",
+  ],
   openGraph: {
-    title: "補助金コラム | 補助金申請サポート",
+    title: "補助金コラム | 申請方法・書き方・採択のコツ",
     description:
-      "補助金の申請方法・書き方・採択のコツなど、中小企業経営者に役立つ情報を発信。",
+      "補助金の申請方法・書き方・採択のコツを解説。持続化補助金・IT導入補助金など主要補助金の最新ガイドを無料公開。",
+    url: `${siteUrl}/blog`,
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "補助金コラム | 申請方法・書き方・採択のコツ",
+    description:
+      "補助金の申請方法・書き方・採択のコツを解説。中小企業向け補助金ガイドを無料公開。",
+  },
+  alternates: {
+    canonical: `${siteUrl}/blog`,
   },
 };
 

@@ -7,7 +7,7 @@ import {
   getPostBySlug,
   renderMarkdown,
 } from "@/lib/blog";
-import { BlogPostTracker, BlogCtaLink } from "./tracker";
+import { BlogPostTracker, BlogCtaLink, InlineBlogCta } from "./tracker";
 import { RelatedPosts } from "@/components/blog/related-posts";
 
 export async function generateStaticParams() {
@@ -82,6 +82,7 @@ export default async function BlogPostPage({
     headline: post.title,
     description: post.description,
     datePublished: post.date,
+    dateModified: post.date,
     author: {
       "@type": "Organization",
       name: post.author,
@@ -93,6 +94,31 @@ export default async function BlogPostPage({
     },
     mainEntityOfPage: `${siteUrl}/blog/${slug}`,
     keywords: post.keywords.join(", "),
+  };
+
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "ホーム",
+        item: siteUrl,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "コラム",
+        item: `${siteUrl}/blog`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: post.title,
+        item: `${siteUrl}/blog/${slug}`,
+      },
+    ],
   };
 
   return (
@@ -121,6 +147,10 @@ export default async function BlogPostPage({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
         />
 
         {/* パンくず */}
@@ -172,22 +202,40 @@ export default async function BlogPostPage({
           )}
         </header>
 
-        {/* 記事本文 */}
+        {/* 記事本文（前半） */}
         <article
           className="prose prose-slate max-w-none prose-headings:font-bold prose-h2:text-xl prose-h2:mt-10 prose-h2:mb-4 prose-h3:text-lg prose-h3:mt-8 prose-h3:mb-3 prose-p:leading-relaxed prose-p:text-muted-foreground prose-li:text-muted-foreground prose-a:text-primary prose-a:no-underline hover:prose-a:underline prose-strong:text-foreground prose-table:text-sm"
           dangerouslySetInnerHTML={{ __html: htmlContent }}
         />
 
-        {/* CTA */}
-        <div className="mt-12 rounded-xl border-2 border-primary/20 bg-primary/5 p-6 text-center">
-          <Sparkles className="h-8 w-8 text-primary mx-auto mb-3" />
-          <h3 className="text-lg font-bold mb-2">
-            補助金の申請書類をAIで自動生成
+        {/* 中間インラインCTA */}
+        <InlineBlogCta slug={slug} />
+
+        {/* 末尾CTA */}
+        <div className="mt-12 rounded-xl border-2 border-primary/30 bg-gradient-to-br from-primary/10 to-primary/5 p-8 text-center">
+          <Sparkles className="h-10 w-10 text-primary mx-auto mb-4" />
+          <h3 className="text-xl font-bold mb-2">
+            補助金の申請書をAIで自動作成
           </h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            プロフィールを登録するだけで、AIが審査に通りやすい申請書の下書きを作成します。まずは無料でお試しください。
+          <p className="text-sm text-muted-foreground mb-2 max-w-md mx-auto">
+            事業内容を入力するだけで、審査に通りやすい申請書の下書きをAIが自動生成。
+            採択率アップに直結する具体的な文章を、3分で作成できます。
           </p>
-          <BlogCtaLink slug={slug} />
+          <ul className="flex flex-col sm:flex-row justify-center gap-x-6 gap-y-1 text-xs text-muted-foreground mb-6">
+            <li className="flex items-center justify-center gap-1.5">
+              <Sparkles className="h-3 w-3 text-primary shrink-0" />
+              無料プランで月3セクションまで生成
+            </li>
+            <li className="flex items-center justify-center gap-1.5">
+              <Sparkles className="h-3 w-3 text-primary shrink-0" />
+              15種類以上の補助金に対応
+            </li>
+            <li className="flex items-center justify-center gap-1.5">
+              <Sparkles className="h-3 w-3 text-primary shrink-0" />
+              クレジットカード不要で登録
+            </li>
+          </ul>
+          <BlogCtaLink slug={slug} variant="bottom" />
         </div>
 
         {/* 関連する補助金 */}

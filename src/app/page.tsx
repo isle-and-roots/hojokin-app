@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -19,6 +20,39 @@ import {
   CheckCircle,
   type LucideIcon,
 } from "lucide-react";
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://hojokin.isle-and-roots.com";
+
+export const metadata: Metadata = {
+  title: "補助金申請書をAIで自動生成 | 補助金サポート",
+  description:
+    "持続化補助金・IT導入補助金・ものづくり補助金など100件以上の補助金申請書類をAIが自動生成。中小企業診断士レベルの経営計画書を3分で作成。まずは無料でお試しください。",
+  keywords: [
+    "補助金 申請書 AI 自動生成",
+    "持続化補助金 書き方",
+    "IT導入補助金 申請",
+    "ものづくり補助金 申請書",
+    "補助金 中小企業",
+    "補助金 申請 サポート",
+    "事業計画書 AI",
+  ],
+  openGraph: {
+    title: "補助金申請書をAIで自動生成 | 補助金サポート",
+    description:
+      "持続化補助金・IT導入補助金など100件以上の補助金申請書をAIが3分で自動生成。中小企業診断士レベルの申請書を無料でお試しください。",
+    url: siteUrl,
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "補助金申請書をAIで自動生成 | 補助金サポート",
+    description:
+      "持続化補助金・IT導入補助金など100件以上の補助金申請書をAIが3分で自動生成。まずは無料でお試しください。",
+  },
+  alternates: {
+    canonical: siteUrl,
+  },
+};
 import { getLandingStats } from "@/lib/data/landing-stats";
 import { PLAN_LIST } from "@/lib/plans";
 import { PROMPT_SUPPORT_CONFIG } from "@/lib/data/subsidy-categories";
@@ -131,7 +165,46 @@ export default async function LandingPage() {
 
   const stats = getLandingStats();
 
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: FAQ_ITEMS.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.answer,
+      },
+    })),
+  };
+
+  const webSiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "補助金申請サポート",
+    url: siteUrl,
+    description:
+      "持続化補助金・IT導入補助金・ものづくり補助金など100件以上の補助金申請書類をAIが自動生成するSaaSサービス。",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${siteUrl}/subsidies?q={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
+  };
+
   return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(webSiteJsonLd) }}
+      />
     <div className="min-h-screen">
       {/* Exit Intent Modal */}
       <ExitIntentModal />
@@ -718,5 +791,6 @@ export default async function LandingPage() {
         </div>
       </footer>
     </div>
+    </>
   );
 }

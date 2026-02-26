@@ -59,6 +59,10 @@ export const EVENTS = {
   BLOG_POST_VIEWED: "blog_post_viewed",
   BLOG_CTA_CLICKED: "blog_cta_clicked",
 
+  // ─── 補助金診断 ───
+  SHINDAN_STARTED: "shindan_started",
+  SHINDAN_COMPLETED: "shindan_completed",
+
   // ─── 課金（サーバーサイド） ───
   CHECKOUT_INITIATED: "checkout_initiated",
   SUBSCRIPTION_CREATED: "subscription_created",

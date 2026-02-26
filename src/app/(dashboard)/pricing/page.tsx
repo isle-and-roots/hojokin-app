@@ -7,11 +7,16 @@ const siteUrl =
 export const metadata: Metadata = {
   title: "料金プラン | 補助金申請サポート",
   description:
-    "無料プランからEnterpriseプランまで5段階の料金体系。AI申請書生成・DOCXエクスポート・高性能AIモデルなど、プランに応じた機能をご利用いただけます。",
+    "補助金申請サポートの料金プラン。無料〜月額¥9,800。AI申請書自動生成・DOCXエクスポート・全補助金AI対応など。中小企業・小規模事業者の補助金申請を強力サポート。",
   openGraph: {
     title: "料金プラン | 補助金申請サポート",
     description:
       "月額¥0〜¥9,800。AIで補助金申請書類を自動生成。無料プランで今すぐ始められます。年額プランで最大25%OFF。",
+    url: `${siteUrl}/pricing`,
+    type: "website",
+  },
+  alternates: {
+    canonical: `${siteUrl}/pricing`,
   },
 };
 

@@ -76,19 +76,25 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Organization",
-              name: "ISLE & ROOTS Inc.",
-              url: siteUrl,
-              description:
-                "中小企業向け補助金申請書類をAIで自動生成するSaaSサービスを提供。",
-              sameAs: [],
-              service: {
+            __html: JSON.stringify([
+              {
+                "@context": "https://schema.org",
+                "@type": "Organization",
+                name: "ISLE & ROOTS 合同会社",
+                url: siteUrl,
+                description:
+                  "中小企業向け補助金申請書類をAIで自動生成するSaaSサービスを提供。持続化補助金・IT導入補助金・ものづくり補助金など100件以上の補助金に対応。",
+                sameAs: [],
+              },
+              {
+                "@context": "https://schema.org",
                 "@type": "SoftwareApplication",
                 name: "補助金申請サポート",
                 applicationCategory: "BusinessApplication",
                 operatingSystem: "Web",
+                url: siteUrl,
+                description:
+                  "持続化補助金・IT導入補助金・ものづくり補助金など100件以上の補助金申請書をAIが自動生成。中小企業診断士レベルの申請書の下書きを3分で作成。",
                 offers: {
                   "@type": "AggregateOffer",
                   lowPrice: "0",
@@ -97,7 +103,21 @@ export default function RootLayout({
                   offerCount: "4",
                 },
               },
-            }),
+              {
+                "@context": "https://schema.org",
+                "@type": "WebSite",
+                name: "補助金申請サポート",
+                url: siteUrl,
+                potentialAction: {
+                  "@type": "SearchAction",
+                  target: {
+                    "@type": "EntryPoint",
+                    urlTemplate: `${siteUrl}/subsidies?q={search_term_string}`,
+                  },
+                  "query-input": "required name=search_term_string",
+                },
+              },
+            ]),
           }}
         />
       </head>
