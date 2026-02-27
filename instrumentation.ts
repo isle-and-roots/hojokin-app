@@ -10,7 +10,7 @@ export async function register() {
       env: process.env.DD_ENV || 'production',
       version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
       logInjection: true,
-      runtimeMetrics: true,
+      runtimeMetrics: false, // Vercel Serverless には statsD (port 8125) がないため無効化
       profiling: false, // Vercel Serverless では無効
       plugins: true, // 自動計装を有効化 (Anthropic含む)
     })
