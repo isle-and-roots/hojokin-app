@@ -1,13 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  Document,
-  Packer,
-  Paragraph,
-  TextRun,
-  HeadingLevel,
-  AlignmentType,
-  BorderStyle,
-} from "docx";
 import { createClient } from "@/lib/supabase/server";
 import { trackServerEvent } from "@/lib/posthog/track";
 import { EVENTS } from "@/lib/posthog/events";
@@ -54,7 +45,17 @@ export async function POST(request: NextRequest) {
     const body: ApplicationData = await request.json();
     const { subsidyName, sections } = body;
 
-    const allChildren: Paragraph[] = [];
+    const {
+      Document,
+      Packer,
+      Paragraph,
+      TextRun,
+      HeadingLevel,
+      AlignmentType,
+      BorderStyle,
+    } = await import("docx");
+
+    const allChildren: InstanceType<typeof Paragraph>[] = [];
 
     // Group sections by their group field
     const groups: Record<string, SectionData[]> = {};

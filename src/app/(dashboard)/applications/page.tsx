@@ -3,9 +3,14 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { FileText, PlusCircle, Download, Trash2, Sparkles, Loader2 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm-dialog";
-import { DocxPaywallModal } from "@/components/docx-paywall-modal";
+
+const DocxPaywallModal = dynamic(
+  () => import("@/components/docx-paywall-modal").then((m) => m.DocxPaywallModal),
+  { ssr: false }
+);
 import { posthog } from "@/lib/posthog/client";
 import { EVENTS } from "@/lib/posthog/events";
 
@@ -42,17 +47,16 @@ export default function ApplicationsPage() {
   const [userPlan, setUserPlan] = useState<string>("free");
   const [paywallApp, setPaywallApp] = useState<ApplicationData | null>(null);
 
+  // Load plan and applications in parallel
   useEffect(() => {
-    fetch("/api/user/plan")
+    const fetchPlan = fetch("/api/user/plan")
       .then((res) => (res.ok ? res.json() : null))
       .then((data: { userProfile?: { plan: string } } | null) => {
         if (data?.userProfile?.plan) setUserPlan(data.userProfile.plan);
       })
       .catch(() => { /* ignore */ });
-  }, []);
 
-  useEffect(() => {
-    fetch("/api/applications")
+    const fetchApps = fetch("/api/applications")
       .then((res) => res.json())
       .then((data) => {
         if (data.applications) {
@@ -63,6 +67,8 @@ export default function ApplicationsPage() {
         setLoadError(true);
       })
       .finally(() => setLoading(false));
+
+    Promise.all([fetchPlan, fetchApps]);
   }, []);
 
   useEffect(() => {

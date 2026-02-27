@@ -12,7 +12,6 @@ import {
   getModelForPlan,
   classifyError,
   getErrorMessage,
-  isRetryable,
   type AiErrorKind,
 } from "@/lib/ai/config";
 import { trackServerEvent } from "@/lib/posthog/track";
@@ -55,58 +54,6 @@ const PLAN_LIMITS: Record<string, number> = {
   pro: 100,
   business: 500,
 };
-
-/** 指数バックオフ付きリトライで Anthropic API を呼び出す */
-async function callAnthropicWithRetry(
-  modelId: string,
-  prompt: string,
-  signal?: AbortSignal
-): Promise<Anthropic.Message> {
-  let lastError: unknown;
-
-  for (let attempt = 0; attempt <= AI_CONFIG.maxRetries; attempt++) {
-    try {
-      const message = await anthropic.messages.create(
-        {
-          model: modelId,
-          max_tokens: AI_CONFIG.maxTokens,
-          temperature: AI_CONFIG.temperature,
-          system: [
-            {
-              type: "text" as const,
-              text: SYSTEM_PROMPT,
-              cache_control: { type: "ephemeral" as const },
-            },
-          ],
-          messages: [{ role: "user", content: prompt }],
-        },
-        {
-          timeout: AI_CONFIG.timeoutMs,
-          signal,
-        }
-      );
-      return message;
-    } catch (error) {
-      lastError = error;
-      const kind = classifyError(error);
-
-      // リトライ不可能なエラー or 最終試行 → 即座にスロー
-      if (!isRetryable(kind) || attempt === AI_CONFIG.maxRetries) {
-        throw error;
-      }
-
-      // 指数バックオフ: 1秒 → 3秒
-      const delay = AI_CONFIG.retryBaseDelayMs * (attempt === 0 ? 1 : 3);
-      console.warn(
-        `[AI] Retry ${attempt + 1}/${AI_CONFIG.maxRetries} after ${delay}ms (${kind})`,
-        error instanceof Error ? error.message : error
-      );
-      await new Promise((resolve) => setTimeout(resolve, delay));
-    }
-  }
-
-  throw lastError;
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -203,109 +150,151 @@ export async function POST(request: NextRequest) {
     const plan: PlanKey = (userProfile?.plan as PlanKey) ?? "free";
     const modelId = getModelForPlan(plan);
 
-    // リトライ付き API 呼び出し（APM トレーシング）
-    const message = await withSpan(
-      'ai.generate-section',
-      {
-        resource: 'generate-section',
-        tags: {
-          'user.plan': plan,
-          'subsidy.id': subsidyId || 'jizokuka-001',
-          'ai.model': modelId,
-        },
+    // SSE ストリーミングレスポンス
+    const encoder = new TextEncoder();
+
+    const readable = new ReadableStream({
+      async start(controller) {
+        try {
+          await withSpan(
+            'ai.generate-section',
+            {
+              resource: 'generate-section',
+              tags: {
+                'user.plan': plan,
+                'subsidy.id': subsidyId || 'jizokuka-001',
+                'ai.model': modelId,
+              },
+            },
+            async () => {
+              const stream = anthropic.messages.stream(
+                {
+                  model: modelId,
+                  max_tokens: AI_CONFIG.maxTokens,
+                  temperature: AI_CONFIG.temperature,
+                  system: [
+                    {
+                      type: "text" as const,
+                      text: SYSTEM_PROMPT,
+                      cache_control: { type: "ephemeral" as const },
+                    },
+                  ],
+                  messages: [{ role: "user", content: prompt }],
+                },
+                {
+                  timeout: AI_CONFIG.timeoutMs,
+                  signal: request.signal,
+                }
+              );
+
+              stream.on('text', (text) => {
+                const data = JSON.stringify({ type: "delta", text });
+                controller.enqueue(encoder.encode(`data: ${data}\n\n`));
+              });
+
+              const finalMessage = await stream.finalMessage();
+
+              // トークン使用量・キャッシュヒット率のログ記録 (LLM Observability)
+              logger.info('anthropic.generation.complete', {
+                model: modelId,
+                input_tokens: finalMessage.usage.input_tokens,
+                output_tokens: finalMessage.usage.output_tokens,
+                cache_creation_input_tokens: finalMessage.usage.cache_creation_input_tokens ?? 0,
+                cache_read_input_tokens: finalMessage.usage.cache_read_input_tokens ?? 0,
+                subsidy_id: subsidyId || 'jizokuka-001',
+                user_plan: plan,
+                section_key: sectionKey,
+              });
+
+              // 使用量インクリメント（ストリーム完了後のみ）
+              if (userProfile) {
+                await supabase
+                  .from("user_profiles")
+                  .update({
+                    ai_generations_used: (userProfile.ai_generations_used || 0) + 1,
+                  })
+                  .eq("id", user.id);
+              }
+
+              trackServerEvent(user.id, EVENTS.AI_GENERATION_SUCCESS, {
+                model: modelId,
+                input_tokens: finalMessage.usage.input_tokens,
+                output_tokens: finalMessage.usage.output_tokens,
+                section_key: sectionKey,
+                subsidy_id: subsidyId || "jizokuka-001",
+                plan,
+              });
+
+              // done イベント送信
+              const doneData = JSON.stringify({
+                type: "done",
+                usage: {
+                  inputTokens: finalMessage.usage.input_tokens,
+                  outputTokens: finalMessage.usage.output_tokens,
+                },
+              });
+              controller.enqueue(encoder.encode(`data: ${doneData}\n\n`));
+              controller.close();
+            }
+          );
+        } catch (error) {
+          // エラー分類
+          const errorKind: AiErrorKind = classifyError(error);
+
+          // PostHog サーバーサイドエラートラッキング
+          try {
+            trackServerEvent(user.id, EVENTS.AI_GENERATION_FAILED, {
+              error_kind: errorKind,
+              error_message: error instanceof Error ? error.message : String(error),
+            });
+          } catch {
+            // エラートラッキング自体の失敗は無視
+          }
+
+          console.error("[AI] Generation failed:", {
+            kind: errorKind,
+            message: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+          });
+
+          // キャンセル時はストリームを静かに閉じる
+          if (error instanceof Error && error.name === "AbortError") {
+            controller.close();
+            return;
+          }
+
+          // エラーイベントを送信してストリームを閉じる
+          const errData = JSON.stringify({
+            type: "error",
+            message: getErrorMessage(errorKind),
+            errorKind,
+          });
+          controller.enqueue(encoder.encode(`data: ${errData}\n\n`));
+          controller.close();
+        }
       },
-      () => withSpan(
-        'anthropic.messages.create',
-        {
-          resource: 'generate-section',
-          tags: {
-            'ai.model': modelId,
-            'subsidy.id': subsidyId || 'jizokuka-001',
-            'user.plan': plan,
-          },
-        },
-        () => callAnthropicWithRetry(modelId, prompt, request.signal)
-      )
-    );
-
-    // トークン使用量・キャッシュヒット率のログ記録 (LLM Observability)
-    logger.info('anthropic.generation.complete', {
-      model: modelId,
-      input_tokens: message.usage.input_tokens,
-      output_tokens: message.usage.output_tokens,
-      cache_creation_input_tokens: message.usage.cache_creation_input_tokens ?? 0,
-      cache_read_input_tokens: message.usage.cache_read_input_tokens ?? 0,
-      subsidy_id: subsidyId || 'jizokuka-001',
-      user_plan: plan,
-      section_key: sectionKey,
     });
 
-    const textContent = message.content.find((block) => block.type === "text");
-    const content = textContent ? textContent.text : "";
-
-    // 使用量インクリメント
-    if (userProfile) {
-      await supabase
-        .from("user_profiles")
-        .update({
-          ai_generations_used: (userProfile.ai_generations_used || 0) + 1,
-        })
-        .eq("id", user.id);
-    }
-
-    trackServerEvent(user.id, EVENTS.AI_GENERATION_SUCCESS, {
-      model: modelId,
-      input_tokens: message.usage.input_tokens,
-      output_tokens: message.usage.output_tokens,
-      section_key: sectionKey,
-      subsidy_id: subsidyId || "jizokuka-001",
-      plan,
-    });
-
-    return NextResponse.json({
-      content,
-      modelUsed: modelId,
-      usage: {
-        inputTokens: message.usage.input_tokens,
-        outputTokens: message.usage.output_tokens,
+    return new Response(readable, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
       },
     });
   } catch (error) {
-    // 構造化エラーログ（将来の Sentry 対応準備）
+    // ストリーム開始前のエラー（認証・バリデーション等）
     const errorKind: AiErrorKind = classifyError(error);
 
-    // PostHog サーバーサイドエラートラッキング（userId が取れる場合のみ）
-    try {
-      const supabaseForError = await createClient();
-      const { data: { user: errorUser } } = await supabaseForError.auth.getUser();
-      if (errorUser) {
-        trackServerEvent(errorUser.id, EVENTS.AI_GENERATION_FAILED, {
-          error_kind: errorKind,
-          error_message: error instanceof Error ? error.message : String(error),
-        });
-      }
-    } catch {
-      // エラートラッキング自体の失敗は無視
-    }
-
-    console.error("[AI] Generation failed:", {
+    console.error("[AI] Pre-stream error:", {
       kind: errorKind,
       message: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
     });
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "入力内容を確認してください" },
         { status: 400 }
-      );
-    }
-
-    // キャンセル（AbortController）
-    if (error instanceof Error && error.name === "AbortError") {
-      return NextResponse.json(
-        { error: "生成がキャンセルされました", errorKind: "cancelled" },
-        { status: 499 }
       );
     }
 

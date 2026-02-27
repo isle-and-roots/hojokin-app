@@ -3,6 +3,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   serverExternalPackages: ['dd-trace'],
   compress: true,
+  experimental: {
+    optimizePackageImports: ['framer-motion', 'lucide-react'],
+  },
   async headers() {
     return [
       {

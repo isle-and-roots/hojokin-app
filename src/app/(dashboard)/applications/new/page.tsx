@@ -15,9 +15,14 @@ import {
   AlertCircle,
   Search,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { CreditDisplay } from "@/components/credit-display";
-import { UpgradeModal } from "@/components/upgrade-modal";
 import { QuotaProgressBanner } from "@/components/quota-progress-banner";
+
+const UpgradeModal = dynamic(
+  () => import("@/components/upgrade-modal").then((m) => m.UpgradeModal),
+  { ssr: false }
+);
 import { GenerationUpsellBanner } from "@/components/generation-upsell-banner";
 import { useToast } from "@/components/ui/toast";
 import { posthog } from "@/lib/posthog/client";
@@ -76,9 +81,9 @@ function NewApplicationContent() {
   const [generationCompleted, setGenerationCompleted] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Load quota info
+  // Load quota, profile, and subsidy in parallel
   useEffect(() => {
-    fetch("/api/user/plan")
+    const fetchQuota = fetch("/api/user/plan")
       .then((res) => (res.ok ? res.json() : null))
       .then((data: { userProfile?: { plan: string; ai_generations_used: number } } | null) => {
         if (!data?.userProfile) return;
@@ -91,11 +96,8 @@ function NewApplicationContent() {
         setQuotaInfo({ remaining, limit, plan });
       })
       .catch(() => { /* ignore */ });
-  }, []);
 
-  // Load profile from Supabase
-  useEffect(() => {
-    fetch("/api/profile")
+    const fetchProfile = fetch("/api/profile")
       .then((res) => res.json())
       .then((data) => {
         if (data.profile) {
@@ -107,50 +109,47 @@ function NewApplicationContent() {
         setProfileLoadError(true);
       })
       .finally(() => setLoadingProfile(false));
-  }, []);
+
+    const fetchSubsidy = subsidyId
+      ? (setLoadingSubsidy(true),
+        fetch(`/api/subsidies/${subsidyId}`)
+          .then((res) => (res.ok ? res.json() : null))
+          .then((data: SubsidyInfo | null) => {
+            if (data) {
+              setSubsidy(data);
+              setSections(
+                data.applicationSections.map((s) => ({
+                  key: s.key,
+                  title: s.title,
+                  group: s.group || "",
+                  status: "pending",
+                  content: "",
+                  userEdited: "",
+                  additionalContext: "",
+                }))
+              );
+            }
+          })
+          .finally(() => setLoadingSubsidy(false)))
+      : (setSections(
+          JIZOKUKA_SECTIONS.map((s) => ({
+            key: s.key,
+            title: s.title,
+            group: s.form,
+            status: "pending",
+            content: "",
+            userEdited: "",
+            additionalContext: "",
+          }))
+        ),
+        Promise.resolve());
+
+    Promise.all([fetchQuota, fetchProfile, fetchSubsidy]);
+  }, [subsidyId]);
 
   useEffect(() => {
     if (profileLoadError) toast.error("プロフィールの読み込みに失敗しました");
   }, [profileLoadError, toast]);
-
-  // Load subsidy and set sections
-  useEffect(() => {
-    if (subsidyId) {
-      setLoadingSubsidy(true);
-      fetch(`/api/subsidies/${subsidyId}`)
-        .then((res) => (res.ok ? res.json() : null))
-        .then((data: SubsidyInfo | null) => {
-          if (data) {
-            setSubsidy(data);
-            setSections(
-              data.applicationSections.map((s) => ({
-                key: s.key,
-                title: s.title,
-                group: s.group || "",
-                status: "pending",
-                content: "",
-                userEdited: "",
-                additionalContext: "",
-              }))
-            );
-          }
-        })
-        .finally(() => setLoadingSubsidy(false));
-    } else {
-      // Fallback: JIZOKUKA sections for backward compatibility
-      setSections(
-        JIZOKUKA_SECTIONS.map((s) => ({
-          key: s.key,
-          title: s.title,
-          group: s.form,
-          status: "pending",
-          content: "",
-          userEdited: "",
-          additionalContext: "",
-        }))
-      );
-    }
-  }, [subsidyId]);
 
   const cancelGeneration = () => {
     abortRef.current?.abort();
@@ -171,7 +170,9 @@ function NewApplicationContent() {
     abortRef.current = controller;
     setIsGenerating(true);
     setSections((prev) =>
-      prev.map((s, i) => (i === index ? { ...s, status: "generating" } : s))
+      prev.map((s, i) =>
+        i === index ? { ...s, status: "generating", content: "" } : s
+      )
     );
 
     posthog.capture(EVENTS.AI_GENERATION_STARTED, {
@@ -202,28 +203,74 @@ function NewApplicationContent() {
         throw new Error(err.error || "生成に失敗しました");
       }
 
-      const data = await res.json();
-      setSections((prev) =>
-        prev.map((s, i) =>
-          i === index
-            ? {
-                ...s,
-                status: "done",
-                content: data.content,
-                userEdited: data.content,
-              }
-            : s
-        )
-      );
-      posthog.capture(EVENTS.AI_GENERATION_COMPLETED, {
-        section_key: section.key,
-        subsidy_id: subsidyId || "jizokuka-001",
-      });
-      // Update quota info after successful generation
-      setQuotaInfo((prev) =>
-        prev ? { ...prev, remaining: Math.max(0, prev.remaining - 1) } : prev
-      );
-      setGenerationCompleted(true);
+      // SSE ストリームを消費
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error("ストリームの読み取りに失敗しました");
+
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let fullContent = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const jsonStr = line.slice(6);
+          if (!jsonStr) continue;
+
+          try {
+            const event = JSON.parse(jsonStr) as
+              | { type: "delta"; text: string }
+              | { type: "done"; usage: { inputTokens: number; outputTokens: number } }
+              | { type: "error"; message: string; errorKind: string };
+
+            if (event.type === "delta") {
+              fullContent += event.text;
+              const snapshot = fullContent;
+              setSections((prev) =>
+                prev.map((s, i) =>
+                  i === index ? { ...s, content: snapshot } : s
+                )
+              );
+            } else if (event.type === "done") {
+              const final = fullContent;
+              setSections((prev) =>
+                prev.map((s, i) =>
+                  i === index
+                    ? {
+                        ...s,
+                        status: "done",
+                        content: final,
+                        userEdited: final,
+                      }
+                    : s
+                )
+              );
+              posthog.capture(EVENTS.AI_GENERATION_COMPLETED, {
+                section_key: section.key,
+                subsidy_id: subsidyId || "jizokuka-001",
+              });
+              setQuotaInfo((prev) =>
+                prev
+                  ? { ...prev, remaining: Math.max(0, prev.remaining - 1) }
+                  : prev
+              );
+              setGenerationCompleted(true);
+            } else if (event.type === "error") {
+              throw new Error(event.message || "生成に失敗しました");
+            }
+          } catch (parseErr) {
+            if (parseErr instanceof SyntaxError) continue;
+            throw parseErr;
+          }
+        }
+      }
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") return;
       const msg = error instanceof Error ? error.message : "生成に失敗しました";
@@ -590,15 +637,40 @@ function NewApplicationContent() {
                   </div>
                 )}
                 {activeSection.status === "generating" && (
-                  <div className="text-center py-12">
-                    <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3 text-primary" />
-                    <p className="text-muted-foreground mb-3">AI生成中...</p>
-                    <button
-                      onClick={cancelGeneration}
-                      className="text-sm text-muted-foreground hover:text-foreground underline transition-colors"
-                    >
-                      キャンセル
-                    </button>
+                  <div>
+                    {activeSection.content ? (
+                      <>
+                        <textarea
+                          value={activeSection.content}
+                          readOnly
+                          rows={20}
+                          className="w-full rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 text-sm leading-relaxed resize-y"
+                        />
+                        <div className="flex items-center justify-between mt-3">
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                            AI生成中...
+                          </div>
+                          <button
+                            onClick={cancelGeneration}
+                            className="text-sm text-muted-foreground hover:text-foreground underline transition-colors"
+                          >
+                            キャンセル
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-center py-12">
+                        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3 text-primary" />
+                        <p className="text-muted-foreground mb-3">AI生成中...</p>
+                        <button
+                          onClick={cancelGeneration}
+                          className="text-sm text-muted-foreground hover:text-foreground underline transition-colors"
+                        >
+                          キャンセル
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
                 {activeSection.status === "error" && (
