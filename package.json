@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
+    "@datadog/browser-rum": "^6.28.1",
     "@polar-sh/nextjs": "^0.9.3",
     "@polar-sh/sdk": "^0.44.0",
     "@supabase/ssr": "^0.8.0",
@@ -22,6 +23,7 @@
     "@vercel/analytics": "^1.6.1",
     "@vercel/speed-insights": "^1.3.1",
     "clsx": "^2.1.1",
+    "dd-trace": "^5.87.0",
     "docx": "^9.5.3",
     "framer-motion": "^12.34.3",
     "gray-matter": "^4.0.3",

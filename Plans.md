@@ -1,14 +1,14 @@
 # Plans.md — hojokin-app
 
-Updated: 2026-02-28
+Updated: 2026-02-27
 
 ## 現状サマリー
 
-- **Phase 1〜8 全完了** — プロダクト開発完了、Vercel デプロイ済み
+- **Phase 1〜9 全完了** — プロダクト開発完了、Vercel デプロイ済み
 - 課金: Polar.sh (JPY対応済み)、payout設定完了（Identity審査中）
 - SEO: 16記事 + JSON-LD + OGメタデータ + サイトマップ + FAQページ + 補助金診断LP
-- FULL AI対応補助金: 持続化(1) + IT導入(4) + ものづくり(1) + 省力化(1) + 新事業進出(1) + 成長加速化(1) + 事業再構築(1) + 設備投資(1) + 人材育成(2) = **13件**
-- Analytics: Vercel Analytics + SpeedInsights + PostHog 28イベント + A/Bテスト基盤
+- FULL AI対応補助金: **30件** (経営革新・雇用調整 新規追加 + 17件 GENERIC→FULL昇格)
+- Analytics: Vercel Analytics + SpeedInsights + PostHog 28イベント + A/Bテスト基盤 + Datadog APM/LLM Observability/RUM
 - LP: 11セクション + ソーシャルプルーフ + 信頼性バッジ + A/Bテスト CTA
 - メール: Resend 7通ナーチャリングシーケンス + Vercel Cron 日次配信
 - プロフィール: 構造化入力（ドロップダウン + ピルボタン） + 都道府県対応
@@ -59,17 +59,21 @@ npm run build        # ✅ ビルド成功
 | Task 52: content/drafts/ 削除 | done | 重複ドラフト9ファイル削除 |
 | Task 53: console.log クリーンアップ | skip | console.log は0件（全て console.error = 本番監視用） |
 | Task 54: .gitignore 整理 | skip | *.tsbuildinfo は既に .gitignore 済み |
-| Task 55: 事業再構築 FULL AI | done | souzou-tenkan.ts 134行、JIGYOU_SAIKOUCHIKU 対応 |
+| Task 55: 事業再構築 FULL AI | done | souzou-tenkan.ts 134行→194行に拡充、JIGYOU_SAIKOUCHIKU 対応 |
 | Task 56: 設備投資 FULL AI | done | setsubi-toushi.ts 106行、SETSUBI_TOUSHI 新規型 |
 | Task 57: 人材育成 FULL AI | done | jinzai-ikusei.ts 142行、JINZAI_IKUSEI 新規型 |
+| Task 66: 経営革新 FULL AI | done | keiei-kakushin.ts 321行、KEIEI_KAKUSHIN 新規型追加 |
+| Task 67: 雇用調整 FULL AI | done | koyou-chousei.ts 85行、KOYOU_CHOUSEI 新規型追加 |
+| Task 68: 大量 GENERIC→FULL 昇格 | done | 17件の補助金データを GENERIC→FULL に昇格（jizokuka 359行・monodzukuri 249行等を大幅改善）|
 
 ### Phase 8 成果
 
 | 指標 | Before | After | 改善 |
 |------|--------|-------|------|
 | CLAUDE.md | 610行 / 33KB | 87行 / 4KB | -86% |
-| FULL AI 対応補助金 | 9件 | 13件 | +44% |
+| FULL AI 対応補助金 | 9件 | **30件** | +233% |
 | セッションあたりトークン | ~15,000 | ~3,000 | -80% |
+| SubsidyType 種類 | 13種 | **15種** | +KOYOU_CHOUSEI, KEIEI_KAKUSHIN |
 
 ### Phase 8 品質ゲート ✅
 
@@ -172,6 +176,21 @@ Phase 1〜7 の約12週間で、補助金申請AIサービス「補助金サポ�
 | 中 | ユーザー獲得KPI計測ダッシュボード | 意思決定のためのデータ基盤 |
 | ~~中~~ | ~~補助金FULL AI対応拡充（+3〜5件）~~ | ✅ Phase 8で完了 (9→13件) |
 | 低 | リファラルプログラム実装 | パートナー獲得後に優先度上昇 |
+
+---
+
+## Phase 9: Datadog 統合基盤
+
+| タスク | 状態 | 概要 |
+|--------|------|------|
+| Task 58: Datadog 統合基盤実装 | done | dd-trace + instrumentation.ts + src/lib/datadog/ + .env.local.example |
+| Task 59: APMトレーシング + LLM Observability実装 | done | generate-section/applications/checkout の withSpan ラップ + LLM メトリクスログ |
+| Task 60: Datadog RUM 実装 | done | @datadog/browser-rum インストール + DatadogRumInit コンポーネント + layout.tsx 統合 |
+| Task 61: DevLog 全Phase作成 | done | docs/devlog/phase-0〜5.md 作成、各Phase の詰まり・学びを記録 |
+| Task 62: 記事素材生成 | done | docs/article-source.md 作成 (Note記事「補助金AIアプリにDatadogを入れてわかったこと」の一次素材) |
+| Task 63: Vercel Log Drain 設定 | manual | Vercel Dashboard > Integrations > Datadog から手動設定が必要 |
+| Task 64: Datadog 環境変数設定 | manual | Vercel に DD_API_KEY / NEXT_PUBLIC_DD_CLIENT_TOKEN 等を追加 |
+| Task 65: Dashboard & Alerts 設定 | manual | Datadog UI でモニター3件 + ダッシュボード作成 (docs/devlog/phase-5.md 参照) |
 
 ---
 

@@ -17,6 +17,8 @@ import {
 } from "@/lib/ai/config";
 import { trackServerEvent } from "@/lib/posthog/track";
 import { EVENTS } from "@/lib/posthog/events";
+import { withSpan } from "@/lib/datadog";
+import { logger } from "@/lib/datadog/logger";
 
 const anthropic = new Anthropic();
 
@@ -201,8 +203,42 @@ export async function POST(request: NextRequest) {
     const plan: PlanKey = (userProfile?.plan as PlanKey) ?? "free";
     const modelId = getModelForPlan(plan);
 
-    // リトライ付き API 呼び出し
-    const message = await callAnthropicWithRetry(modelId, prompt, request.signal);
+    // リトライ付き API 呼び出し（APM トレーシング）
+    const message = await withSpan(
+      'ai.generate-section',
+      {
+        resource: 'generate-section',
+        tags: {
+          'user.plan': plan,
+          'subsidy.id': subsidyId || 'jizokuka-001',
+          'ai.model': modelId,
+        },
+      },
+      () => withSpan(
+        'anthropic.messages.create',
+        {
+          resource: 'generate-section',
+          tags: {
+            'ai.model': modelId,
+            'subsidy.id': subsidyId || 'jizokuka-001',
+            'user.plan': plan,
+          },
+        },
+        () => callAnthropicWithRetry(modelId, prompt, request.signal)
+      )
+    );
+
+    // トークン使用量・キャッシュヒット率のログ記録 (LLM Observability)
+    logger.info('anthropic.generation.complete', {
+      model: modelId,
+      input_tokens: message.usage.input_tokens,
+      output_tokens: message.usage.output_tokens,
+      cache_creation_input_tokens: message.usage.cache_creation_input_tokens ?? 0,
+      cache_read_input_tokens: message.usage.cache_read_input_tokens ?? 0,
+      subsidy_id: subsidyId || 'jizokuka-001',
+      user_plan: plan,
+      section_key: sectionKey,
+    });
 
     const textContent = message.content.find((block) => block.type === "text");
     const content = textContent ? textContent.text : "";
