@@ -224,6 +224,27 @@ npm run build        # ✅ 196ページ正常ビルド
 
 ---
 
+## Phase 11 ✅ 完了: モバイルレスポンシブ + PWA
+
+**Commit**: 0a417ab
+
+| タスク | 状態 | 概要 |
+|--------|------|------|
+| PWA マニフェスト + アイコン | done | manifest.json + 3種アイコン (192/512/180) + layout.tsx metadata |
+| /applications 一覧レスポンシブ | done | ヘッダー/行スタック化 + パディング調整 |
+| /profile レスポンシブ | done | ステップインジケーター wrap + フォームグリッド 1col→2col + 確認グリッド |
+| /applications/new レスポンシブ | done | モバイル横スクロールストリップ + lg:grid-cols-12 + loading.tsx |
+
+### Phase 11 品質ゲート ✅
+
+```bash
+npx tsc --noEmit    # ✅ 型エラーゼロ
+npm run lint         # ✅ 警告ゼロ
+npm run build        # ✅ 196ページ正常ビルド
+```
+
+---
+
 ## 12週マーケティングスケジュール
 
 - **Week 3-4** ← 現在: SNS初投稿(5本) + note.com + Search Console + はてブ
