@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIサービスを"ブラックボックス"のまま運用していた私が、1日でDatadogを導入した話</title>
+  <style>
+    /* ── リセット & ベース ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:    #2563eb;
+      --blue-lt: #eff6ff;
+      --gray:    #374151;
+      --gray-lt: #f9fafb;
+      --border:  #e5e7eb;
+      --accent:  #7c3aed;
+      --green:   #059669;
+      --orange:  #d97706;
+    }
+
+    body {
+      font-family: "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+      font-size: 15px;
+      line-height: 1.85;
+      color: var(--gray);
+      background: #fff;
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 48px 40px;
+    }
+
+    /* ── 印刷 ── */
+    @media print {
+      body { padding: 0; font-size: 13px; }
+      .no-print { display: none; }
+      h1 { font-size: 22px; }
+      h2 { font-size: 16px; }
+      pre { font-size: 11px; }
+      .page-break { page-break-before: always; }
+      a { color: inherit; text-decoration: none; }
+    }
+
+    /* ── ヘッダー ── */
+    .article-header {
+      border-left: 5px solid var(--blue);
+      padding-left: 20px;
+      margin-bottom: 40px;
+    }
+
+    .label {
+      display: inline-block;
+      background: var(--blue);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      padding: 3px 10px;
+      border-radius: 3px;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      font-size: 26px;
+      font-weight: 900;
+      line-height: 1.35;
+      color: #111827;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #6b7280;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .meta {
+      font-size: 12px;
+      color: #9ca3af;
+    }
+
+    /* ── 見出し ── */
+    h2 {
+      font-size: 20px;
+      font-weight: 800;
+      color: #111827;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 8px;
+      margin: 48px 0 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h2 .num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      background: var(--blue);
+      color: #fff;
+      border-radius: 50%;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1f2937;
+      margin: 28px 0 12px;
+      padding-left: 10px;
+      border-left: 3px solid var(--blue);
+    }
+
+    p { margin-bottom: 16px; }
+    p + p { margin-top: -4px; }
+
+    strong { color: #111827; }
+
+    /* ── 引用 ── */
+    blockquote {
+      background: var(--blue-lt);
+      border-left: 4px solid var(--blue);
+      padding: 14px 18px;
+      border-radius: 0 6px 6px 0;
+      margin: 20px 0;
+      font-style: normal;
+      color: #1e40af;
+      font-weight: 500;
+    }
+
+    /* ── コードブロック ── */
+    pre {
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 20px 24px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.65;
+      margin: 20px 0;
+      font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
+    }
+
+    code {
+      background: #f1f5f9;
+      color: #be185d;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.88em;
+      font-family: "SF Mono", "Fira Code", monospace;
+    }
+
+    pre code {
+      background: none;
+      color: inherit;
+      padding: 0;
+      font-size: inherit;
+    }
+
+    /* コメント色 */
+    pre .comment { color: #94a3b8; }
+    pre .key { color: #7dd3fc; }
+    pre .str { color: #86efac; }
+
+    /* ── テーブル ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 14px;
+    }
+
+    th {
+      background: #f1f5f9;
+      font-weight: 700;
+      text-align: left;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      color: #374151;
+    }
+
+    td {
+      padding: 9px 14px;
+      border: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    tr:nth-child(even) td { background: #f9fafb; }
+
+    /* ── インサイトカード ── */
+    .insight {
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 20px 0;
+    }
+
+    .insight-title {
+      font-weight: 700;
+      color: var(--green);
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    /* ── ステップボックス ── */
+    .step-box {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px 24px;
+      margin: 20px 0;
+      position: relative;
+    }
+
+    .step-label {
+      position: absolute;
+      top: -12px;
+      left: 16px;
+      background: var(--blue);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 3px;
+    }
+
+    /* ── フロー図 ── */
+    .flow {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin: 20px 0;
+    }
+
+    .flow-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .flow-left {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+      width: 36px;
+    }
+
+    .flow-circle {
+      width: 36px;
+      height: 36px;
+      background: var(--blue);
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .flow-line {
+      width: 2px;
+      background: var(--border);
+      flex: 1;
+      min-height: 24px;
+    }
+
+    .flow-content {
+      padding: 4px 0 24px;
+      flex: 1;
+    }
+
+    .flow-title { font-weight: 700; color: #111827; margin-bottom: 4px; }
+    .flow-desc { font-size: 13px; color: #6b7280; }
+
+    /* ── ハイライトボックス ── */
+    .highlight {
+      background: #fefce8;
+      border: 1px solid #fde68a;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 24px 0;
+    }
+
+    /* ── CTA ── */
+    .cta {
+      background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+      color: #fff;
+      border-radius: 12px;
+      padding: 32px 36px;
+      margin-top: 48px;
+      text-align: center;
+    }
+
+    .cta h3 { color: #fff; border: none; padding: 0; font-size: 18px; margin-bottom: 10px; }
+    .cta p { color: #bfdbfe; margin-bottom: 16px; }
+    .cta a {
+      display: inline-block;
+      background: #fff;
+      color: #1e40af;
+      font-weight: 700;
+      padding: 10px 24px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    /* ── Before / After ── */
+    .ba-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 20px 0;
+    }
+
+    .ba-box {
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .ba-before { background: #fef2f2; border: 1px solid #fca5a5; }
+    .ba-after  { background: #f0fdf4; border: 1px solid #86efac; }
+
+    .ba-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      margin-bottom: 10px;
+    }
+
+    .ba-before .ba-label { color: #dc2626; }
+    .ba-after  .ba-label { color: var(--green); }
+
+    .ba-box ul { list-style: none; padding: 0; }
+    .ba-box li { font-size: 13px; padding: 3px 0; }
+    .ba-before li::before { content: "✗ "; color: #dc2626; }
+    .ba-after  li::before { content: "✓ "; color: var(--green); }
+
+    /* ── フッター ── */
+    footer {
+      margin-top: 64px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: #9ca3af;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ヘッダー -->
+<header class="article-header">
+  <span class="label">個人開発 × Claude Code × 可観測性</span>
+  <h1>AIサービスを"ブラックボックス"のまま<br>運用していた私が、1日でDatadogを導入した話</h1>
+  <p class="subtitle">── Claude Codeと一緒に進めた可観測性の入れ方</p>
+  <p class="meta">hojokin-app（補助金申請AI）開発記 ／ 2026年2月</p>
+</header>
+
+<!-- イントロ -->
+<section>
+  <blockquote>「生成、なんか遅いですよね？」</blockquote>
+
+  <p>補助金申請書をAIで自動生成するSaaSを個人で作っています。ある日、テストユーザーからこの一言をもらいました。</p>
+
+  <p>画面を見ながら、自分でも「確かに」と思った。でも、<strong>何が遅いのかわからない。</strong></p>
+
+  <p>ClaudeのAPIが遅いのか、データベースが遅いのか、フロントが重いのか。ログを見ても <code>console.error</code> が散らばっているだけ。PostHogのイベントには「生成完了」が記録されているが、何秒かかったかはわからない。</p>
+
+  <div class="highlight">
+    <strong>作ったものが動いているのに、中が全く見えていなかった。</strong><br>
+    これが、Datadogを入れようと決めた瞬間です。
+  </div>
+</section>
+
+<!-- SECTION 1 -->
+<h2><span class="num">1</span>作業プロセス：「計画書を渡して、判断するだけ」</h2>
+
+<p>今回の実装で一番大事なことをお伝えします。</p>
+
+<blockquote>私が書いたコードは、ほぼゼロです。</blockquote>
+
+<p>Claude Codeというツールを使って、「こんな監視を入れたい」という計画書を作り、あとはClaudeに実装してもらいながら、私は結果を確認して「OK」か「もう少しここを直して」と判断するだけでした。</p>
+
+<h3>実際のフロー</h3>
+
+<div class="flow">
+  <div class="flow-item">
+    <div class="flow-left"><div class="flow-circle">1</div><div class="flow-line"></div></div>
+    <div class="flow-content">
+      <div class="flow-title">計画書（Plans.md）を書く</div>
+      <div class="flow-desc">「何を監視したいか」をフェーズに分けて整理。Phase 0〜5まで6段階で設計。</div>
+    </div>
+  </div>
+  <div class="flow-item">
+    <div class="flow-left"><div class="flow-circle">2</div><div class="flow-line"></div></div>
+    <div class="flow-content">
+      <div class="flow-title">Claude Codeに「これを実装して」と渡す</div>
+      <div class="flow-desc">計画書を読ませて、1フェーズずつ実装を依頼する。</div>
+    </div>
+  </div>
+  <div class="flow-item">
+    <div class="flow-left"><div class="flow-circle">3</div><div class="flow-line"></div></div>
+    <div class="flow-content">
+      <div class="flow-title">「型エラーゼロ、ビルド成功」と返ってきた内容を確認</div>
+      <div class="flow-desc">Claudeが自動でテストを実行し、品質チェックまで行う。</div>
+    </div>
+  </div>
+  <div class="flow-item">
+    <div class="flow-left"><div class="flow-circle">4</div><div class="flow-line"></div></div>
+    <div class="flow-content">
+      <div class="flow-title">承認してコミット・プッシュ</div>
+      <div class="flow-desc">コードの内容を確認して問題なければGitにコミット。</div>
+    </div>
+  </div>
+  <div class="flow-item">
+    <div class="flow-left"><div class="flow-circle">5</div></div>
+    <div class="flow-content">
+      <div class="flow-title">次のフェーズへ</div>
+      <div class="flow-desc">この繰り返しで、APM・LLM可視化・フロントエンド監視の3つが半日で完成。</div>
+    </div>
+  </div>
+</div>
+
+<h3>計画書の作り方のポイント：フェーズに分ける</h3>
+
+<table>
+  <thead>
+    <tr><th>フェーズ</th><th>内容</th><th>所要時間</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Phase 0</td><td>環境セットアップ（ライブラリ追加・設定ファイル）</td><td>30分</td></tr>
+    <tr><td>Phase 1</td><td>ログをDatadogに流す（Vercel Log Drain）</td><td>5分</td></tr>
+    <tr><td>Phase 2</td><td>APIの速度を計測する（APM）</td><td>1時間</td></tr>
+    <tr><td>Phase 3</td><td>AIの呼び出しを可視化する（LLM Observability）</td><td>30分</td></tr>
+    <tr><td>Phase 4</td><td>フロントエンドのユーザー体験を計測する（RUM）</td><td>20分</td></tr>
+    <tr><td>Phase 5</td><td>ダッシュボードとアラート設定</td><td>UI操作のみ</td></tr>
+  </tbody>
+</table>
+
+<p><strong>「全部やって」より「Phase 2を実装して」の方が、Claudeへの指示が格段に精度アップします。</strong></p>
+
+<!-- SECTION 2 -->
+<div class="page-break"></div>
+<h2><span class="num">2</span>考え方：「何が見えていないか」から逆算する</h2>
+
+<h3>見えないことへの恐怖</h3>
+
+<p>AIサービスを作るとき、多くの人が「動いてるからOK」で終わらせます。私もそうでした。でも、考えてみると怖い。</p>
+
+<div class="ba-grid">
+  <div class="ba-box ba-before">
+    <div class="ba-label">BEFORE（見えていなかった世界）</div>
+    <ul>
+      <li>エラーが起きても気づかない</li>
+      <li>遅くなっても気づかない</li>
+      <li>コストが増えても気づかない</li>
+      <li>何が原因か特定できない</li>
+    </ul>
+  </div>
+  <div class="ba-box ba-after">
+    <div class="ba-label">AFTER（見えるようになった世界）</div>
+    <ul>
+      <li>エラーをSlackに即通知</li>
+      <li>レイテンシーをグラフで把握</li>
+      <li>トークンコストを日次で確認</li>
+      <li>ボトルネックをミリ秒単位で特定</li>
+    </ul>
+  </div>
+</div>
+
+<p>「見えない」は「安全」ではなく、「見えていないだけ」です。</p>
+
+<h3>「何を見たいか」を先に決める</h3>
+
+<p>Datadogを入れる前に、自分に問いかけました。</p>
+
+<blockquote>「今、一番知りたいことは何か？」</blockquote>
+
+<p>答えはシンプルでした。</p>
+
+<div class="insight">
+  <div class="insight-title">✦ 見たかった3つのこと</div>
+  <ol style="padding-left: 20px;">
+    <li style="margin-bottom: 8px;"><strong>Claude APIの呼び出しで何秒かかっているか</strong><br><small style="color: #6b7280;">「遅い」の原因がAPIなのかDBなのかを切り分けたかった</small></li>
+    <li style="margin-bottom: 8px;"><strong>エラーが起きているなら、どこで・何が原因か</strong><br><small style="color: #6b7280;">ユーザーが諦めた瞬間を知りたかった</small></li>
+    <li><strong>プロンプトキャッシュは実際に効いているか</strong><br><small style="color: #6b7280;">コスト削減機能が本当に機能しているか確かめたかった</small></li>
+  </ol>
+</div>
+
+<div class="highlight">
+  <strong>「全部見たい」から始めると迷う。「これだけ見えればいい」から始めると動ける。</strong>
+</div>
+
+<!-- SECTION 3 -->
+<h2><span class="num">3</span>進め方：「最初の一歩」は5分でできる</h2>
+
+<div class="step-box">
+  <span class="step-label">STEP 1 — 5分でできる</span>
+  <h3 style="border: none; padding: 0; margin: 12px 0 10px;">VercelのLog Drainを設定する</h3>
+  <p>Vercelを使っているなら、コードを1行も書かずに今日からログをDatadogに流せます。</p>
+  <pre>Vercel Dashboard
+  → プロジェクト選択
+  → Integrations
+  → "Datadog" を検索
+  → API Key を入力して保存</pre>
+  <p>これだけで、<code>console.log</code> の内容がすべてDatadogに届くようになります。</p>
+</div>
+
+<div class="step-box" style="margin-top: 24px;">
+  <span class="step-label">STEP 2 — ログを「構造化」する</span>
+  <p>次は、ログをJSON形式にするだけ。変更前後の比較：</p>
+  <pre><span class="comment">// Before（読みにくい）</span>
+console.error("AI generation failed:", error.message)
+
+<span class="comment">// After（Datadogが自動解析）</span>
+logger.error('ai.generation.failed', {
+  <span class="key">error</span>: <span class="str">error.message</span>,
+  <span class="key">user_plan</span>: <span class="str">plan</span>,
+  <span class="key">subsidy_id</span>: <span class="str">subsidyId</span>,
+})</pre>
+  <p>Datadogはこれを自動解析して「プランごとのエラー率」「種別ごとの失敗数」を集計できるようになります。</p>
+</div>
+
+<div class="step-box" style="margin-top: 24px;">
+  <span class="step-label">STEP 3 — APIの速度を計測する</span>
+  <p>コードに <code>withSpan</code> を1つ追加するだけで、その処理の時間が記録されます。</p>
+  <pre><span class="comment">// AI生成APIに追加した例</span>
+const message = await withSpan(
+  <span class="str">'anthropic.messages.create'</span>,
+  { tags: { <span class="key">user_plan</span>: plan, <span class="key">subsidy_id</span>: subsidyId } },
+  () => callAnthropicWithRetry(modelId, prompt)
+)</pre>
+  <p>これで「anthropic.messages.create が何秒かかったか」がグラフになります。</p>
+</div>
+
+<!-- SECTION 4 -->
+<div class="page-break"></div>
+<h2><span class="num">4</span>実装して「見えた」こと</h2>
+
+<h3>AI生成のレイテンシー内訳</h3>
+
+<p>APMのウォーターフォール表示で、全体8秒の内訳が判明しました。</p>
+
+<table>
+  <thead>
+    <tr><th>処理</th><th>所要時間</th><th>改善余地</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>認証チェック（Supabase）</td><td>0.3秒</td><td>問題なし</td></tr>
+    <tr><td>クォータチェック（DB）</td><td>0.2秒</td><td>問題なし</td></tr>
+    <tr>
+      <td><strong>Claude API呼び出し</strong></td>
+      <td><strong>7.5秒</strong></td>
+      <td><strong>← ここが「遅い」の正体</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="insight">
+  <div class="insight-title">✦ 得られた洞察</div>
+  <p>「AIが遅い」の正体は、Claude APIへの待ち時間。インフラ側で改善できることはほとんどない、という事実がわかった。<br>つまり「遅い」への対応は「高速モデルへの切り替え検討」か「プロンプト最適化」のどちらか——という判断ができるようになった。</p>
+</div>
+
+<h3>Prompt Cachingのコスト削減効果</h3>
+
+<pre>{
+  <span class="key">"input_tokens"</span>: 1250,
+  <span class="key">"cache_read_input_tokens"</span>: 600,   <span class="comment">← キャッシュから読まれた分</span>
+  <span class="key">"cache_creation_input_tokens"</span>: 0
+}</pre>
+
+<p>キャッシュヒット率50%で、<strong>月のAPIコストが約30%削減</strong>されていることが確認できました。「設定してあるつもり」が「本当に効いている」に変わった。</p>
+
+<h3>フロントエンドのボトルネック発見</h3>
+
+<p>RUM（Real User Monitoring）を入れると、Core Web VitalsがPC/スマホ別に見えます。</p>
+
+<table>
+  <thead>
+    <tr><th>指標</th><th>Desktop</th><th>Mobile</th><th>原因</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>LCP（最大コンテンツ描画）</td>
+      <td>1.8秒</td>
+      <td><strong style="color: #dc2626;">4.2秒</strong></td>
+      <td>日本語フォント（Noto Sans JP）のロード</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="highlight">
+  これは<strong>RUMを入れるまで完全に気づいていなかった</strong>。モバイルユーザーが4秒待たされていたことを、ユーザーレポートなしに発見できた。
+</div>
+
+<!-- SECTION 5 -->
+<h2><span class="num">5</span>Claude Codeと一緒に作る、という働き方</h2>
+
+<p>最後に、一番伝えたいことを書きます。</p>
+
+<p>今回の実装で、私が実際にやったことは：</p>
+
+<ol style="padding-left: 24px; margin-bottom: 16px;">
+  <li style="margin-bottom: 8px;">「こんな監視を入れたい」という計画書を書いた</li>
+  <li style="margin-bottom: 8px;">Claude Codeに渡した</li>
+  <li style="margin-bottom: 8px;">「実装完了、型エラーゼロ、ビルド成功」と返ってきた内容を確認した</li>
+  <li>コミット・プッシュした</li>
+</ol>
+
+<blockquote>コードを「書いた」というより、「承認した」という感覚に近かった。</blockquote>
+
+<p>これは怠けているのではなく、<strong>「何を作るか」の判断に集中できている</strong>ということだと思っています。</p>
+
+<h3>個人開発者にとっての意味</h3>
+
+<p>監視・可観測性はこれまで「大企業がやること」でした。専任のSREチームがいないと、DatadogもNew Relicも「コストに見合わない」と後回しにされてきた。</p>
+
+<p>でも、Claude Codeを使えば：</p>
+
+<div class="insight">
+  <div class="insight-title">✦ Claude Codeが変えた3つのこと</div>
+  <ul style="list-style: none; padding: 0;">
+    <li style="padding: 6px 0; border-bottom: 1px solid #d1fae5;">📘 設定の仕方を全部知らなくていい（Claudeが教えてくれる）</li>
+    <li style="padding: 6px 0; border-bottom: 1px solid #d1fae5;">✍️ 全部自分で書かなくていい（Claudeが書いてくれる）</li>
+    <li style="padding: 6px 0;">💬 詰まったときに相談できる（Claudeが一緒に考えてくれる）</li>
+  </ul>
+</div>
+
+<div class="highlight">
+  <strong>「技術力がない」ではなく、「判断力があれば作れる時代」になっています。</strong>
+</div>
+
+<!-- まとめ -->
+<h2><span class="num">6</span>まとめ：まず「Log Drain」から始めてみて</h2>
+
+<p>今日から試せる最初の一歩：</p>
+
+<pre>Vercel Dashboard → Integrations → Datadog → API Key 設定</pre>
+
+<p>これだけで「何も見えない」から「ログが見える」に変わります。</p>
+
+<p>そこから先は、「見えたものを見て、次に何が知りたいか」を考えるだけ。</p>
+
+<blockquote>作ったものを「見える化」することは、ユーザーへの責任でもある。</blockquote>
+
+<p>私はそう考えて、今日も補助金AIサービスを改善し続けています。</p>
+
+<!-- CTA -->
+<div class="cta">
+  <h3>補助金申請サポートを試してみる</h3>
+  <p>持続化補助金・IT導入補助金など100件以上の補助金申請書をAIが自動生成。<br>まずは無料でお試しください。</p>
+  <a href="https://hojokin-app-beta.vercel.app" target="_blank">無料で試してみる →</a>
+</div>
+
+<footer>
+  <p>© 2026 ISLE &amp; ROOTS 合同会社 ／ 補助金申請サポート</p>
+  <p style="margin-top: 4px;">この記事は Claude Code を使って実装しながら記録した内容をもとに作成されました。</p>
+</footer>
+
+<!-- 印刷ボタン（Web表示時のみ） -->
+<div class="no-print" style="position: fixed; bottom: 24px; right: 24px;">
+  <button onclick="window.print()" style="
+    background: #2563eb; color: #fff; border: none;
+    padding: 12px 20px; border-radius: 8px; cursor: pointer;
+    font-size: 14px; font-weight: 700; box-shadow: 0 4px 12px rgba(37,99,235,.4);
+  ">
+    📄 PDFで保存
+  </button>
+</div>
+
+</body>
+</html>
