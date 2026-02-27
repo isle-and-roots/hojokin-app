@@ -1,5 +1,9 @@
 export async function register() {
-  if (process.env.NEXT_RUNTIME === 'nodejs') {
+  // ビルドフェーズ中は初期化しない（Vercel build sandbox クラッシュ防止）
+  if (
+    process.env.NEXT_RUNTIME === 'nodejs' &&
+    process.env.NEXT_PHASE !== 'phase-production-build'
+  ) {
     const tracer = await import('dd-trace')
     tracer.default.init({
       service: process.env.DD_SERVICE || 'hojokin-app',
