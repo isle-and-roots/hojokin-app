@@ -92,7 +92,10 @@ export function PricingPageClient() {
       const res = await fetch("/api/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: planKey }),
+        body: JSON.stringify({
+          plan: planKey,
+          billingInterval: isAnnual ? "annual" : "monthly",
+        }),
       });
 
       const data = await res.json();

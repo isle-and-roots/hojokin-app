@@ -14,7 +14,7 @@ npx vitest <file>    # 単一テストファイル実行
 npx tsc --noEmit     # 型チェックのみ（出力なし）
 ```
 
-**コミット前の品質ゲート:** `npx tsc --noEmit && npm run lint && npm run build`
+**コミット前の品質ゲート:** `npx tsc --noEmit && npm run lint && npm run db:check && npm run build`
 
 ## アーキテクチャ概要
 
@@ -63,6 +63,22 @@ npx tsc --noEmit     # 型チェックのみ（出力なし）
 - **API レスポンス:** エラー時は `{ error: string }` + 適切な HTTP ステータス。ユーザー向けエラーメッセージは日本語。
 - **認証チェックパターン:** 保護 API ルートは全て `supabase.auth.getUser()` を最初に呼び、ユーザーがいなければ 401 を返す。
 - **`any` 型禁止** — `unknown` + 型ガードを使用。`// @ts-ignore` 禁止。`dangerouslySetInnerHTML` 禁止。
+
+## DB Schema Safety
+
+**背景:** コードが参照するカラムが DB に存在しない障害を防止するためのプロセス。
+
+**カラム追加/変更フロー:**
+1. `supabase/migrations/` にマイグレーション SQL 作成
+2. `supabase db push` で本番 DB に適用
+3. `scripts/check-schema.ts` の `EXPECTED_SCHEMA` を更新
+4. `npm run db:check` で整合性を確認
+5. デプロイ
+
+**ルール:**
+- DB カラム参照は `src/lib/db/` に集約する（API route で直接 `.select("column")` しない）
+- 品質ゲートに `npm run db:check` を含める（CI でも手動でも必ず実行）
+- `/api/health` エンドポイントが 6 時間ごとにカラム存在を自動検証
 
 ---
 

@@ -30,6 +30,9 @@ process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-role-key";
 process.env.POLAR_STARTER_PRODUCT_ID = "prod_starter_123";
 process.env.POLAR_PRO_PRODUCT_ID = "prod_pro_456";
 process.env.POLAR_BUSINESS_PRODUCT_ID = "prod_business_789";
+process.env.POLAR_STARTER_ANNUAL_PRODUCT_ID = "prod_starter_annual_123";
+process.env.POLAR_PRO_ANNUAL_PRODUCT_ID = "prod_pro_annual_456";
+process.env.POLAR_BUSINESS_ANNUAL_PRODUCT_ID = "prod_business_annual_789";
 
 // ── Webhooks mock: コールバックを捕捉 ──
 type WebhookHandlers = Record<string, (payload: unknown) => Promise<void>>;
@@ -89,6 +92,7 @@ function makeSubscriptionPayload(overrides: Record<string, unknown> = {}) {
       productId: "prod_pro_456",
       customerId: "cust_001",
       status: "active",
+      recurringInterval: "month",
       modifiedAt: new Date("2025-01-01"),
       customer: {
         externalId: "user_123",
@@ -112,6 +116,7 @@ describe("Webhook handlers", () => {
         plan: "pro",
         polar_customer_id: "cust_001",
         polar_subscription_id: "sub_001",
+        subscription_interval: "monthly",
       });
       expect(mockEq).toHaveBeenCalledWith("id", "user_123");
     });
@@ -144,7 +149,7 @@ describe("Webhook handlers", () => {
       await capturedHandlers.onSubscriptionCreated(payload);
 
       expect(mockUpdate).toHaveBeenCalledWith(
-        expect.objectContaining({ plan: "starter" })
+        expect.objectContaining({ plan: "starter", subscription_interval: "monthly" })
       );
     });
 
@@ -156,7 +161,36 @@ describe("Webhook handlers", () => {
       await capturedHandlers.onSubscriptionCreated(payload);
 
       expect(mockUpdate).toHaveBeenCalledWith(
-        expect.objectContaining({ plan: "business" })
+        expect.objectContaining({ plan: "business", subscription_interval: "monthly" })
+      );
+    });
+
+    it("年額 Product ID で正しいプランと interval を設定", async () => {
+      const payload = makeSubscriptionPayload({
+        productId: "prod_pro_annual_456",
+        recurringInterval: "year",
+      });
+
+      await capturedHandlers.onSubscriptionCreated(payload);
+
+      expect(mockUpdate).toHaveBeenCalledWith({
+        plan: "pro",
+        polar_customer_id: "cust_001",
+        polar_subscription_id: "sub_001",
+        subscription_interval: "annual",
+      });
+    });
+
+    it("Starter 年額 Product ID で starter + annual を設定", async () => {
+      const payload = makeSubscriptionPayload({
+        productId: "prod_starter_annual_123",
+        recurringInterval: "year",
+      });
+
+      await capturedHandlers.onSubscriptionCreated(payload);
+
+      expect(mockUpdate).toHaveBeenCalledWith(
+        expect.objectContaining({ plan: "starter", subscription_interval: "annual" })
       );
     });
   });
@@ -174,6 +208,7 @@ describe("Webhook handlers", () => {
         plan: "business",
         polar_customer_id: "cust_001",
         polar_subscription_id: "sub_001",
+        subscription_interval: "monthly",
       });
     });
 
@@ -186,8 +221,25 @@ describe("Webhook handlers", () => {
       await capturedHandlers.onSubscriptionUpdated(payload);
 
       expect(mockUpdate).toHaveBeenCalledWith(
-        expect.objectContaining({ plan: "starter" })
+        expect.objectContaining({ plan: "starter", subscription_interval: "monthly" })
       );
+    });
+
+    it("年額プランへの変更を正しく反映", async () => {
+      const payload = makeSubscriptionPayload({
+        status: "active",
+        productId: "prod_pro_annual_456",
+        recurringInterval: "year",
+      });
+
+      await capturedHandlers.onSubscriptionUpdated(payload);
+
+      expect(mockUpdate).toHaveBeenCalledWith({
+        plan: "pro",
+        polar_customer_id: "cust_001",
+        polar_subscription_id: "sub_001",
+        subscription_interval: "annual",
+      });
     });
 
     it("past_due 状態で free に戻す", async () => {
@@ -265,6 +317,23 @@ describe("Webhook handlers", () => {
         plan: "pro",
         polar_customer_id: "cust_001",
         polar_subscription_id: "sub_001",
+        subscription_interval: "monthly",
+      });
+    });
+
+    it("年額アクティベーション時に annual interval を設定", async () => {
+      const payload = makeSubscriptionPayload({
+        productId: "prod_business_annual_789",
+        recurringInterval: "year",
+      });
+
+      await capturedHandlers.onSubscriptionActive(payload);
+
+      expect(mockUpdate).toHaveBeenCalledWith({
+        plan: "business",
+        polar_customer_id: "cust_001",
+        polar_subscription_id: "sub_001",
+        subscription_interval: "annual",
       });
     });
   });

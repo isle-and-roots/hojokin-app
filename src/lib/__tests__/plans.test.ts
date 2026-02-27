@@ -5,6 +5,9 @@ beforeAll(() => {
   process.env.POLAR_STARTER_PRODUCT_ID = "prod_starter_123";
   process.env.POLAR_PRO_PRODUCT_ID = "prod_pro_456";
   process.env.POLAR_BUSINESS_PRODUCT_ID = "prod_business_789";
+  process.env.POLAR_STARTER_ANNUAL_PRODUCT_ID = "prod_starter_annual_123";
+  process.env.POLAR_PRO_ANNUAL_PRODUCT_ID = "prod_pro_annual_456";
+  process.env.POLAR_BUSINESS_ANNUAL_PRODUCT_ID = "prod_business_annual_789";
 });
 
 describe("plans", () => {
@@ -32,6 +35,37 @@ describe("plans", () => {
     it("空文字列 → null を返す（free の productId は空）", async () => {
       const { getPlanKeyByProductId } = await import("@/lib/plans");
       expect(getPlanKeyByProductId("")).toBeNull();
+    });
+
+    it("Starter 年額 Product ID → starter を返す", async () => {
+      const { getPlanKeyByProductId } = await import("@/lib/plans");
+      expect(getPlanKeyByProductId("prod_starter_annual_123")).toBe("starter");
+    });
+
+    it("Pro 年額 Product ID → pro を返す", async () => {
+      const { getPlanKeyByProductId } = await import("@/lib/plans");
+      expect(getPlanKeyByProductId("prod_pro_annual_456")).toBe("pro");
+    });
+
+    it("Business 年額 Product ID → business を返す", async () => {
+      const { getPlanKeyByProductId } = await import("@/lib/plans");
+      expect(getPlanKeyByProductId("prod_business_annual_789")).toBe("business");
+    });
+  });
+
+  describe("PLAN_LIST annualProductId", () => {
+    it("有料プランに annualProductId が設定されている", async () => {
+      const { PLAN_LIST } = await import("@/lib/plans");
+      const paidPlans = PLAN_LIST.filter((p) => p.key !== "free");
+      for (const plan of paidPlans) {
+        expect(plan.annualProductId).toBeTruthy();
+      }
+    });
+
+    it("free プランの annualProductId は空", async () => {
+      const { PLAN_LIST } = await import("@/lib/plans");
+      const free = PLAN_LIST.find((p) => p.key === "free");
+      expect(free?.annualProductId).toBe("");
     });
   });
 

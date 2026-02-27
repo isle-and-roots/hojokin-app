@@ -6,6 +6,7 @@ export interface PlanInfo {
   price: number;
   annualPrice: number | null;
   productId: string;
+  annualProductId: string;
   aiLimit: number;
   docxExport: boolean;
   maxApplications: number;
@@ -21,6 +22,7 @@ export const PLAN_LIST: PlanInfo[] = [
     price: 0,
     annualPrice: null,
     productId: "",
+    annualProductId: "",
     aiLimit: 3,
     docxExport: false,
     maxApplications: 1,
@@ -38,6 +40,7 @@ export const PLAN_LIST: PlanInfo[] = [
     price: 980,
     annualPrice: 9800,
     productId: process.env.POLAR_STARTER_PRODUCT_ID ?? "",
+    annualProductId: process.env.POLAR_STARTER_ANNUAL_PRODUCT_ID ?? "",
     aiLimit: 15,
     docxExport: true,
     maxApplications: 5,
@@ -56,6 +59,7 @@ export const PLAN_LIST: PlanInfo[] = [
     price: 2980,
     annualPrice: 29800,
     productId: process.env.POLAR_PRO_PRODUCT_ID ?? "",
+    annualProductId: process.env.POLAR_PRO_ANNUAL_PRODUCT_ID ?? "",
     aiLimit: 100,
     docxExport: true,
     maxApplications: -1,
@@ -75,6 +79,7 @@ export const PLAN_LIST: PlanInfo[] = [
     price: 9800,
     annualPrice: 88200,
     productId: process.env.POLAR_BUSINESS_PRODUCT_ID ?? "",
+    annualProductId: process.env.POLAR_BUSINESS_ANNUAL_PRODUCT_ID ?? "",
     aiLimit: 500,
     docxExport: true,
     maxApplications: -1,
@@ -91,9 +96,13 @@ export const PLAN_LIST: PlanInfo[] = [
   },
 ];
 
-/** Polar Product ID → PlanKey 逆引き（Webhook用） */
+/** Polar Product ID → PlanKey 逆引き（Webhook用、月額・年額両方対応） */
 export function getPlanKeyByProductId(productId: string): PlanKey | null {
-  const plan = PLAN_LIST.find((p) => p.productId && p.productId === productId);
+  const plan = PLAN_LIST.find(
+    (p) =>
+      (p.productId && p.productId === productId) ||
+      (p.annualProductId && p.annualProductId === productId)
+  );
   return plan?.key ?? null;
 }
 

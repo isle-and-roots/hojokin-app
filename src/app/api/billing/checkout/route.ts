@@ -36,11 +36,18 @@ export async function POST(request: Request) {
       );
     }
 
-    const { plan } = await request.json();
+    const { plan, billingInterval } = await request.json();
 
     if (!["starter", "pro", "business"].includes(plan)) {
       return NextResponse.json(
         { error: "無効なプランです" },
+        { status: 400 }
+      );
+    }
+
+    if (billingInterval && !["monthly", "annual"].includes(billingInterval)) {
+      return NextResponse.json(
+        { error: "無効な請求間隔です" },
         { status: 400 }
       );
     }
@@ -53,21 +60,31 @@ export async function POST(request: Request) {
       );
     }
 
+    const isAnnual = billingInterval === "annual";
+    if (isAnnual && !planInfo.annualProductId) {
+      return NextResponse.json(
+        { error: "年額プランは現在準備中です" },
+        { status: 400 }
+      );
+    }
+
+    const productId = isAnnual ? planInfo.annualProductId : planInfo.productId;
     const origin = request.headers.get("origin") || "http://localhost:3000";
 
     const polar = getPolar();
     const checkout = await polar.checkouts.create({
-      products: [planInfo.productId],
+      products: [productId],
       externalCustomerId: user.id,
       successUrl: `${origin}/pricing?success=true`,
-      metadata: { plan },
+      metadata: { plan, billingInterval: billingInterval ?? "monthly" },
       currency: "jpy",
       ...(user.email ? { customerEmail: user.email } : {}),
     });
 
     trackServerEvent(user.id, EVENTS.CHECKOUT_INITIATED, {
       plan,
-      product_id: planInfo.productId,
+      billing_interval: billingInterval ?? "monthly",
+      product_id: productId,
     });
 
     return NextResponse.json({ url: checkout.url });

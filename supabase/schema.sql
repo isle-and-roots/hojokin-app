@@ -20,6 +20,8 @@ CREATE TABLE user_profiles (
   plan TEXT NOT NULL DEFAULT 'free' CHECK (plan IN ('free', 'starter', 'pro', 'business')),
   polar_customer_id TEXT,
   polar_subscription_id TEXT,
+  subscription_interval TEXT NOT NULL DEFAULT 'monthly'
+    CHECK (subscription_interval IN ('monthly', 'annual')),
   ai_generations_used INTEGER NOT NULL DEFAULT 0,
   ai_generations_reset_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

@@ -29,6 +29,11 @@ function markEventProcessed(eventId: string): boolean {
   return true;
 }
 
+/** Polar の recurringInterval ("month"|"year") → DB 値 ("monthly"|"annual") */
+function resolveInterval(data: { recurringInterval?: string }): "monthly" | "annual" {
+  return data.recurringInterval === "year" ? "annual" : "monthly";
+}
+
 export const POST = Webhooks({
   webhookSecret: getPolarWebhookSecret(),
 
@@ -51,12 +56,15 @@ export const POST = Webhooks({
       return;
     }
 
+    const interval = resolveInterval(payload.data);
+
     const { error } = await supabaseAdmin
       .from("user_profiles")
       .update({
         plan: planKey,
         polar_customer_id: payload.data.customerId,
         polar_subscription_id: payload.data.id,
+        subscription_interval: interval,
       })
       .eq("id", userId);
 
@@ -66,6 +74,7 @@ export const POST = Webhooks({
       trackServerEvent(userId, EVENTS.SUBSCRIPTION_CREATED, {
         plan: planKey,
         product_id: productId,
+        billing_interval: interval,
       });
       identifyUser(userId, { plan: planKey });
     }
@@ -84,12 +93,15 @@ export const POST = Webhooks({
     const planKey = getPlanKeyByProductId(productId);
     if (!planKey) return;
 
+    const interval = resolveInterval(payload.data);
+
     const { error } = await supabaseAdmin
       .from("user_profiles")
       .update({
         plan: planKey,
         polar_customer_id: payload.data.customerId,
         polar_subscription_id: payload.data.id,
+        subscription_interval: interval,
       })
       .eq("id", userId);
 
@@ -113,12 +125,15 @@ export const POST = Webhooks({
       const planKey = getPlanKeyByProductId(productId);
 
       if (planKey) {
+        const interval = resolveInterval(payload.data);
+
         const { error } = await supabaseAdmin
           .from("user_profiles")
           .update({
             plan: planKey,
             polar_customer_id: payload.data.customerId,
             polar_subscription_id: payload.data.id,
+            subscription_interval: interval,
           })
           .eq("id", userId);
 
