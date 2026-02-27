@@ -30,6 +30,16 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://hojokin.isle-and-ro
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/icons/icon-192x192.png",
+    apple: "/icons/apple-touch-icon.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "補助金サポート",
+  },
   title: {
     default: "補助金申請サポート | ISLE & ROOTS",
     template: "%s | 補助金申請サポート",

@@ -33,7 +33,7 @@ export default function NewApplicationPage() {
   return (
     <Suspense
       fallback={
-        <div className="p-8 max-w-3xl">
+        <div className="p-4 sm:p-8 max-w-3xl">
           <div className="rounded-xl border border-border bg-card p-12 text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3 text-primary" />
             <p className="text-muted-foreground">読み込み中...</p>
@@ -336,7 +336,7 @@ function NewApplicationContent() {
 
   if (loadingSubsidy || loadingProfile) {
     return (
-      <div className="p-8 max-w-3xl">
+      <div className="p-4 sm:p-8 max-w-3xl">
         <div className="rounded-xl border border-border bg-card p-12 text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3 text-primary" />
           <p className="text-muted-foreground">補助金情報を読み込み中...</p>
@@ -347,8 +347,8 @@ function NewApplicationContent() {
 
   if (!profile) {
     return (
-      <div className="p-8 max-w-3xl">
-        <div className="rounded-xl border border-border bg-card p-8 text-center">
+      <div className="p-4 sm:p-8 max-w-3xl">
+        <div className="rounded-xl border border-border bg-card p-4 sm:p-8 text-center">
           <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-lg font-semibold mb-2">
             企業プロフィールが未登録です
@@ -371,7 +371,7 @@ function NewApplicationContent() {
   // If no subsidyId and no subsidy loaded, show subsidy selector
   if (!subsidyId && !subsidy) {
     return (
-      <div className="p-8 max-w-3xl">
+      <div className="p-4 sm:p-8 max-w-3xl">
         <div className="mb-6">
           <h1 className="text-2xl font-bold">新規申請を作成</h1>
           <p className="text-muted-foreground mt-1">
@@ -439,8 +439,8 @@ function NewApplicationContent() {
     subsidy?.name ?? "小規模事業者持続化補助金";
 
   return (
-    <div className="p-8">
-      <div className="mb-6 flex items-center justify-between">
+    <div className="p-4 sm:p-8">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">
             {subsidy?.nameShort ?? "持続化補助金"} 申請書作成
@@ -449,7 +449,7 @@ function NewApplicationContent() {
             AIが各セクションの下書きを生成します。生成後に編集できます。
           </p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
           <CreditDisplay
             variant="compact"
             onQuotaLoaded={(remaining) => setQuotaExhausted(remaining === 0)}
@@ -541,9 +541,37 @@ function NewApplicationContent() {
         </div>
       )}
 
-      <div className="grid grid-cols-12 gap-6">
-        {/* セクションリスト */}
-        <div className="col-span-4 space-y-4">
+      {/* モバイル用セクション横スクロールストリップ */}
+      <div className="lg:hidden mb-4 -mx-4 sm:-mx-8 px-4 sm:px-8 overflow-x-auto">
+        <div className="flex gap-2 pb-2">
+          {sections.map((section, i) => (
+            <button
+              key={section.key}
+              onClick={() => setActiveSectionIndex(i)}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium whitespace-nowrap transition-colors ${
+                activeSectionIndex === i
+                  ? "bg-primary/10 text-primary"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {section.status === "done" ? (
+                <Check className="h-3.5 w-3.5 text-green-600 shrink-0" />
+              ) : section.status === "generating" ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-primary shrink-0" />
+              ) : section.status === "error" ? (
+                <AlertCircle className="h-3.5 w-3.5 text-destructive shrink-0" />
+              ) : (
+                <div className="h-3.5 w-3.5 rounded-full border border-border shrink-0" />
+              )}
+              {section.title}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* セクションリスト（デスクトップのみ） */}
+        <div className="hidden lg:block lg:col-span-4 space-y-4">
           {Object.entries(groups).map(([groupName, groupSections]) => (
             <div key={groupName}>
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
@@ -580,7 +608,7 @@ function NewApplicationContent() {
         </div>
 
         {/* セクションエディタ */}
-        <div className="col-span-8">
+        <div className="lg:col-span-8">
           {activeSection && (
             <div className="rounded-xl border border-border bg-card">
               <div className="flex items-center justify-between border-b border-border px-6 py-4">

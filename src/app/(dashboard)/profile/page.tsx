@@ -155,7 +155,7 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="p-8 max-w-3xl">
+      <div className="p-4 sm:p-8 max-w-3xl">
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
@@ -164,7 +164,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="p-8 max-w-3xl">
+    <div className="p-4 sm:p-8 max-w-3xl">
       <div className="mb-8">
         <h1 className="text-2xl font-bold">企業プロフィール</h1>
         <p className="text-muted-foreground mt-1">
@@ -211,7 +211,7 @@ export default function ProfilePage() {
       )}
 
       {/* ステップインジケーター */}
-      <div className="flex items-center gap-2 mb-8">
+      <div className="flex flex-wrap items-center gap-2 mb-8">
         {STEPS.map((step, i) => (
           <div key={step.key} className="flex items-center gap-2">
             <button
@@ -227,10 +227,10 @@ export default function ProfilePage() {
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-current/10 text-xs">
                 {i + 1}
               </span>
-              {step.label}
+              <span className="hidden sm:inline">{step.label}</span>
             </button>
             {i < STEPS.length - 1 && (
-              <div className="h-px w-8 bg-border" />
+              <div className="hidden sm:block h-px w-8 bg-border" />
             )}
           </div>
         ))}
@@ -241,7 +241,7 @@ export default function ProfilePage() {
         {currentStep === "basic" && (
           <div className="space-y-4">
             <h2 className="text-lg font-semibold mb-4">基本情報</h2>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">
                   事業者名 *
@@ -266,7 +266,7 @@ export default function ProfilePage() {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">都道府県</label>
                 <select
@@ -290,7 +290,7 @@ export default function ProfilePage() {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">
                   電話番号
@@ -314,7 +314,7 @@ export default function ProfilePage() {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">
                   業種 *
@@ -467,7 +467,7 @@ export default function ProfilePage() {
         {currentStep === "financial" && (
           <div className="space-y-4">
             <h2 className="text-lg font-semibold mb-4">財務情報</h2>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">
                   年間売上
@@ -527,7 +527,7 @@ export default function ProfilePage() {
                 ["年間売上", profile.annualRevenue ? (REVENUE_RANGES.find((r) => r.value === profile.annualRevenue)?.label ?? `${profile.annualRevenue}万円`) : ""],
                 ["設立年", profile.foundedYear ? `${profile.foundedYear}年` : ""],
               ] as [string, string | number | null][]).map(([label, value]) => (
-                <div key={label} className="grid grid-cols-3 gap-2 py-2 border-b border-border">
+                <div key={label} className="grid grid-cols-1 sm:grid-cols-3 gap-1 sm:gap-2 py-2 border-b border-border">
                   <span className="text-muted-foreground">{label}</span>
                   <span className="col-span-2 whitespace-pre-wrap">
                     {value || "（未入力）"}

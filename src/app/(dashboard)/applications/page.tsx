@@ -133,7 +133,7 @@ export default function ApplicationsPage() {
 
   if (loading) {
     return (
-      <div className="p-8">
+      <div className="p-4 sm:p-8">
         <div className="flex items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
@@ -142,8 +142,8 @@ export default function ApplicationsPage() {
   }
 
   return (
-    <div className="p-8">
-      <div className="mb-8 flex items-center justify-between">
+    <div className="p-4 sm:p-8">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">申請一覧</h1>
           <p className="text-muted-foreground mt-1">
@@ -181,10 +181,10 @@ export default function ApplicationsPage() {
             return (
               <div
                 key={app.id}
-                className="flex items-center justify-between rounded-xl border border-border bg-card p-5"
+                className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-border bg-card p-5"
               >
                 <div className="flex items-center gap-4">
-                  <FileText className="h-8 w-8 text-primary" />
+                  <FileText className="h-8 w-8 text-primary shrink-0" />
                   <div>
                     <h3 className="font-semibold">{app.subsidy_name}</h3>
                     <p className="text-sm text-muted-foreground">
@@ -193,7 +193,7 @@ export default function ApplicationsPage() {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 self-end sm:self-auto">
                   <span
                     className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${statusInfo.color}`}
                   >
