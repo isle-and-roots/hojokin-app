@@ -171,6 +171,9 @@ src/
   - `POLAR_STARTER_PRODUCT_ID`: Starter プラン Product ID
   - `POLAR_PRO_PRODUCT_ID`: Pro プラン Product ID
   - `POLAR_BUSINESS_PRODUCT_ID`: Business プラン Product ID
+  - `POLAR_STARTER_ANNUAL_PRODUCT_ID`: Starter 年額 Product ID
+  - `POLAR_PRO_ANNUAL_PRODUCT_ID`: Pro 年額 Product ID
+  - `POLAR_BUSINESS_ANNUAL_PRODUCT_ID`: Business 年額 Product ID
 
 ### 本番チェックリスト
 - [ ] 全環境変数が設定されている

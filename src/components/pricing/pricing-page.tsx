@@ -105,8 +105,9 @@ export function PricingPageClient() {
       } else {
         throw new Error(data.error || "チェックアウトの作成に失敗しました");
       }
-    } catch {
-      toast.error("チェックアウトの作成に失敗しました。しばらくしてから再度お試しください。");
+    } catch (e) {
+      const errorMsg = e instanceof Error ? e.message : "チェックアウトの作成に失敗しました";
+      toast.error(`${errorMsg}。しばらくしてから再度お試しください。`);
     } finally {
       setLoading(null);
     }

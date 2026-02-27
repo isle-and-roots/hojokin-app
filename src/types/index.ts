@@ -113,6 +113,8 @@ export type SubsidyType =
   | "SEICHOU_KASOKUKA"
   | "SETSUBI_TOUSHI"
   | "JINZAI_IKUSEI"
+  | "KOYOU_CHOUSEI"
+  | "KEIEI_KAKUSHIN"
   | "OTHER";
 
 export type ApplicationStatus =

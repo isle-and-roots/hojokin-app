@@ -24,7 +24,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const origin = request.headers.get("origin") || "http://localhost:3000";
+    const origin = request.headers.get("origin") || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
     const polar = getPolar();
     const session = await polar.customerSessions.create({
       customerId: profile.polar_customer_id,
