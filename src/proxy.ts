@@ -40,7 +40,7 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   // 認証不要のパス
-  const publicPaths = ["/login", "/auth/callback", "/pricing", "/blog", "/legal"];
+  const publicPaths = ["/login", "/auth/callback", "/pricing", "/blog", "/legal", "/sitemap.xml", "/robots.txt", "/faq", "/shindan"];
   const isPublicPath = publicPaths.some((path) =>
     request.nextUrl.pathname.startsWith(path)
   );

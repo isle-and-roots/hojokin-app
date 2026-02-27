@@ -58,9 +58,9 @@ npm run build        # ✅ ビルド成功
 
 | # | タスク | 種別 | 状態 |
 |---|--------|------|------|
-| Task 40 | X/Twitter 5投稿（締切アラート・記事シェア） | 手動 | TODO |
-| Task 41 | note.com に記事1本投稿 | 手動 | TODO |
-| Task 42 | Google Search Console サイトマップ送信 | 手動 | TODO |
+| Task 40 | X/Twitter 5投稿（締切アラート・記事シェア） | 手動 | WIP (docs/twitter-drafts.md 作成済み、投稿待ち) |
+| Task 41 | note.com に記事1本投稿 | 手動 | WIP (docs/note-article-draft.md 作成済み、投稿待ち) |
+| Task 42 | Google Search Console サイトマップ送信 | 手動 | WIP (docs/search-console-setup.md + middleware修正済み) |
 | Task 43 | 週次ブログ記事3本追加 | cc | done |
 | Task 44 | SEO最適化ラウンド1（メタデータ・内部リンク・サイトマップ強化） | cc | done |
 | Task 45 | 「補助金診断」LP作成（/shindan — 3問→最適補助金表示） | cc | done |
