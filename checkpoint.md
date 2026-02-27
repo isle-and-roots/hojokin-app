@@ -1,36 +1,27 @@
 # Checkpoint
-Updated: 2026-02-25 12:00
+Updated: 2026-02-27 11:20
 
 ## Goal
-Phase 5 ソフトローンチ実行計画 — 全CCタスク完了
+Task 42: Google Search Console サイトマップ送信の準備 — 完了
 
 ## Done
-- [x] Task 33: GSC検証メタタグ追加
-- [x] Task 30: クォータ枯渇モーダル
-- [x] Task 31: 段階的アップセルバナー
-- [x] Task 32: DOCXペイウォール改善
-- [x] Task 34: 料金ページ信頼性向上
-- [x] Task 35: ブログ関連記事セクション
-- [x] Task 36: コンバージョン分析イベント追加
-- [x] Task 37: ブログタグページ
-- [x] Task 38: 料金ページSEO強化
-- [x] 品質ゲート: tsc ✓ lint ✓ build ✓
+- [x] sitemap.xml が /login にリダイレクトされる問題を発見
+- [x] src/proxy.ts の publicPaths に /sitemap.xml /robots.txt /faq /shindan を追加
+- [x] tsc --noEmit パス (エラーゼロ)
+- [x] docs/search-console-setup.md 作成 (手順書)
 
 ## Pending
-- [ ] コミット + プッシュ（ユーザー承認待ち）
-- [ ] PM-1〜PM-4（ユーザー手動作業）
+- [ ] middleware修正をVercelにデプロイ (git push)
+- [ ] Search Console で所有権確認 (HTMLタグ方式を推奨)
+- [ ] sitemap.xml を Search Console に送信
 
 ## Files
-- src/components/upgrade-modal.tsx — クォータ枯渇モーダル
-- src/components/quota-progress-banner.tsx — 段階的バナー
-- src/components/docx-paywall-modal.tsx — DOCXペイウォール
-- src/components/blog/related-posts.tsx — 関連記事
-- src/components/dashboard/signup-tracker.tsx — サインアップ追跡
-- src/app/blog/tag/[tag]/page.tsx — タグ別記事一覧
+- src/proxy.ts — publicPaths に /sitemap.xml /robots.txt /faq /shindan を追加
+- docs/search-console-setup.md — Search Console 設定手順書 (新規作成)
 
 ## Decisions
-- DOCXペイウォールはAPI呼び出し前にクライアント判定
-- クォータ情報はapplications/newで独立取得
+- /faq と /shindan も同時に公開パスに追加 (SEO上も認証なしでアクセス可能にすべきページ)
+- gcloud CLI 未インストールのため API 経由の送信は不可 -> 手動手順書を作成
 
 ## Next
-コミット→プッシュ→PM作業（GSC/X投稿/note.com）
+git push して Vercel にデプロイ後、Search Console 手順書に従って手動で設定する

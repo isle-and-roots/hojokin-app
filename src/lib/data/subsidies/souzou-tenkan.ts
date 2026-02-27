@@ -97,7 +97,7 @@ export const souzouTenkanSubsidies: SubsidyInfo[] = [
         estimatedLength: "600〜800字",
       },
     ],
-    promptSupport: "GENERIC",
+    promptSupport: "FULL",
     subsidyType: "JIGYOU_SAIKOUCHIKU",
     popularity: 8,
     difficulty: "HARD",

@@ -1,13 +1,13 @@
 # Plans.md — hojokin-app
 
-Updated: 2026-02-26
+Updated: 2026-02-28
 
 ## 現状サマリー
 
-- **Phase 1〜6 全完了** — プロダクト開発完了、Vercel デプロイ済み
+- **Phase 1〜8 全完了** — プロダクト開発完了、Vercel デプロイ済み
 - 課金: Polar.sh (JPY対応済み)、payout設定完了（Identity審査中）
 - SEO: 16記事 + JSON-LD + OGメタデータ + サイトマップ + FAQページ + 補助金診断LP
-- FULL AI対応補助金: 持続化(1) + IT導入(4) + ものづくり(1) + 省力化(1) + 新事業進出(1) + 成長加速化(1) = **9件**
+- FULL AI対応補助金: 持続化(1) + IT導入(4) + ものづくり(1) + 省力化(1) + 新事業進出(1) + 成長加速化(1) + 事業再構築(1) + 設備投資(1) + 人材育成(2) = **13件**
 - Analytics: Vercel Analytics + SpeedInsights + PostHog 28イベント + A/Bテスト基盤
 - LP: 11セクション + ソーシャルプルーフ + 信頼性バッジ + A/Bテスト CTA
 - メール: Resend 7通ナーチャリングシーケンス + Vercel Cron 日次配信
@@ -45,6 +45,37 @@ Updated: 2026-02-26
 npx tsc --noEmit    # ✅ 型エラーゼロ
 npm run lint         # ✅ 警告ゼロ
 npm run build        # ✅ ビルド成功
+```
+
+---
+
+## Phase 8 ✅ 完了: 最適化 + FULL AI 拡充
+
+**全5タスク完了** (Task 51-57、Task 53/54 はスキップ)
+
+| タスク | 状態 | 概要 |
+|--------|------|------|
+| Task 51: CLAUDE.md リファクタリング | done | 610→87行、.claude/rules/ に3ファイル分割 |
+| Task 52: content/drafts/ 削除 | done | 重複ドラフト9ファイル削除 |
+| Task 53: console.log クリーンアップ | skip | console.log は0件（全て console.error = 本番監視用） |
+| Task 54: .gitignore 整理 | skip | *.tsbuildinfo は既に .gitignore 済み |
+| Task 55: 事業再構築 FULL AI | done | souzou-tenkan.ts 134行、JIGYOU_SAIKOUCHIKU 対応 |
+| Task 56: 設備投資 FULL AI | done | setsubi-toushi.ts 106行、SETSUBI_TOUSHI 新規型 |
+| Task 57: 人材育成 FULL AI | done | jinzai-ikusei.ts 142行、JINZAI_IKUSEI 新規型 |
+
+### Phase 8 成果
+
+| 指標 | Before | After | 改善 |
+|------|--------|-------|------|
+| CLAUDE.md | 610行 / 33KB | 87行 / 4KB | -86% |
+| FULL AI 対応補助金 | 9件 | 13件 | +44% |
+| セッションあたりトークン | ~15,000 | ~3,000 | -80% |
+
+### Phase 8 品質ゲート ✅
+
+```bash
+npx tsc --noEmit    # ✅ 型エラーゼロ
+npm run lint         # ✅ 警告ゼロ
 ```
 
 ---

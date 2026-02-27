@@ -4,6 +4,9 @@ import { getMonodzukuriPrompt } from "./monodzukuri";
 import { getShouryokukaPrompt } from "./shouryokuka";
 import { getShinjiyoShinshutsuPrompt } from "./shinjigyo-shinshutsu";
 import { getSeichouKasokukaPrompt } from "./seichou-kasokuka";
+import { getJigyouSaikouchikuPrompt } from "./souzou-tenkan";
+import { getSetsubiToushiPrompt } from "./setsubi-toushi";
+import { getJinzaiIkuseiPrompt } from "./jinzai-ikusei";
 import { getGenericPrompt } from "./generic";
 import type { BusinessProfile, SubsidyInfo } from "@/types";
 
@@ -35,6 +38,18 @@ export function getPrompt(
 
   if (subsidy.subsidyType === "SEICHOU_KASOKUKA" && subsidy.promptSupport === "FULL") {
     return getSeichouKasokukaPrompt(sectionKey, profile, additionalContext);
+  }
+
+  if (subsidy.subsidyType === "JIGYOU_SAIKOUCHIKU" && subsidy.promptSupport === "FULL") {
+    return getJigyouSaikouchikuPrompt(sectionKey, profile, additionalContext);
+  }
+
+  if (subsidy.subsidyType === "SETSUBI_TOUSHI" && subsidy.promptSupport === "FULL") {
+    return getSetsubiToushiPrompt(sectionKey, profile, additionalContext);
+  }
+
+  if (subsidy.subsidyType === "JINZAI_IKUSEI" && subsidy.promptSupport === "FULL") {
+    return getJinzaiIkuseiPrompt(sectionKey, profile, additionalContext);
   }
 
   const sectionDef = subsidy.applicationSections.find(
