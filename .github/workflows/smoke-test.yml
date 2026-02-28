@@ -1,0 +1,36 @@
+name: Smoke Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "Target URL to smoke test (e.g. https://hojokin-app.vercel.app)"
+        required: false
+        type: string
+  # Vercel sends a repository_dispatch event on successful deployment
+  repository_dispatch:
+    types: [vercel-deployment-complete]
+
+jobs:
+  smoke-test:
+    name: Smoke Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run smoke tests
+        run: npm run smoke-test
+        env:
+          # Prefer manual input → repository_dispatch payload → secret
+          SMOKE_TEST_URL: ${{ inputs.url || github.event.client_payload.url || secrets.NEXT_PUBLIC_SITE_URL }}
