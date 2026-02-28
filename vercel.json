@@ -7,6 +7,10 @@
     {
       "path": "/api/health",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/subsidy-ingestion",
+      "schedule": "0 6 * * *"
     }
   ]
 }

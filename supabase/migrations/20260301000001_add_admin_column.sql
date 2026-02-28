@@ -1,0 +1,2 @@
+-- 管理者フラグを追加
+ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT false;

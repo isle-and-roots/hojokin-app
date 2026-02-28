@@ -26,6 +26,12 @@ import {
   INDUSTRY_LABELS,
 } from "@/lib/data/subsidy-categories";
 
+/** ISR: 1時間ごとに再検証 */
+export const revalidate = 3600;
+
+/** jGrantsから追加された補助金もSSGできるようdynamic paramsを許可 */
+export const dynamicParams = true;
+
 export async function generateStaticParams() {
   return DUMMY_SUBSIDIES.map((s: { id: string }) => ({ id: s.id }));
 }

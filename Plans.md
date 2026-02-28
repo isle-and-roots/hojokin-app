@@ -245,6 +245,64 @@ npm run build        # ✅ 196ページ正常ビルド
 
 ---
 
+## ドキュメント作成タスク
+
+- [ ] インフラコスト試算ドキュメント作成 `cc:WIP`
+  - 依頼内容: docs/cost-estimation.md を指定内容で更新
+  - 追加日時: 2026-03-01
+
+- [ ] デモシナリオ集作成 `cc:WIP`
+  - 依頼内容: docs/demo-scenarios.md を指定内容で更新
+  - 追加日時: 2026-03-01
+
+- [ ] 機能要件マトリクス作成 `cc:WIP`
+  - 依頼内容: docs/feature-requirements-matrix.md を指定内容で更新
+  - 追加日時: 2026-03-01
+
+---
+
+## Phase 12: 補助金データ自動更新機能（jGrants API連携）
+
+**目標**: 静的TS→DB移行 + jGrants API日次自動取込 + 管理画面
+
+| # | タスク | 状態 | 概要 |
+|---|--------|------|------|
+| Task 70 | DB移行: subsidies + ingestion_logs テーブル | done | マイグレーション + シードスクリプト + DBアクセスレイヤー |
+| Task 71 | データソース切替 | done | DB優先+静的フォールバック、ISR、sitemap/landing-stats/shindan対応 |
+| Task 72 | jGrants APIクライアント | done | 一覧/詳細取得、レート制限、ページネーション |
+| Task 73 | AI抽出 + マッパー + パイプライン | done | Claude Haiku抽出、バッチ10件、50秒タイムアウト、品質チェック |
+| Task 74 | Cronエンドポイント | done | /api/cron/subsidy-ingestion (毎日15:00 JST) |
+| Task 75 | 管理画面 | done | is_admin、管理API CRUD、補助金テーブル+編集フォーム+取込パネル |
+| Task 76 | ビルド検証 | done | tsc ✓ / lint ✓ / build ✓ (201 pages) / tests ✓ |
+| Task 77 | Supabaseマイグレーション適用 | cc | `supabase db push` で本番DBに反映 |
+| Task 78 | 補助金データシード | cc | `npx tsx scripts/seed-subsidies.ts` で既存105件をDBに投入 |
+| Task 79 | Vercelデプロイ + 動作確認 | cc | git push → Vercel自動デプロイ → Cron/管理画面の動作確認 |
+
+### Phase 12 新規ファイル (16件)
+
+- `supabase/migrations/20260301000000_create_subsidies_table.sql`
+- `supabase/migrations/20260301000001_add_admin_column.sql`
+- `scripts/seed-subsidies.ts`
+- `src/lib/db/subsidies.ts`, `src/lib/db/admin.ts`
+- `src/lib/external/jgrants.ts`
+- `src/lib/ingestion/{mapper,ai-extractor,pipeline,quality-check}.ts`
+- `src/app/api/cron/subsidy-ingestion/route.ts`
+- `src/app/api/admin/{subsidies,subsidies/[id],ingestion}/route.ts`
+- `src/app/(dashboard)/admin/page.tsx`, `admin/subsidies/[id]/page.tsx`
+- `src/components/admin/{subsidy-table,subsidy-form}.tsx`
+
+### Phase 12 コスト
+
+| 項目 | 月額 |
+|------|------|
+| Supabase (Free tier) | $0 |
+| Claude Haiku (AI抽出 ~500件/月) | ~$0.50 |
+| Vercel Cron | $0 |
+| jGrants API | $0 |
+| **合計** | **~$0.50/月** |
+
+---
+
 ## 12週マーケティングスケジュール
 
 - **Week 3-4** ← 現在: SNS初投稿(5本) + note.com + Search Console + はてブ

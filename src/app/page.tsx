@@ -165,7 +165,7 @@ export default async function LandingPage() {
     // Supabase 未設定の場合はランディングページを表示
   }
 
-  const stats = getLandingStats();
+  const stats = await getLandingStats();
 
   const faqJsonLd = {
     "@context": "https://schema.org",

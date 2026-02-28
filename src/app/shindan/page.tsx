@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { ShindanTool } from "./shindan-tool";
+import { ALL_SUBSIDIES } from "@/lib/data/subsidies";
+import { getAllSubsidiesFromDb } from "@/lib/db/subsidies";
 
 export const metadata: Metadata = {
   title: "補助金診断 — あなたに合った補助金を3問で見つける",
@@ -40,14 +42,23 @@ const jsonLd = {
   },
 };
 
-export default function ShindanPage() {
+export default async function ShindanPage() {
+  // DB優先で補助金データ取得（フォールバック: 静的データ）
+  let subsidies;
+  try {
+    const dbSubsidies = await getAllSubsidiesFromDb();
+    subsidies = dbSubsidies && dbSubsidies.length > 0 ? dbSubsidies : ALL_SUBSIDIES;
+  } catch {
+    subsidies = ALL_SUBSIDIES;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <ShindanTool />
+      <ShindanTool subsidies={subsidies} />
     </div>
   );
 }

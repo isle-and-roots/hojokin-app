@@ -125,7 +125,7 @@ export default async function Dashboard({
   let recommendation: RecommendationResult | null = null;
   let profileCompleteness = 0;
   if (profile) {
-    recommendation = getRecommendedSubsidiesWithReasons(profile);
+    recommendation = await getRecommendedSubsidiesWithReasons(profile);
     profileCompleteness = calculateProfileCompleteness(profile);
   }
 

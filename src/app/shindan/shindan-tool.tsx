@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import { posthog } from "@/lib/posthog/client";
 import { EVENTS } from "@/lib/posthog/events";
-import { ALL_SUBSIDIES } from "@/lib/data/subsidies";
 import type { SubsidyInfo, TargetIndustry, SubsidyCategory, TargetScale } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -133,13 +132,13 @@ function scoreSubsidy(
   return score;
 }
 
-function getTopSubsidies(answers: CompletedAnswers): SubsidyInfo[] {
+function getTopSubsidies(allSubsidies: SubsidyInfo[], answers: CompletedAnswers): SubsidyInfo[] {
   const completedAnswers: CompletedAnswers = {
     industry: answers.industry,
     purpose: answers.purpose,
     scale: answers.scale,
   };
-  const scored = ALL_SUBSIDIES.map((s) => ({
+  const scored = allSubsidies.map((s) => ({
     subsidy: s,
     score: scoreSubsidy(s, completedAnswers),
   }))
@@ -153,7 +152,7 @@ function getTopSubsidies(answers: CompletedAnswers): SubsidyInfo[] {
 
 type Step = "industry" | "purpose" | "scale";
 
-export function ShindanTool() {
+export function ShindanTool({ subsidies }: { subsidies: SubsidyInfo[] }) {
   const [currentStep, setCurrentStep] = useState<number>(0); // 0=intro, 1-3=questions, 4=result
   const [answers, setAnswers] = useState<Answers>({
     industry: null,
@@ -177,7 +176,7 @@ export function ShindanTool() {
     } else {
       // 全問完了 → 結果算出
       const complete = newAnswers as CompletedAnswers;
-      const top = getTopSubsidies(complete);
+      const top = getTopSubsidies(subsidies, complete);
       setResults(top);
       setCurrentStep(4);
       posthog.capture(EVENTS.SHINDAN_COMPLETED, {

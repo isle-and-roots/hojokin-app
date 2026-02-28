@@ -1,4 +1,5 @@
 import { DUMMY_SUBSIDIES } from "@/lib/data/subsidies";
+import { getAllSubsidiesFromDb } from "@/lib/db/subsidies";
 import type {
   SubsidyInfo,
   SubsidySearchFilters,
@@ -11,10 +12,21 @@ import type {
   SubsidyCategory,
 } from "@/types";
 
+/** DB優先で全補助金を取得（フォールバック: 静的データ） */
+async function getAllSubsidies(): Promise<SubsidyInfo[]> {
+  try {
+    const dbSubsidies = await getAllSubsidiesFromDb();
+    if (dbSubsidies && dbSubsidies.length > 0) return dbSubsidies;
+  } catch {
+    // DB接続失敗時は静的データにフォールバック
+  }
+  return [...DUMMY_SUBSIDIES];
+}
+
 export async function searchSubsidies(
   filters: SubsidySearchFilters
 ): Promise<SubsidySearchResult> {
-  let results = [...DUMMY_SUBSIDIES];
+  let results = await getAllSubsidies();
 
   if (filters.keyword) {
     const kw = filters.keyword.toLowerCase();
@@ -71,13 +83,21 @@ export async function searchSubsidies(
 export async function getSubsidyById(
   id: string
 ): Promise<SubsidyInfo | null> {
+  try {
+    const { getSubsidyByIdFromDb } = await import("@/lib/db/subsidies");
+    const dbResult = await getSubsidyByIdFromDb(id);
+    if (dbResult) return dbResult;
+  } catch {
+    // DB接続失敗時は静的データにフォールバック
+  }
   return DUMMY_SUBSIDIES.find((s) => s.id === id) ?? null;
 }
 
 export async function getRecommendedSubsidies(
   profile: BusinessProfile
 ): Promise<SubsidyInfo[]> {
-  const active = DUMMY_SUBSIDIES.filter((s) => s.isActive);
+  const allSubsidies = await getAllSubsidies();
+  const active = allSubsidies.filter((s) => s.isActive);
 
   const scored = active.map((s) => {
     let score = s.popularity;
@@ -237,10 +257,11 @@ export function calculateProfileCompleteness(profile: BusinessProfile): number {
 }
 
 // === 9次元スコアリング ===
-export function getRecommendedSubsidiesWithReasons(
+export async function getRecommendedSubsidiesWithReasons(
   profile: BusinessProfile
-): RecommendationResult {
-  const active = DUMMY_SUBSIDIES.filter((s) => s.isActive);
+): Promise<RecommendationResult> {
+  const allSubsidies = await getAllSubsidies();
+  const active = allSubsidies.filter((s) => s.isActive);
   const profileCompleteness = calculateProfileCompleteness(profile);
 
   const scored: ScoredSubsidy[] = active.map((s) => {

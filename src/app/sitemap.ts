@@ -1,11 +1,21 @@
 import type { MetadataRoute } from "next";
 import { DUMMY_SUBSIDIES } from "@/lib/data/subsidies";
+import { getAllSubsidiesFromDb } from "@/lib/db/subsidies";
 import { getAllPosts, getAllTags } from "@/lib/blog";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://hojokin.isle-and-roots.com";
 
-  const subsidyPages = DUMMY_SUBSIDIES.map((s: { id: string; lastUpdated: string }) => ({
+  // DB優先で補助金データ取得（フォールバック: 静的データ）
+  let subsidies: Array<{ id: string; lastUpdated: string }>;
+  try {
+    const dbSubsidies = await getAllSubsidiesFromDb();
+    subsidies = dbSubsidies && dbSubsidies.length > 0 ? dbSubsidies : DUMMY_SUBSIDIES;
+  } catch {
+    subsidies = DUMMY_SUBSIDIES;
+  }
+
+  const subsidyPages = subsidies.map((s) => ({
     url: `${baseUrl}/subsidies/${s.id}`,
     lastModified: new Date(s.lastUpdated),
     changeFrequency: "weekly" as const,
