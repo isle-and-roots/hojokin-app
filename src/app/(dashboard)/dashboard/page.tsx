@@ -7,6 +7,7 @@ import {
   Sparkles,
   ArrowRight,
   Trophy,
+  MessageSquare,
 } from "lucide-react";
 import { PageTransition, AnimatedGrid, AnimatedItem } from "@/components/ui/motion";
 import { searchSubsidies, getRecommendedSubsidiesWithReasons } from "@/lib/subsidies";
@@ -23,6 +24,7 @@ import { QuotaWidget } from "@/components/dashboard/quota-widget";
 import { ProfileCompletenessBanner } from "@/components/dashboard/profile-completeness-banner";
 import { IndustryQuickStart } from "@/components/dashboard/industry-quick-start";
 import { SmartNotifications } from "@/components/dashboard/smart-notifications";
+import { ChatOnboardingCta } from "@/components/dashboard/chat-onboarding-cta";
 import { calculateProfileCompleteness } from "@/lib/subsidies";
 import type { BusinessProfile, RecommendationResult } from "@/types";
 
@@ -168,6 +170,9 @@ export default async function Dashboard({
       {/* スマート通知 */}
       <SmartNotifications />
 
+      {/* 初回ユーザー向けチャットCTA (セッション0件のとき自動表示) */}
+      <ChatOnboardingCta />
+
       <div className="mb-8">
         {profile ? (
           <h1 className="text-2xl font-bold">こんにちは、{profile.companyName}さん</h1>
@@ -301,6 +306,23 @@ export default async function Dashboard({
                   </div>
                 </Link>
               </AnimatedItem>
+              <AnimatedItem>
+                <Link
+                  href="/chat"
+                  className="flex flex-col gap-3 rounded-xl border border-border bg-card p-6 hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group h-full"
+                >
+                  <div className="flex items-center justify-between">
+                    <MessageSquare className="h-8 w-8 text-primary" />
+                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">補助金について質問する</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      AIが補助金の疑問に答えます
+                    </p>
+                  </div>
+                </Link>
+              </AnimatedItem>
             </AnimatedGrid>
           </div>
         </>
@@ -368,6 +390,23 @@ export default async function Dashboard({
                   <h3 className="font-semibold">申請一覧</h3>
                   <p className="text-sm text-muted-foreground mt-1">
                     作成済みの申請書類を管理
+                  </p>
+                </div>
+              </Link>
+            </AnimatedItem>
+            <AnimatedItem>
+              <Link
+                href="/chat"
+                className="flex flex-col gap-3 rounded-xl border border-border bg-card p-6 hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group h-full"
+              >
+                <div className="flex items-center justify-between">
+                  <MessageSquare className="h-8 w-8 text-primary" />
+                  <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">補助金について質問する</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    AIが補助金の疑問に答えます
                   </p>
                 </div>
               </Link>

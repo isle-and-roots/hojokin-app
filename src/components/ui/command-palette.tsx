@@ -10,6 +10,7 @@ import {
   Building2,
   ArrowRight,
   Command,
+  MessageSquare,
 } from "lucide-react";
 import { ALL_SUBSIDIES } from "@/lib/data/subsidies";
 import { UpgradeModal } from "@/components/upgrade-modal";
@@ -33,6 +34,14 @@ interface CommandPaletteProps {
 }
 
 const QUICK_ACTIONS: CommandItem[] = [
+  {
+    id: "ai-chat",
+    type: "action",
+    label: "AI相談を開始",
+    description: "補助金についてAIに質問する",
+    href: "/chat",
+    icon: <MessageSquare className="h-4 w-4" />,
+  },
   {
     id: "new-application",
     type: "action",

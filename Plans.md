@@ -1,6 +1,6 @@
 # Plans.md — hojokin-app
 
-Updated: 2026-03-01
+Updated: 2026-03-02
 
 ## 現状サマリー
 
@@ -34,6 +34,7 @@ Updated: 2026-03-01
 | 13 | 報告書品質(準拠チェック・品質スコア・差分) + PDF日本語 + デプロイ基盤(CI・ヘルス・ストレージ) | — |
 | 14 | UI/UX ポリッシュ — アニメーション・スケルトン・デザインシステム基盤 | 130f510 |
 | 15 | 本番ヘルスチェック — health API, 公開ページ, 認証, API, Cron, テスト全PASS | — |
+| 16 | CX最適化 — 業種選択・デモ生成・ツアー・チェックリスト・通知・Cmd+K | 1102e9e |
 
 ### 未実装手動タスク
 
@@ -62,102 +63,115 @@ Task 81-87 全完了: health API healthy, 公開9ページ200, 認証307リダ�
 
 ---
 
-## Phase 16: CX最適化 — 初回体験 & オンボーディング
+## Phase 16 ✅ 完了: CX最適化
 
-**目標**: TTFV (Time-to-First-Value) 15分→2分短縮 + PostHog ファネル計測
-**Phase 0 精査済み**: Planner分析 + Critic Red Teaming 反映
+Task 88a-95 全完了 (1102e9e): 業種選択UI + quick-recommend API, デモ生成(cached), ダッシュボード空状態リデザイン, SpotlightTour, チェックリスト強化, 成功アニメーション, コンテキストヘルプ, スマート通知, コマンドパレット(Cmd+K) — 19ファイル変更, 2641行追加
 
-### Sprint A: TTFV短縮 & 初回体験 (Required)
+---
 
-#### Task 88a: 業種選択UI + quick-recommend API [feature:a11y]
-- [ ] 初回ログイン時の業種選択UI (`dashboard/page.tsx` に条件分岐)
-- [ ] `/api/subsidies/quick-recommend` — 業種→補助金3件マッチング (DBフィルタのみ、AI不使用)
-- [ ] PostHog TTFV ファネル: signup→industry_select→first_recommend→first_generation
-- **owns**: `dashboard/page.tsx`, `api/subsidies/quick-recommend/`
-- **done marker**: 業種選択→3件レコメンド表示 + PostHogイベント発火
+## Phase 17: AI補助金チャットアドバイザー
 
-#### Task 88b: デモ生成体験 (cached sample)
-- [ ] 補助金タイプ別のキャッシュ済みサンプル文章 (`src/lib/data/demo-samples.ts`)
-- [ ] デモモードUI: 「サンプルを見る」ボタン → キャッシュ表示 (Claude API呼び出しなし)
-- [ ] クォータ消費なし、本番APIコール一切なし (セキュリティ要件)
-- [ ] 体験完了→プロフィール充実への誘導CTA
-- **owns**: `demo-samples.ts`, `applications/new/page.tsx` (デモ部分のみ)
-- **done marker**: デモ生成がキャッシュから即座表示、API呼び出しゼロ
+**目標**: 対話型AI相談で補助金初心者の疑問を即解決 → Free→有料転換率 +3%
+**FinOps精査済み**: プラン別モデル選択 + Prompt Caching + 日次レート制限
 
-#### Task 89: ダッシュボード空状態リデザイン
-- [ ] ステータスカード「0件」→アクション誘導型カード (イラスト + CTA)
-- [ ] プロフィール未作成時: 次ステップを1つだけ大きく表示
-- [ ] クイックアクションとオンボーディングステッパーの重複解消
-- **owns**: `dashboard/page.tsx` (空状態セクションのみ)
-- **done marker**: 初回ダッシュボードがアクション誘導型
+### FinOps サマリー
 
-#### Task 90: プロダクトツアー (自前実装: framer-motion + Tailwind)
-- [ ] SpotlightTour コンポーネント自作 (~200行、framer-motion AnimatePresence + Tailwind)
-- [ ] 3ステップ: プロフィール→補助金検索→AI生成 (要素ハイライト + ツールチップ)
-- [ ] スキップ可能 + localStorage「もう表示しない」
-- [ ] PostHog: ツアー完了率・ステップ離脱計測
-- **注意**: onborda不使用 (CLAUDE.md「外部UIライブラリ禁止」準拠)
-- **owns**: `components/onboarding/spotlight-tour.tsx` (新規)
-- **done marker**: 初回ログインでスポットライトツアー起動
+| Plan | 月額 | チャットモデル | 日次上限 | 平均粗利率 |
+|------|------|-------------|---------|----------|
+| Free | ¥0 | Haiku 4.5 | 3/日 | — (転換フック) |
+| Starter | ¥980 | Haiku 4.5 | 10/日 | 83% |
+| Pro | ¥2,980 | Sonnet 4 | 20/日 | 66% |
+| Business | ¥9,800 | Sonnet 4 | 50/日 | 61% |
 
-### Sprint B: エンゲージメント向上 (Recommended)
+コスト最適化: Prompt Caching (~7,900トークン/90%削減) + 会話履歴20メッセージ上限
 
-#### Task 91: オンボーディングチェックリスト強化
-- [ ] 既存 `OnboardingStepper` を進捗バー付きチェックリストに拡張
-- [ ] 非表示条件: 全完了 or localStorage loginCount >= 3 (DB不要)
-- [ ] 全完了時: confetti CSS アニメーション
-- **owns**: `components/dashboard/onboarding-stepper.tsx`
-- **done marker**: チェックリスト + 完了時アニメーション動作
+### Sprint A: チャット基盤 (Required)
 
-#### Task 92: 成功体験アニメーション
-- [ ] AI初回生成完了: CSS @keyframes confetti + 「最初の申請書セクション完成！」
-- [ ] プロフィール100%完了: バッジ + メッセージ (AnimatePresence)
-- [ ] 申請書全セクション完了: 祝福画面 + DOCXダウンロードCTA
-- [ ] CSS @keyframes + framer-motion AnimatePresence (物理演算ライブラリ不使用)
-- **owns**: `components/ui/confetti.tsx` (新規), `applications/new/page.tsx` (成功部分)
-- **done marker**: 3つの成功体験アニメーション動作
+#### Task 96: チャットUI + ストリーミングAPI [feature:security]
+- [ ] `/chat` ページ新規作成 (Server Component + Client チャットUI)
+- [ ] `POST /api/ai/chat` — Claude API streaming (ReadableStream)
+- [ ] チャットUI: メッセージ入力 → ストリーミング表示 (タイピングアニメーション)
+- [ ] 認証必須、Zodバリデーション
+- [ ] レート制限: Free 3/日(Haiku)、Starter 10/日(Haiku)、Pro 20/日(Sonnet)、Business 50/日(Sonnet)
+- [ ] チャット用モデル選択: `src/lib/ai/chat-config.ts` (Haiku/Sonnet をプラン別に分岐)
+- [ ] DBベースの日次カウント: `chat_messages` テーブルの当日user件数で制限
+- **owns**: `src/app/(dashboard)/chat/page.tsx`, `src/app/api/ai/chat/route.ts`
+- **done marker**: `/chat` でストリーミング回答が表示される
 
-#### Task 93: コンテキストヘルプ & 用語説明
-- [ ] Tailwind ツールチップ: 「補助率」「上限額」「AI完全対応 vs AI対応」
-- [ ] AI生成画面: セクション名にインラインヘルプ
-- [ ] 「プロフィールが詳しいほど、AIが精密な申請書を生成します」明示
-- **owns**: `components/ui/tooltip.tsx` (新規), subsidy関連ページ
-- **done marker**: ツールチップ + ヘルプテキスト表示
+#### Task 97: 補助金ナレッジベース統合
+- [ ] システムプロンプトに補助金データ105件のサマリーを埋め込み (~7,500トークン)
+- [ ] `src/lib/ai/chat-prompt.ts` — チャット専用プロンプト（ペルソナ: 中小企業診断士）
+- [ ] **Prompt Caching**: ペルソナ+ナレッジ (~7,900トークン) を `cache_control: { type: "ephemeral" }` でキャッシュ → 入力コスト90%削減
+- [ ] ユーザープロフィール（業種・従業員数・年商）をコンテキストに注入 (動的部分、キャッシュ外)
+- [ ] 会話履歴の注入上限: **最大20メッセージ** (超過分は古いものから除外)
+- [ ] 該当補助金がある場合、補助金詳細ページへのリンクを回答に含める
+- [ ] 回答に「申請書を作成する」CTAボタンを含める
+- [ ] Datadog ログ: `input_tokens`, `output_tokens`, `cache_read_input_tokens` を記録
+- **owns**: `src/lib/ai/chat-prompt.ts` (新規), `src/lib/ai/chat-config.ts` (新規)
+- **done marker**: 業種を伝えると適切な補助金を提案、リンク付き
 
-### Sprint C: パワーユーザー & リテンション (Optional)
+#### Task 98: 会話履歴の永続化
+- [ ] `supabase/migrations/` — `chat_sessions` + `chat_messages` テーブル
+- [ ] `GET /api/chat/sessions` — セッション一覧
+- [ ] `GET /api/chat/sessions/[id]` — セッション内メッセージ取得
+- [ ] チャットUI: サイドバーに過去の会話一覧表示
+- [ ] 新規会話 / 既存会話の続き を選択可能
+- **owns**: `supabase/migrations/`, `src/app/api/chat/`
+- **done marker**: ページリロード後も会話が復元される
 
-#### Task 94: スマート通知 (アプリ内)
-- [ ] 締切7日前バナー、申請書3日未更新ナッジ、新FULL補助金通知
-- **owns**: `components/dashboard/smart-notifications.tsx` (新規)
-- **done marker**: ダッシュボードにスマート通知バナー表示
+### Sprint B: インテリジェンス強化 (Recommended)
 
-#### Task 95: コマンドパレット (Cmd+K) [feature:a11y]
-- [ ] 自前実装: Tailwind モーダル + ファジー検索 (cmdk不使用、外部UIライブラリ禁止準拠)
-- [ ] 補助金名検索→詳細ジャンプ、クイックアクション
-- [ ] 全プランで基本機能利用可、Free は upgrade modal 表示で高度機能制限
-- **owns**: `components/ui/command-palette.tsx` (新規), `dashboard/layout.tsx`
-- **done marker**: Cmd+K でパレット起動
+#### Task 99: スマート補助金レコメンド (チャット内)
+- [ ] チャット回答内に「おすすめ補助金カード」をリッチ表示
+- [ ] 補助金カード: 名前・補助率・上限額・締切・AI対応度 をインラインで表示
+- [ ] カードクリック → 補助金詳細ページ or 申請書作成開始
+- [ ] 「この補助金で申請書を作成」ワンクリックCTA
+- **owns**: `src/components/chat/subsidy-recommendation-card.tsx` (新規)
+- **done marker**: チャット内に補助金カードがリッチ表示される
+
+#### Task 100: 申請書レビューモード
+- [ ] チャットに申請書セクションのテキストを貼り付け → AIが改善提案
+- [ ] 「このセクションの強みと弱み」を分析
+- [ ] 「採択されやすくするための具体的な修正案」を提示
+- [ ] Pro以上のみ利用可（Free/Starterはアップグレード促進）
+- **owns**: チャットプロンプトの拡張
+- **done marker**: 申請書テキストを入力すると改善提案が返る
+
+#### Task 101: サイドバー + ダッシュボード統合
+- [ ] ダッシュボードサイドバーに「AI相談」メニュー追加 (MessageSquare アイコン)
+- [ ] ダッシュボードに「補助金について質問する」クイックアクションカード追加
+- [ ] コマンドパレット (Cmd+K) に「AI相談を開始」アクション追加
+- [ ] PostHog: chat_started, chat_message_sent, chat_subsidy_clicked イベント
+- **owns**: `src/components/layout/sidebar.tsx`, `dashboard/page.tsx`
+- **done marker**: サイドバー・ダッシュボード・Cmd+KからチャットにアクセスOK
+
+### Sprint C: エンゲージメント (Optional)
+
+#### Task 102: チャット起点のオンボーディング
+- [ ] 初回ログイン時: 「まずはAIに相談してみましょう」CTA
+- [ ] 初回チャットのサジェスト質問3つ表示
+- [ ] チャット→補助金選択→申請書作成の導線を最適化
+- **owns**: チャットUI内
+- **done marker**: 初回ユーザーがチャットから自然に申請フローに移行
+
+#### Task 103: FAQ自動学習 + よくある質問
+- [ ] `/chat` ページ上部に「よくある質問」セクション (5-8件)
+- [ ] クリックで即座にチャットに質問が入力される
+- [ ] PostHog: 人気質問ランキングを収集
+- **owns**: チャットUI内
+- **done marker**: FAQ表示 + クリックでチャット開始
 
 ### 依存グラフ & 並列レーン
 
 ```
-Lane A (critical): 88a → 88b → 89 → 91 → 90
-Lane B (独立):     92 (成功アニメーション)
-Lane C (serial):   93 → 94
-Lane D (独立):     95 (Cmd+K)
-max_parallel: 3 (Round1: 88a+92+95, Round2: 88b+93, Round3: 89+94, Round4: 91→90)
+96 (チャットUI+API) → 97 (ナレッジ統合) → 98 (履歴永続化)
+                                           → 99 (レコメンドカード)
+                                           → 100 (レビューモード)
+96 → 101 (サイドバー統合)
+98 → 102 (オンボーディング)
+98 → 103 (FAQ)
+max_parallel: 3 (Round1: 96, Round2: 97+101, Round3: 98+99+100, Round4: 102+103)
 ```
-
-### 技術選定 (Phase 0 精査済み)
-
-| 用途 | 実装方法 | 理由 |
-|------|---------|------|
-| プロダクトツアー | **自前** (framer-motion + Tailwind) | CLAUDE.md「外部UIライブラリ禁止」準拠 |
-| 成功アニメーション | **CSS @keyframes + AnimatePresence** | 物理演算不要、軽量 |
-| コマンドパレット | **自前** (Tailwind モーダル) | cmdk も外部UIに該当、自前で十分 |
-| ツールチップ | **Tailwind CSS** | 外部依存不要 |
-| デモ生成 | **キャッシュ済みサンプル** | セキュリティ: Claude API 不使用 |
-| TTFV計測 | **PostHog ファネル** | 既存PostHog活用 |
 
 ---
 

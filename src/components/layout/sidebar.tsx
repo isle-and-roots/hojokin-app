@@ -13,6 +13,7 @@ import {
   LogOut,
   Menu,
   X,
+  MessageSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -22,6 +23,7 @@ const navigation = [
   { name: "企業プロフィール", href: "/profile", icon: Building2 },
   { name: "補助金検索", href: "/subsidies", icon: Search },
   { name: "申請一覧", href: "/applications", icon: FileText },
+  { name: "AI相談", href: "/chat", icon: MessageSquare },
   { name: "料金プラン", href: "/pricing", icon: CreditCard },
   { name: "アカウント設定", href: "/settings", icon: Settings },
 ];

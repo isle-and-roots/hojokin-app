@@ -108,7 +108,7 @@ export function getPlanKeyByProductId(productId: string): PlanKey | null {
 
 export function canUseFeature(
   plan: PlanKey,
-  feature: "docxExport" | "aiGeneration" | "multipleProfiles"
+  feature: "docxExport" | "aiGeneration" | "multipleProfiles" | "chatReview"
 ): boolean {
   switch (feature) {
     case "docxExport":
@@ -117,6 +117,8 @@ export function canUseFeature(
       return true; // すべてのプランで利用可能（回数制限あり）
     case "multipleProfiles":
       return plan === "business";
+    case "chatReview":
+      return plan === "pro" || plan === "business";
     default:
       return false;
   }

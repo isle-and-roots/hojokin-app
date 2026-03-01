@@ -119,6 +119,22 @@ const EXPECTED_SCHEMA: Record<string, string[]> = {
     "metadata",
     "created_at",
   ],
+  chat_sessions: [
+    "id",
+    "user_id",
+    "title",
+    "created_at",
+    "updated_at",
+  ],
+  chat_messages: [
+    "id",
+    "session_id",
+    "user_id",
+    "role",
+    "content",
+    "metadata",
+    "created_at",
+  ],
 };
 
 async function main() {

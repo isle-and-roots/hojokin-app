@@ -85,6 +85,14 @@ export const EVENTS = {
   FIRST_GENERATION_COMPLETED: "first_generation_completed",
   ALL_SECTIONS_COMPLETED: "all_sections_completed",
   PROFILE_100_PERCENT: "profile_100_percent",
+
+  // ─── AI相談チャット ───
+  CHAT_STARTED: "chat_started",
+  CHAT_MESSAGE_SENT: "chat_message_sent",
+  CHAT_SUBSIDY_CLICKED: "chat_subsidy_clicked",
+
+  // ─── FAQ ───
+  FAQ_QUESTION_CLICKED: "faq_question_clicked",
 } as const;
 
 export type PostHogEventName = (typeof EVENTS)[keyof typeof EVENTS];
