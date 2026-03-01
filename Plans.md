@@ -11,7 +11,7 @@ Updated: 2026-03-01
 - Analytics: Vercel Analytics + SpeedInsights + PostHog + Datadog APM/LLM Observability/RUM
 - LP: 11セクション + ソーシャルプルーフ + 信頼性バッジ + A/Bテスト CTA
 - メール: Resend 7通ナーチャリングシーケンス + Vercel Cron 日次配信
-- 補助金データ: DB移行済み(105件) + jGrants API日次自動取込 + 管理画面
+- 補助金データ: DB移行済み(105件) + jGrants API日次自動取込(API v2互換修正済み) + 管理画面
 - PDF: @react-pdf/renderer + NotoSansJP日本語フォント対応
 - CI: GitHub Actions (tsc + lint + vitest + build) + スモークテスト
 - 品質: 補助金準拠チェック + 品質スコア(A-F) + ドラフト差分 + StorageProvider
@@ -106,6 +106,7 @@ PostHog: `hero-cta-text` Feature Flag 作成（control / variant_a）
 | Task 72-74 | jGrants APIクライアント + AI抽出 + Cron | done |
 | Task 75 | 管理画面 (CRUD + 取込パネル) | done |
 | Task 76-79 | ビルド検証 + DB push + シード + デプロイ | done |
+| Task 80 | jGrants API v2 互換性修正 (パラメータ・型・バッチ処理) | done (7e99a9b) |
 
 コスト: Supabase Free $0 + Claude Haiku ~$0.50/月 + Vercel Cron $0 = **~$0.50/月**
 
