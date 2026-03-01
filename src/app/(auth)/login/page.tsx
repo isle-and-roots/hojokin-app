@@ -28,12 +28,12 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="card-floating rounded-xl border bg-card p-8 space-y-6">
       <div className="text-center space-y-2">
-        <div className="mx-auto h-12 w-12 rounded-xl bg-primary flex items-center justify-center">
+        <div className="mx-auto h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-blue-700 flex items-center justify-center">
           <span className="text-primary-foreground font-bold text-lg">H</span>
         </div>
-        <h1 className="text-2xl font-bold">ログイン</h1>
+        <h1 className="text-2xl font-bold">補助金サポート</h1>
         <p className="text-muted-foreground text-sm">
           補助金申請サポートにログイン
         </p>
@@ -48,7 +48,7 @@ export default function LoginPage() {
       <button
         onClick={handleGoogleLogin}
         disabled={loading}
-        className="w-full flex items-center justify-center gap-3 border border-input bg-background py-3 rounded-lg text-sm font-medium hover:bg-accent transition-colors disabled:opacity-50"
+        className="w-full flex items-center justify-center gap-3 border border-input bg-background py-3 rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-50 hover:shadow-md hover:border-primary/20 active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
       >
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin" />

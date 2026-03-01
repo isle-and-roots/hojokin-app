@@ -14,6 +14,7 @@ import {
   Building2,
   BookOpen,
 } from "lucide-react";
+import { PageTransition, FadeInUp, AnimatedGrid, AnimatedItem } from "@/components/ui/motion";
 import { getSubsidyById } from "@/lib/subsidies";
 import { getPostsBySubsidyId } from "@/lib/blog";
 import { DUMMY_SUBSIDIES } from "@/lib/data/subsidies";
@@ -119,7 +120,14 @@ export default async function SubsidyDetailPage({
     return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
   };
 
+  const getDaysUntilDeadline = (deadline: string | null) => {
+    if (!deadline) return null;
+    return Math.ceil((new Date(deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+  };
+  const daysLeft = getDaysUntilDeadline(subsidy.deadline);
+
   return (
+    <PageTransition>
     <div className="p-8 max-w-4xl">
       <script
         type="application/ld+json"
@@ -135,7 +143,7 @@ export default async function SubsidyDetailPage({
       </nav>
 
       {/* ヘッダー */}
-      <div className="mb-6">
+      <FadeInUp className="mb-6">
         <div className="flex flex-wrap items-center gap-2 mb-2">
           {subsidy.categories.map((cat) => (
             <span
@@ -161,226 +169,263 @@ export default async function SubsidyDetailPage({
         </div>
         <h1 className="text-2xl font-bold mb-1">{subsidy.name}</h1>
         <p className="text-muted-foreground">{subsidy.department}</p>
-      </div>
+      </FadeInUp>
+
+      {/* 締切カウントダウン */}
+      {daysLeft !== null && daysLeft <= 60 && (
+        <FadeInUp className="mb-6">
+          <div className={`text-center py-4 rounded-xl ${daysLeft <= 14 ? 'bg-red-50 border border-red-200' : daysLeft <= 30 ? 'bg-orange-50 border border-orange-200' : 'bg-blue-50 border border-blue-200'}`}>
+            <p className={`text-3xl font-bold ${daysLeft <= 14 ? 'text-red-600' : daysLeft <= 30 ? 'text-orange-600' : 'text-blue-600'}`}>
+              あと{daysLeft}日
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">申請締切まで</p>
+          </div>
+        </FadeInUp>
+      )}
 
       {/* 金額・締切サマリ */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-        <div className="rounded-xl border border-border bg-card p-4">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-            <Banknote className="h-3.5 w-3.5" />
-            上限額
+      <AnimatedGrid className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <AnimatedItem>
+          <div className="rounded-xl border border-border bg-card p-4">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+              <Banknote className="h-3.5 w-3.5" />
+              上限額
+            </div>
+            <p className="text-lg font-bold">{formatAmount(subsidy.maxAmount)}</p>
           </div>
-          <p className="text-lg font-bold">{formatAmount(subsidy.maxAmount)}</p>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-4">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-            <Banknote className="h-3.5 w-3.5" />
-            補助率
+        </AnimatedItem>
+        <AnimatedItem>
+          <div className="rounded-xl border border-border bg-card p-4">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+              <Banknote className="h-3.5 w-3.5" />
+              補助率
+            </div>
+            <p className="text-lg font-bold">{subsidy.subsidyRate}</p>
           </div>
-          <p className="text-lg font-bold">{subsidy.subsidyRate}</p>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-4">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-            <Calendar className="h-3.5 w-3.5" />
-            締切
+        </AnimatedItem>
+        <AnimatedItem>
+          <div className="rounded-xl border border-border bg-card p-4">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+              <Calendar className="h-3.5 w-3.5" />
+              締切
+            </div>
+            <p className="text-lg font-bold">{formatDeadline(subsidy.deadline)}</p>
           </div>
-          <p className="text-lg font-bold">{formatDeadline(subsidy.deadline)}</p>
-        </div>
-        <div className="rounded-xl border border-border bg-card p-4">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-            <Building2 className="h-3.5 w-3.5" />
-            対象規模
+        </AnimatedItem>
+        <AnimatedItem>
+          <div className="rounded-xl border border-border bg-card p-4">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+              <Building2 className="h-3.5 w-3.5" />
+              対象規模
+            </div>
+            <p className="text-sm font-bold">
+              {subsidy.targetScale.map((s) => SCALE_LABELS[s]).join("・")}
+            </p>
           </div>
-          <p className="text-sm font-bold">
-            {subsidy.targetScale.map((s) => SCALE_LABELS[s]).join("・")}
-          </p>
-        </div>
-      </div>
+        </AnimatedItem>
+      </AnimatedGrid>
 
       {/* 概要 */}
-      <section className="rounded-xl border border-border bg-card p-5 mb-4">
-        <h2 className="font-semibold mb-2">概要</h2>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          {subsidy.description}
-        </p>
-        {subsidy.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-3">
-            {subsidy.tags.map((tag) => (
+      <FadeInUp>
+        <section className="rounded-xl border border-border bg-card p-5 mb-4">
+          <h2 className="font-semibold mb-2">概要</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            {subsidy.description}
+          </p>
+          {subsidy.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-3">
+              {subsidy.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </section>
+      </FadeInUp>
+
+      {/* 対象業種 */}
+      <FadeInUp>
+        <section className="rounded-xl border border-border bg-card p-5 mb-4">
+          <h2 className="font-semibold mb-2">対象業種</h2>
+          <div className="flex flex-wrap gap-2">
+            {subsidy.targetIndustries.map((ind) => (
               <span
-                key={tag}
-                className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                key={ind}
+                className="inline-flex items-center rounded-full bg-muted px-3 py-1 text-xs font-medium"
               >
-                {tag}
+                {INDUSTRY_LABELS[ind]}
               </span>
             ))}
           </div>
-        )}
-      </section>
-
-      {/* 対象業種 */}
-      <section className="rounded-xl border border-border bg-card p-5 mb-4">
-        <h2 className="font-semibold mb-2">対象業種</h2>
-        <div className="flex flex-wrap gap-2">
-          {subsidy.targetIndustries.map((ind) => (
-            <span
-              key={ind}
-              className="inline-flex items-center rounded-full bg-muted px-3 py-1 text-xs font-medium"
-            >
-              {INDUSTRY_LABELS[ind]}
-            </span>
-          ))}
-        </div>
-      </section>
+        </section>
+      </FadeInUp>
 
       {/* 適格性要件 */}
       {subsidy.eligibilityCriteria.length > 0 && (
-        <section className="rounded-xl border border-border bg-card p-5 mb-4">
-          <h2 className="font-semibold mb-3 flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
-            適格性要件
-          </h2>
-          <ul className="space-y-2">
-            {subsidy.eligibilityCriteria.map((c, i) => (
-              <li
-                key={i}
-                className="flex items-start gap-2 text-sm text-muted-foreground"
-              >
-                <span className="text-green-600 mt-0.5">✓</span>
-                {c}
-              </li>
-            ))}
-          </ul>
-        </section>
+        <FadeInUp>
+          <section className="rounded-xl border border-border bg-card p-5 mb-4">
+            <h2 className="font-semibold mb-3 flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              適格性要件
+            </h2>
+            <ul className="space-y-2">
+              {subsidy.eligibilityCriteria.map((c, i) => (
+                <li
+                  key={i}
+                  className="flex items-start gap-2 text-sm text-muted-foreground"
+                >
+                  <span className="text-green-600 mt-0.5">✓</span>
+                  {c}
+                </li>
+              ))}
+            </ul>
+          </section>
+        </FadeInUp>
       )}
 
       {/* 対象外ケース */}
       {subsidy.excludedCases.length > 0 && (
-        <section className="rounded-xl border border-border bg-card p-5 mb-4">
-          <h2 className="font-semibold mb-3 flex items-center gap-2">
-            <XCircle className="h-4 w-4 text-red-500" />
-            対象外となるケース
-          </h2>
-          <ul className="space-y-2">
-            {subsidy.excludedCases.map((c, i) => (
-              <li
-                key={i}
-                className="flex items-start gap-2 text-sm text-muted-foreground"
-              >
-                <span className="text-red-500 mt-0.5">✕</span>
-                {c}
-              </li>
-            ))}
-          </ul>
-        </section>
+        <FadeInUp>
+          <section className="rounded-xl border border-border bg-card p-5 mb-4">
+            <h2 className="font-semibold mb-3 flex items-center gap-2">
+              <XCircle className="h-4 w-4 text-red-500" />
+              対象外となるケース
+            </h2>
+            <ul className="space-y-2">
+              {subsidy.excludedCases.map((c, i) => (
+                <li
+                  key={i}
+                  className="flex items-start gap-2 text-sm text-muted-foreground"
+                >
+                  <span className="text-red-500 mt-0.5">✕</span>
+                  {c}
+                </li>
+              ))}
+            </ul>
+          </section>
+        </FadeInUp>
       )}
 
       {/* 必要書類 */}
       {subsidy.requiredDocuments.length > 0 && (
-        <section className="rounded-xl border border-border bg-card p-5 mb-4">
-          <h2 className="font-semibold mb-3 flex items-center gap-2">
-            <FileText className="h-4 w-4 text-muted-foreground" />
-            必要書類
-          </h2>
-          <ul className="space-y-1.5">
-            {subsidy.requiredDocuments.map((doc, i) => (
-              <li
-                key={i}
-                className="flex items-center gap-2 text-sm text-muted-foreground"
-              >
-                <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 shrink-0" />
-                {doc}
-              </li>
-            ))}
-          </ul>
-        </section>
+        <FadeInUp>
+          <section className="rounded-xl border border-border bg-card p-5 mb-4">
+            <h2 className="font-semibold mb-3 flex items-center gap-2">
+              <FileText className="h-4 w-4 text-muted-foreground" />
+              必要書類
+            </h2>
+            <ul className="space-y-1.5">
+              {subsidy.requiredDocuments.map((doc, i) => (
+                <li
+                  key={i}
+                  className="flex items-center gap-2 text-sm text-muted-foreground"
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/50 shrink-0" />
+                  {doc}
+                </li>
+              ))}
+            </ul>
+          </section>
+        </FadeInUp>
       )}
 
       {/* 申請書セクション構成 */}
       {subsidy.applicationSections.length > 0 && (
-        <section className="rounded-xl border border-border bg-card p-5 mb-6">
-          <h2 className="font-semibold mb-3 flex items-center gap-2">
-            <ClipboardList className="h-4 w-4 text-muted-foreground" />
-            申請書セクション構成
-          </h2>
-          <div className="space-y-2">
-            {subsidy.applicationSections.map((sec) => (
-              <div
-                key={sec.key}
-                className="flex items-start gap-3 rounded-lg bg-muted/50 px-4 py-3"
-              >
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{sec.title}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {sec.description}
-                  </p>
+        <FadeInUp>
+          <section className="rounded-xl border border-border bg-card p-5 mb-6">
+            <h2 className="font-semibold mb-3 flex items-center gap-2">
+              <ClipboardList className="h-4 w-4 text-muted-foreground" />
+              申請書セクション構成
+            </h2>
+            <div className="space-y-2">
+              {subsidy.applicationSections.map((sec) => (
+                <div
+                  key={sec.key}
+                  className="flex items-start gap-3 rounded-lg bg-muted/50 px-4 py-3"
+                >
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{sec.title}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {sec.description}
+                    </p>
+                  </div>
+                  {sec.group && (
+                    <span className="text-xs text-muted-foreground shrink-0">
+                      {sec.group}
+                    </span>
+                  )}
                 </div>
-                {sec.group && (
-                  <span className="text-xs text-muted-foreground shrink-0">
-                    {sec.group}
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
+              ))}
+            </div>
+          </section>
+        </FadeInUp>
       )}
 
       {/* 関連ブログ記事 */}
       {relatedPosts.length > 0 && (
-        <section className="rounded-xl border border-border bg-card p-5 mb-6">
-          <h2 className="font-semibold mb-3 flex items-center gap-2">
-            <BookOpen className="h-4 w-4 text-primary" />
-            関連する記事
-          </h2>
-          <div className="space-y-3">
-            {relatedPosts.map((post) => (
-              <Link
-                key={post.slug}
-                href={`/blog/${post.slug}`}
-                className="block rounded-lg bg-muted/50 px-4 py-3 hover:bg-muted transition-colors"
-              >
-                <p className="text-sm font-medium hover:text-primary transition-colors">
-                  {post.title}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
-                  {post.description}
-                </p>
-              </Link>
-            ))}
-          </div>
-        </section>
+        <FadeInUp>
+          <section className="rounded-xl border border-border bg-card p-5 mb-6">
+            <h2 className="font-semibold mb-3 flex items-center gap-2">
+              <BookOpen className="h-4 w-4 text-primary" />
+              関連する記事
+            </h2>
+            <div className="space-y-3">
+              {relatedPosts.map((post) => (
+                <Link
+                  key={post.slug}
+                  href={`/blog/${post.slug}`}
+                  className="block rounded-lg bg-muted/50 px-4 py-3 hover:bg-muted transition-colors"
+                >
+                  <p className="text-sm font-medium hover:text-primary transition-colors">
+                    {post.title}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                    {post.description}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </section>
+        </FadeInUp>
       )}
 
       {/* CTA */}
-      <div className="flex items-center gap-3">
-        {subsidy.promptSupport !== "NONE" && subsidy.isActive && (
+      <FadeInUp>
+        <div className="flex items-center gap-3">
+          {subsidy.promptSupport !== "NONE" && subsidy.isActive && (
+            <Link
+              href={`/applications/new?subsidyId=${subsidy.id}`}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-sm font-medium"
+            >
+              <Sparkles className="h-4 w-4" />
+              この補助金で申請を作成
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          )}
+          {subsidy.url && (
+            <a
+              href={subsidy.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border hover:bg-accent transition-colors text-sm"
+            >
+              公式サイト
+              <ExternalLink className="h-4 w-4" />
+            </a>
+          )}
           <Link
-            href={`/applications/new?subsidyId=${subsidy.id}`}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-sm font-medium"
+            href="/subsidies"
+            className="px-5 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-accent transition-colors"
           >
-            <Sparkles className="h-4 w-4" />
-            この補助金で申請を作成
-            <ArrowRight className="h-4 w-4" />
+            検索に戻る
           </Link>
-        )}
-        {subsidy.url && (
-          <a
-            href={subsidy.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg border border-border hover:bg-accent transition-colors text-sm"
-          >
-            公式サイト
-            <ExternalLink className="h-4 w-4" />
-          </a>
-        )}
-        <Link
-          href="/subsidies"
-          className="px-5 py-2.5 rounded-lg text-sm text-muted-foreground hover:bg-accent transition-colors"
-        >
-          検索に戻る
-        </Link>
-      </div>
+        </div>
+      </FadeInUp>
     </div>
+    </PageTransition>
   );
 }

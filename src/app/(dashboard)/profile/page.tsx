@@ -100,6 +100,7 @@ export default function ProfilePage() {
       if (!res.ok) throw new Error(data.error);
       if (data.profile?.id) setProfileId(data.profile.id);
       setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
       if (wasNewProfile) {
         trackProfileCompleted();
         posthog.capture(EVENTS.PROFILE_CREATED);
@@ -196,7 +197,7 @@ export default function ProfilePage() {
               <button
                 onClick={handleQuickSave}
                 disabled={!canQuickSave || saving}
-                className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+                className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 active:scale-[0.97] transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50"
               >
                 {saving ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -216,7 +217,7 @@ export default function ProfilePage() {
           <div key={step.key} className="flex items-center gap-2">
             <button
               onClick={() => setCurrentStep(step.key)}
-              className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+              className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                 currentStep === step.key
                   ? "bg-primary text-primary-foreground"
                   : i < stepIndex
@@ -406,7 +407,7 @@ export default function ProfilePage() {
                           : [...selected, ch];
                         update("salesChannels", next.join(","));
                       }}
-                      className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                      className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-150 active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                         isActive
                           ? "bg-primary text-primary-foreground"
                           : "bg-muted text-muted-foreground hover:bg-accent"
@@ -449,7 +450,7 @@ export default function ProfilePage() {
                           : [...selected, ch];
                         update("challenges", next.join(","));
                       }}
-                      className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                      className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-150 active:scale-[0.97] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
                         isActive
                           ? "bg-primary text-primary-foreground"
                           : "bg-muted text-muted-foreground hover:bg-accent"
@@ -546,7 +547,7 @@ export default function ProfilePage() {
               if (prev) setCurrentStep(prev.key);
             }}
             disabled={stepIndex === 0}
-            className="px-4 py-2 text-sm rounded-lg border border-border hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm rounded-lg border border-border hover:bg-accent active:scale-[0.97] transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50 disabled:cursor-not-allowed"
           >
             戻る
           </button>
@@ -554,12 +555,12 @@ export default function ProfilePage() {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg border border-primary text-primary hover:bg-primary/5 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg border border-primary text-primary hover:bg-primary/5 active:scale-[0.97] transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50"
             >
               {saving ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : saved ? (
-                <CheckCircle className="h-4 w-4" />
+                <CheckCircle className="h-4 w-4 animate-[icon-pop_0.2s_ease-out]" />
               ) : (
                 <Save className="h-4 w-4" />
               )}
@@ -577,7 +578,7 @@ export default function ProfilePage() {
                     setCurrentStep(next.key);
                   }
                 }}
-                className="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                className="px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.97] transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               >
                 次へ
               </button>

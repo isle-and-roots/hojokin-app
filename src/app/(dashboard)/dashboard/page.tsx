@@ -7,6 +7,7 @@ import {
   Sparkles,
   ArrowRight,
 } from "lucide-react";
+import { PageTransition, AnimatedGrid, AnimatedItem } from "@/components/ui/motion";
 import { searchSubsidies, getRecommendedSubsidiesWithReasons } from "@/lib/subsidies";
 import {
   PROMPT_SUPPORT_CONFIG,
@@ -137,44 +138,54 @@ export default async function Dashboard({
   const stepperCurrentStep: 1 | 3 = profile ? 3 : 1;
 
   return (
+    <PageTransition>
     <div className="p-8">
       <SignupTracker isWelcome={isWelcome} />
       <WelcomeModal show={isWelcome && !profile} />
       <div className="mb-8">
-        <h1 className="text-2xl font-bold">ダッシュボード</h1>
+        {profile ? (
+          <h1 className="text-2xl font-bold">こんにちは、{profile.companyName}さん</h1>
+        ) : (
+          <h1 className="text-2xl font-bold">ダッシュボード</h1>
+        )}
         <p className="text-muted-foreground mt-1">
           補助金申請の状況を一覧で確認できます
         </p>
       </div>
 
       {/* ステータスカード */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+      <AnimatedGrid className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
         {stats.map((stat) => (
-          <div
-            key={stat.label}
-            className="rounded-xl border border-border bg-card p-6"
-          >
+          <AnimatedItem key={stat.label}>
+            <div className="rounded-xl border border-border bg-card p-6 h-full">
+              <div className="flex items-center gap-3">
+                <stat.icon className={`h-5 w-5 ${stat.color}`} />
+                <span className="text-sm text-muted-foreground">
+                  {stat.label}
+                </span>
+              </div>
+              <p className="mt-2 text-3xl font-bold">{stat.value}</p>
+            </div>
+          </AnimatedItem>
+        ))}
+        <AnimatedItem>
+          <div className="rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 to-blue-50 p-6 shadow-sm h-full">
             <div className="flex items-center gap-3">
-              <stat.icon className={`h-5 w-5 ${stat.color}`} />
+              <Sparkles className="h-5 w-5 text-primary" />
               <span className="text-sm text-muted-foreground">
-                {stat.label}
+                AI対応補助金
               </span>
             </div>
-            <p className="mt-2 text-3xl font-bold">{stat.value}</p>
+            <p className="mt-2 text-3xl font-bold">{aiSupported.length}件</p>
           </div>
-        ))}
-        <div className="rounded-xl border border-border bg-card p-6">
-          <div className="flex items-center gap-3">
-            <Sparkles className="h-5 w-5 text-primary" />
-            <span className="text-sm text-muted-foreground">
-              AI対応補助金
-            </span>
-          </div>
-          <p className="mt-2 text-3xl font-bold">{aiSupported.length}件</p>
-        </div>
-        <QuotaWidget />
-        <PlanBadgeCard />
-      </div>
+        </AnimatedItem>
+        <AnimatedItem>
+          <QuotaWidget />
+        </AnimatedItem>
+        <AnimatedItem>
+          <PlanBadgeCard />
+        </AnimatedItem>
+      </AnimatedGrid>
 
       {/* プロフィール充実度バナー */}
       {profile && (
@@ -186,45 +197,60 @@ export default async function Dashboard({
 
       {/* クイックアクション */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold mb-4">はじめる</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Link
-            href="/profile"
-            className="flex flex-col gap-3 rounded-xl border border-border bg-card p-6 hover:border-primary/50 hover:shadow-sm transition-all"
-          >
-            <Building2 className="h-8 w-8 text-primary" />
-            <div>
-              <h3 className="font-semibold">企業プロフィール登録</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                事業者情報を入力して申請書類の基盤を作成
-              </p>
-            </div>
-          </Link>
-          <Link
-            href="/subsidies"
-            className="flex flex-col gap-3 rounded-xl border border-border bg-card p-6 hover:border-primary/50 hover:shadow-sm transition-all"
-          >
-            <Search className="h-8 w-8 text-primary" />
-            <div>
-              <h3 className="font-semibold">補助金を探す</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                {activeSubsidies.length}件の補助金からぴったりの制度を検索
-              </p>
-            </div>
-          </Link>
-          <Link
-            href="/applications"
-            className="flex flex-col gap-3 rounded-xl border border-border bg-card p-6 hover:border-primary/50 hover:shadow-sm transition-all"
-          >
-            <FileText className="h-8 w-8 text-primary" />
-            <div>
-              <h3 className="font-semibold">申請一覧</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                作成済みの申請書類を管理
-              </p>
-            </div>
-          </Link>
-        </div>
+        <h2 className="text-lg font-semibold mb-4 pl-3 border-l-[3px] border-primary">はじめる</h2>
+        <AnimatedGrid className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <AnimatedItem>
+            <Link
+              href="/profile"
+              className="flex flex-col gap-3 rounded-xl border border-border bg-card p-6 hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group h-full"
+            >
+              <div className="flex items-center justify-between">
+                <Building2 className="h-8 w-8 text-primary" />
+                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+              </div>
+              <div>
+                <h3 className="font-semibold">企業プロフィール登録</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  事業者情報を入力して申請書類の基盤を作成
+                </p>
+              </div>
+            </Link>
+          </AnimatedItem>
+          <AnimatedItem>
+            <Link
+              href="/subsidies"
+              className="flex flex-col gap-3 rounded-xl border border-border bg-card p-6 hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group h-full"
+            >
+              <div className="flex items-center justify-between">
+                <Search className="h-8 w-8 text-primary" />
+                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+              </div>
+              <div>
+                <h3 className="font-semibold">補助金を探す</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {activeSubsidies.length}件の補助金からぴったりの制度を検索
+                </p>
+              </div>
+            </Link>
+          </AnimatedItem>
+          <AnimatedItem>
+            <Link
+              href="/applications"
+              className="flex flex-col gap-3 rounded-xl border border-border bg-card p-6 hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group h-full"
+            >
+              <div className="flex items-center justify-between">
+                <FileText className="h-8 w-8 text-primary" />
+                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+              </div>
+              <div>
+                <h3 className="font-semibold">申請一覧</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  作成済みの申請書類を管理
+                </p>
+              </div>
+            </Link>
+          </AnimatedItem>
+        </AnimatedGrid>
       </div>
 
       {/* オンボーディングステッパー or レコメンドセクション */}
@@ -246,7 +272,7 @@ export default async function Dashboard({
       {/* 対応補助金 */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">対応補助金</h2>
+          <h2 className="text-lg font-semibold pl-3 border-l-[3px] border-primary">対応補助金</h2>
           <Link
             href="/subsidies"
             className="flex items-center gap-1 text-sm text-primary hover:underline"
@@ -292,5 +318,6 @@ export default async function Dashboard({
         </div>
       </div>
     </div>
+    </PageTransition>
   );
 }

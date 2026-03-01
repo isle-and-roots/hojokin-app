@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { FileText, PlusCircle, Download, Trash2, Sparkles, Loader2 } from "lucide-react";
+import { PageTransition } from "@/components/ui/motion";
 import dynamic from "next/dynamic";
 import { useToast } from "@/components/ui/toast";
 import { useConfirm } from "@/components/ui/confirm-dialog";
@@ -36,6 +37,15 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   submitted: { label: "提出済み", color: "bg-purple-100 text-purple-700" },
   adopted: { label: "採択", color: "bg-emerald-100 text-emerald-700" },
   rejected: { label: "不採択", color: "bg-red-100 text-red-700" },
+};
+
+const STATUS_STRIPE_COLORS: Record<string, string> = {
+  draft: "border-l-gray-400",
+  review: "border-l-blue-500",
+  ready: "border-l-green-500",
+  submitted: "border-l-purple-500",
+  adopted: "border-l-emerald-500",
+  rejected: "border-l-red-500",
 };
 
 export default function ApplicationsPage() {
@@ -133,15 +143,18 @@ export default function ApplicationsPage() {
 
   if (loading) {
     return (
-      <div className="p-4 sm:p-8">
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <PageTransition>
+        <div className="p-4 sm:p-8">
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
         </div>
-      </div>
+      </PageTransition>
     );
   }
 
   return (
+    <PageTransition>
     <div className="p-4 sm:p-8">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -152,7 +165,7 @@ export default function ApplicationsPage() {
         </div>
         <Link
           href="/subsidies"
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.97] transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
           <PlusCircle className="h-4 w-4" />
           新規申請
@@ -161,14 +174,32 @@ export default function ApplicationsPage() {
 
       {applications.length === 0 ? (
         <div className="rounded-xl border border-border bg-card p-12 text-center">
-          <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+            <FileText className="h-8 w-8 text-primary" />
+          </div>
           <h2 className="text-lg font-semibold mb-2">申請書類がありません</h2>
-          <p className="text-muted-foreground mb-4">
-            補助金を検索して、AIで申請書類を生成しましょう
+          <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+            3つのステップで簡単に補助金申請書類を作成できます
           </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6 text-sm">
+            <div className="flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold">1</span>
+              <span className="text-muted-foreground">補助金を選ぶ</span>
+            </div>
+            <div className="hidden sm:block w-8 h-px bg-border" />
+            <div className="flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold">2</span>
+              <span className="text-muted-foreground">AIが生成</span>
+            </div>
+            <div className="hidden sm:block w-8 h-px bg-border" />
+            <div className="flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold">3</span>
+              <span className="text-muted-foreground">ダウンロード</span>
+            </div>
+          </div>
           <Link
             href="/subsidies"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.97] transition-all"
           >
             <Sparkles className="h-4 w-4" />
             補助金を探す
@@ -178,10 +209,11 @@ export default function ApplicationsPage() {
         <div className="space-y-3">
           {applications.map((app) => {
             const statusInfo = STATUS_LABELS[app.status] || STATUS_LABELS.draft;
+            const stripeColor = STATUS_STRIPE_COLORS[app.status] || "border-l-gray-400";
             return (
               <div
                 key={app.id}
-                className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-border bg-card p-5"
+                className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-border bg-card p-5 hover:shadow-sm hover:-translate-y-0.5 transition-all duration-200 border-l-[3px] ${stripeColor}`}
               >
                 <div className="flex items-center gap-4">
                   <FileText className="h-8 w-8 text-primary shrink-0" />
@@ -201,14 +233,14 @@ export default function ApplicationsPage() {
                   </span>
                   <button
                     onClick={() => handleExport(app)}
-                    className="p-2 rounded-lg hover:bg-accent transition-colors"
+                    className="p-2 rounded-lg hover:bg-accent active:scale-[0.97] transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                     title="Wordエクスポート"
                   >
                     <Download className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => handleDelete(app.id)}
-                    className="p-2 rounded-lg hover:bg-destructive/10 text-destructive transition-colors"
+                    className="p-2 rounded-lg hover:bg-destructive/10 text-destructive active:scale-[0.97] transition-all duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                     title="削除"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -232,5 +264,6 @@ export default function ApplicationsPage() {
         }
       />
     </div>
+    </PageTransition>
   );
 }
