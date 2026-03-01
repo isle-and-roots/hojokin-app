@@ -44,10 +44,10 @@ const ICONS: Record<ToastType, typeof CheckCircle> = {
 };
 
 const STYLES: Record<ToastType, string> = {
-  success: "border-green-200 bg-green-50 text-green-900",
-  error: "border-red-200 bg-red-50 text-red-900",
-  warning: "border-yellow-200 bg-yellow-50 text-yellow-900",
-  info: "border-blue-200 bg-blue-50 text-blue-900",
+  success: "border-green-200 bg-white/95 backdrop-blur-sm text-green-900",
+  error: "border-red-200 bg-white/95 backdrop-blur-sm text-red-900",
+  warning: "border-yellow-200 bg-white/95 backdrop-blur-sm text-yellow-900",
+  info: "border-blue-200 bg-white/95 backdrop-blur-sm text-blue-900",
 };
 
 const ICON_STYLES: Record<ToastType, string> = {
@@ -70,15 +70,16 @@ function ToastItem({
   const [isLeaving, setIsLeaving] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
+  const duration = toast.duration ?? 5000;
+
   useEffect(() => {
     requestAnimationFrame(() => setIsVisible(true));
-    const duration = toast.duration ?? 5000;
     timerRef.current = setTimeout(() => {
       setIsLeaving(true);
       setTimeout(() => onDismiss(toast.id), 300);
     }, duration);
     return () => clearTimeout(timerRef.current);
-  }, [toast.id, toast.duration, onDismiss]);
+  }, [toast.id, duration, onDismiss]);
 
   const handleClose = () => {
     clearTimeout(timerRef.current);
@@ -92,7 +93,7 @@ function ToastItem({
     <div
       role="alert"
       aria-live="polite"
-      className={`flex items-start gap-3 rounded-lg border px-4 py-3 shadow-lg transition-all duration-300 ${
+      className={`relative flex items-start gap-3 rounded-lg border px-4 py-3 shadow-lg transition-all duration-300 overflow-hidden ${
         STYLES[toast.type]
       } ${
         isVisible && !isLeaving
@@ -100,7 +101,7 @@ function ToastItem({
           : "translate-x-full opacity-0"
       }`}
     >
-      <Icon className={`h-5 w-5 shrink-0 mt-0.5 ${ICON_STYLES[toast.type]}`} />
+      <Icon className={`h-5 w-5 shrink-0 mt-0.5 animate-[scale-in_300ms_ease-out] ${ICON_STYLES[toast.type]}`} />
       <p className="text-sm flex-1">{toast.message}</p>
       <button
         onClick={handleClose}
@@ -109,6 +110,10 @@ function ToastItem({
       >
         <X className="h-4 w-4" />
       </button>
+      <div
+        className="absolute bottom-0 left-0 h-0.5 bg-current/20 rounded-full"
+        style={{ animation: `progress-fill ${duration}ms linear reverse` }}
+      />
     </div>
   );
 }

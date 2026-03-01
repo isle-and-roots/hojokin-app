@@ -90,7 +90,7 @@ export function QuotaWidget() {
   };
 
   return (
-    <div className={`rounded-xl border bg-card p-6 ${borderColor}`}>
+    <div className={`rounded-xl border bg-card p-6 ${borderColor} ${isExhausted ? 'shadow-[0_0_15px_rgb(239_68_68/0.2)]' : ''}`}>
       <div className="flex items-center gap-3 mb-3">
         <Sparkles className={`h-5 w-5 ${isExhausted ? "text-red-500" : isLow ? "text-orange-500" : "text-primary"}`} />
         <span className="text-sm text-muted-foreground">
@@ -106,7 +106,7 @@ export function QuotaWidget() {
       <div className="mt-3 h-2 rounded-full bg-border overflow-hidden">
         <div
           className={`h-2 rounded-full transition-all ${barColor}`}
-          style={{ width: `${percent}%` }}
+          style={{ width: `${percent}%`, animation: 'progress-fill 0.8s ease-out' }}
         />
       </div>
       {showUpgrade && (

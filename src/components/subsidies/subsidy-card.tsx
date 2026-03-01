@@ -8,7 +8,7 @@ import {
   PROMPT_SUPPORT_CONFIG,
 } from "@/lib/data/subsidy-categories";
 
-export function SubsidyCard({ subsidy }: { subsidy: SubsidyInfo }) {
+export function SubsidyCard({ subsidy, now }: { subsidy: SubsidyInfo; now?: number }) {
   const primaryCategory = subsidy.categories[0];
   const difficultyConf = DIFFICULTY_CONFIG[subsidy.difficulty];
   const promptConf = PROMPT_SUPPORT_CONFIG[subsidy.promptSupport];
@@ -25,8 +25,13 @@ export function SubsidyCard({ subsidy }: { subsidy: SubsidyInfo }) {
     return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
   };
 
+  const daysLeft = subsidy.deadline && now
+    ? Math.ceil((new Date(subsidy.deadline).getTime() - now) / (1000 * 60 * 60 * 24))
+    : null;
+
   return (
-    <div className="rounded-xl border border-border bg-card p-5 hover:border-primary/50 hover:shadow-sm transition-all">
+    <div className="rounded-xl border border-border bg-card p-5 hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group relative overflow-hidden">
+      <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-primary/60 rounded-l-xl" />
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex flex-wrap gap-1.5">
           {primaryCategory && (
@@ -68,6 +73,12 @@ export function SubsidyCard({ subsidy }: { subsidy: SubsidyInfo }) {
           <Calendar className="h-3.5 w-3.5" />
           {formatDeadline(subsidy.deadline)}
         </span>
+        {daysLeft !== null && daysLeft <= 14 && (
+          <span className="text-xs font-medium text-red-600 animate-[pulse-soft_2s_ease-in-out_infinite]">あと{daysLeft}日</span>
+        )}
+        {daysLeft !== null && daysLeft > 14 && daysLeft <= 30 && (
+          <span className="text-xs font-medium text-orange-600">あと{daysLeft}日</span>
+        )}
       </div>
 
       {subsidy.tags.length > 0 && (
@@ -89,7 +100,7 @@ export function SubsidyCard({ subsidy }: { subsidy: SubsidyInfo }) {
           className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm text-muted-foreground hover:bg-accent transition-colors"
         >
           詳細を見る
-          <ExternalLink className="h-3.5 w-3.5" />
+          <ExternalLink className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
         </Link>
         {subsidy.promptSupport !== "NONE" && subsidy.isActive && (
           <Link

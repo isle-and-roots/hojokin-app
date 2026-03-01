@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { SearchX } from "lucide-react";
+import { useState, useEffect } from "react";
+import { SearchX, ArrowUp } from "lucide-react";
 import type { SubsidyInfo } from "@/types";
 import { SubsidyCard } from "./subsidy-card";
 
@@ -9,6 +9,16 @@ type SortKey = "popularity" | "amount" | "deadline";
 
 export function SubsidyList({ items }: { items: SubsidyInfo[] }) {
   const [sortKey, setSortKey] = useState<SortKey>("popularity");
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [now] = useState(() => Date.now());
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 500);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const sorted = [...items].sort((a, b) => {
     switch (sortKey) {
@@ -43,7 +53,10 @@ export function SubsidyList({ items }: { items: SubsidyInfo[] }) {
     <div>
       <div className="flex items-center justify-between mb-4">
         <p className="text-sm text-muted-foreground">
-          {items.length}件の補助金
+          <span className="inline-flex items-center rounded-full bg-primary/10 text-primary px-2.5 py-0.5 text-xs font-medium mr-1.5">
+            {items.length}
+          </span>
+          件の補助金
         </p>
         <div className="flex items-center gap-1">
           {(
@@ -67,11 +80,21 @@ export function SubsidyList({ items }: { items: SubsidyInfo[] }) {
           ))}
         </div>
       </div>
-      <div className="space-y-3">
+      <div className="space-y-3 stagger-children">
         {sorted.map((s) => (
-          <SubsidyCard key={s.id} subsidy={s} />
+          <SubsidyCard key={s.id} subsidy={s} now={now} />
         ))}
       </div>
+
+      {showScrollTop && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="fixed bottom-6 right-6 z-40 p-3 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 active:scale-[0.97] transition-all animate-[scale-in_200ms_ease-out]"
+          aria-label="ページトップへ戻る"
+        >
+          <ArrowUp className="h-5 w-5" />
+        </button>
+      )}
     </div>
   );
 }

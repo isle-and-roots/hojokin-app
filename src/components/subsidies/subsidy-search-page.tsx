@@ -6,6 +6,7 @@ import { SearchFilters } from "@/components/subsidies/search-filters";
 import { SubsidyList } from "@/components/subsidies/subsidy-list";
 import { RecommendationBanner } from "@/components/subsidies/recommendation-banner";
 import { OnboardingBanner } from "@/components/subsidies/onboarding-banner";
+import { PageTransition } from "@/components/ui/motion";
 
 export function SubsidySearchPage() {
   const [filters, setFilters] = useState<SubsidySearchFilters>({});
@@ -34,6 +35,7 @@ export function SubsidySearchPage() {
   }, [filters, doSearch]);
 
   return (
+    <PageTransition>
     <div className="p-8 max-w-4xl">
       <div className="mb-6">
         <h1 className="text-2xl font-bold">補助金検索</h1>
@@ -53,13 +55,24 @@ export function SubsidySearchPage() {
       </div>
 
       {loading ? (
-        <div className="rounded-xl border border-border bg-card p-12 text-center">
-          <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">検索中...</p>
+        <div className="space-y-3">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="rounded-xl border border-border bg-card p-5">
+              <div className="flex gap-2 mb-3">
+                <div className="h-5 w-16 rounded-full skeleton-shimmer" />
+                <div className="h-5 w-20 rounded-full skeleton-shimmer" />
+              </div>
+              <div className="h-5 w-3/4 rounded skeleton-shimmer mb-2" />
+              <div className="h-4 w-1/2 rounded skeleton-shimmer mb-3" />
+              <div className="h-4 w-full rounded skeleton-shimmer mb-1" />
+              <div className="h-4 w-4/5 rounded skeleton-shimmer" />
+            </div>
+          ))}
         </div>
       ) : (
         <SubsidyList items={items} />
       )}
     </div>
+    </PageTransition>
   );
 }

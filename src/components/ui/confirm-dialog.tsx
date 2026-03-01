@@ -60,10 +60,14 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
         createPortal(
           <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div
-              className="absolute inset-0 bg-black/40"
+              className="absolute inset-0 bg-black/40 transition-opacity duration-200"
               onClick={handleCancel}
             />
-            <div className="relative bg-card rounded-xl border border-border shadow-xl p-6 max-w-md w-full mx-4 animate-in fade-in zoom-in-95 duration-200">
+            <div className={`relative bg-card rounded-xl border shadow-xl p-6 max-w-md w-full mx-4 animate-[scale-in_250ms_ease-out] ${
+              state.options.variant === "danger"
+                ? "border-t-2 border-t-destructive border-border"
+                : "border-border"
+            }`}>
               <div className="flex items-start gap-4">
                 {state.options.variant === "danger" && (
                   <div className="shrink-0 flex h-10 w-10 items-center justify-center rounded-full bg-red-100">

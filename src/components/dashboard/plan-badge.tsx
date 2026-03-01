@@ -33,7 +33,10 @@ export function PlanBadgeCard() {
   const isPaid = plan !== "free";
 
   return (
-    <div className="rounded-xl border border-border bg-card p-6">
+    <div className={`rounded-xl border p-6 relative overflow-hidden ${isPaid ? 'border-primary/30 bg-card shadow-md shadow-primary/5' : 'border-border bg-card'}`}>
+      {isPaid && (
+        <div className="absolute inset-x-0 top-0 h-1 rounded-t-xl bg-gradient-to-r from-primary/40 via-primary/60 to-primary/40" />
+      )}
       <div className="flex items-center gap-3">
         <Crown className={`h-5 w-5 ${isPaid ? "text-primary" : "text-muted-foreground"}`} />
         <span className="text-sm text-muted-foreground">現在のプラン</span>

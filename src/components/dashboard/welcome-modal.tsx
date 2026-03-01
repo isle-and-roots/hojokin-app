@@ -56,10 +56,10 @@ export function WelcomeModal({ show }: { show: boolean }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-200"
         onClick={handleClose}
       />
-      <div className="relative w-full max-w-lg mx-4 rounded-2xl bg-card border border-border shadow-2xl overflow-hidden">
+      <div className="relative w-full max-w-lg mx-4 rounded-2xl bg-card border border-border shadow-2xl overflow-hidden animate-[scale-in_250ms_ease-out]">
         <button
           onClick={handleClose}
           className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-accent transition-colors z-10"

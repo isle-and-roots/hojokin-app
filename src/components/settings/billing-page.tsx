@@ -14,6 +14,7 @@ import {
   Shield,
   ExternalLink,
 } from "lucide-react";
+import { PageTransition } from "@/components/ui/motion";
 import { PLAN_LIST, type PlanKey, getAiLimit } from "@/lib/plans";
 import { useToast } from "@/components/ui/toast";
 
