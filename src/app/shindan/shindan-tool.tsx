@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Sparkles,
@@ -160,6 +160,15 @@ export function ShindanTool({ subsidies }: { subsidies: SubsidyInfo[] }) {
     scale: null,
   });
   const [results, setResults] = useState<SubsidyInfo[]>([]);
+
+  // 補助金診断の訪問をオンボーディングステッパーに伝える
+  useEffect(() => {
+    try {
+      localStorage.setItem("hojokin_shindan_visited", "true");
+    } catch {
+      // ignore
+    }
+  }, []);
 
   function handleStart() {
     setCurrentStep(1);

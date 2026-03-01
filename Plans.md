@@ -33,6 +33,7 @@ Updated: 2026-03-01
 | 12 | 補助金データDB移行 + jGrants API自動取込 + 管理画面 | d07bdfa |
 | 13 | 報告書品質(準拠チェック・品質スコア・差分) + PDF日本語 + デプロイ基盤(CI・ヘルス・ストレージ) | — |
 | 14 | UI/UX ポリッシュ — アニメーション・スケルトン・デザインシステム基盤 | 130f510 |
+| 15 | 本番ヘルスチェック — health API, 公開ページ, 認証, API, Cron, テスト全PASS | — |
 
 ### 未実装手動タスク
 
@@ -55,109 +56,116 @@ PostHog: `hero-cta-text` Feature Flag 作成（control / variant_a）
 
 ---
 
-## Phase 14 ✅ 完了: UI/UX ポリッシュ
+## Phase 15 ✅ 完了: 本番ヘルスチェック
 
-### 概要
-Phase 13 完了後の全体的なビジュアルポリッシュ。アニメーション基盤、スケルトンUI改善、ページ遷移、デザインシステム統一。
-
-### コミット (3件)
-| コミット | 内容 |
-|---------|------|
-| c1d38aa | デザインシステム基盤 — styles.ts + motion.tsx + globals.css アニメーション |
-| 15f4ecf | ページレベル UI — PageTransition, スケルトン shimmer, 締切カウントダウン |
-| 130f510 | コンポーネント UI — サイドバー・カード・モーダル・トースト改善 |
-
-### 新規ファイル (2件)
-- `src/lib/styles.ts` — カード・ボタン・バッジのスタイルバリアント
-- `src/components/ui/motion.tsx` — Framer Motion ラッパー (PageTransition, AnimatedGrid, FadeInUp)
-
-### 変更ファイル (23件)
-globals.css, auth layout/login, dashboard/applications/subsidies/profile pages, 4 loading skeletons, sidebar, plan-badge, quota-widget, welcome-modal, subsidy-card/list/search-page, pricing-page, billing-page, confirm-dialog, toast, upgrade-modal
+Task 81-87 全完了: health API healthy, 公開9ページ200, 認証307リダイレクト正常, API 401/200正常, Cron 3ジョブ確認, vitest 104テスト全パス + tsc + lint + db:check PASS
 
 ---
 
-## Phase 13 ✅ 完了: Sprint 5-6 (品質・デプロイ基盤)
+## Phase 16: CX最適化 — 初回体験 & オンボーディング
 
-### Sprint 5: 報告書生成品質向上
+**目標**: TTFV (Time-to-First-Value) 15分→2分短縮 + PostHog ファネル計測
+**Phase 0 精査済み**: Planner分析 + Critic Red Teaming 反映
 
-| タスク | 状態 | 概要 |
-|--------|------|------|
-| 補助金ルール準拠チェック | done | src/lib/reports/compliance.ts — セクション別文字数・数値・キーワード検証 (9 tests) |
-| 生成品質評価スコア | done | src/lib/reports/quality-score.ts — 5軸加重スコア (A-F) + QualityBadge UI (14 tests) |
-| ドラフト差分表示 | done | src/lib/reports/diff.ts — LCS差分 + ReportDiffView UI (14 tests) |
-| PDF日本語フォント + レイアウト | done | @react-pdf/renderer + NotoSansJP (CDN) + A4レイアウト |
-| PDFパフォーマンステスト | done | < 3秒 / < 5MB / 1-12セクション対応 (3 tests) |
+### Sprint A: TTFV短縮 & 初回体験 (Required)
 
-### Sprint 6: 低コスト本番デプロイ
+#### Task 88a: 業種選択UI + quick-recommend API [feature:a11y]
+- [ ] 初回ログイン時の業種選択UI (`dashboard/page.tsx` に条件分岐)
+- [ ] `/api/subsidies/quick-recommend` — 業種→補助金3件マッチング (DBフィルタのみ、AI不使用)
+- [ ] PostHog TTFV ファネル: signup→industry_select→first_recommend→first_generation
+- **owns**: `dashboard/page.tsx`, `api/subsidies/quick-recommend/`
+- **done marker**: 業種選択→3件レコメンド表示 + PostHogイベント発火
 
-| タスク | 状態 | 概要 |
-|--------|------|------|
-| 環境変数チェック拡張 | done | src/lib/env-check.ts — 11必須 + 6任意の検証 (10 tests) |
-| /api/health 強化 | done | DB + env + timing + version |
-| スモークテスト + CI | done | scripts/smoke-test.ts + .github/workflows/{ci,smoke-test}.yml |
-| StorageProvider抽象化 | done | src/lib/storage/provider.ts — Supabase + Vercel Blob stub (12 tests) |
-| インフラコスト試算 | done | docs/cost-estimation.md |
-| デモシナリオ集 | done | docs/demo-scenarios.md (会計事務所 / コンサル) |
-| 機能要件マトリクス | done | docs/feature-requirements-matrix.md (SaaS / OEM / 代行) |
+#### Task 88b: デモ生成体験 (cached sample)
+- [ ] 補助金タイプ別のキャッシュ済みサンプル文章 (`src/lib/data/demo-samples.ts`)
+- [ ] デモモードUI: 「サンプルを見る」ボタン → キャッシュ表示 (Claude API呼び出しなし)
+- [ ] クォータ消費なし、本番APIコール一切なし (セキュリティ要件)
+- [ ] 体験完了→プロフィール充実への誘導CTA
+- **owns**: `demo-samples.ts`, `applications/new/page.tsx` (デモ部分のみ)
+- **done marker**: デモ生成がキャッシュから即座表示、API呼び出しゼロ
 
-### Phase 13 新規ファイル (20件)
+#### Task 89: ダッシュボード空状態リデザイン
+- [ ] ステータスカード「0件」→アクション誘導型カード (イラスト + CTA)
+- [ ] プロフィール未作成時: 次ステップを1つだけ大きく表示
+- [ ] クイックアクションとオンボーディングステッパーの重複解消
+- **owns**: `dashboard/page.tsx` (空状態セクションのみ)
+- **done marker**: 初回ダッシュボードがアクション誘導型
 
-- `src/lib/reports/{compliance,quality-score,diff}.ts` + テスト3件
-- `src/lib/pdf/{font-config,styles}.ts`, `application-pdf.tsx` + テスト1件
-- `src/app/api/export/pdf/route.ts`
-- `src/components/applications/{quality-badge,report-diff-view}.tsx`
-- `src/lib/{env-check,storage/provider}.ts` + テスト2件
-- `scripts/smoke-test.ts` + `.github/workflows/{ci,smoke-test}.yml`
-- `docs/{cost-estimation,demo-scenarios,feature-requirements-matrix}.md`
+#### Task 90: プロダクトツアー (自前実装: framer-motion + Tailwind)
+- [ ] SpotlightTour コンポーネント自作 (~200行、framer-motion AnimatePresence + Tailwind)
+- [ ] 3ステップ: プロフィール→補助金検索→AI生成 (要素ハイライト + ツールチップ)
+- [ ] スキップ可能 + localStorage「もう表示しない」
+- [ ] PostHog: ツアー完了率・ステップ離脱計測
+- **注意**: onborda不使用 (CLAUDE.md「外部UIライブラリ禁止」準拠)
+- **owns**: `components/onboarding/spotlight-tour.tsx` (新規)
+- **done marker**: 初回ログインでスポットライトツアー起動
 
-### Phase 13 品質ゲート ✅
+### Sprint B: エンゲージメント向上 (Recommended)
+
+#### Task 91: オンボーディングチェックリスト強化
+- [ ] 既存 `OnboardingStepper` を進捗バー付きチェックリストに拡張
+- [ ] 非表示条件: 全完了 or localStorage loginCount >= 3 (DB不要)
+- [ ] 全完了時: confetti CSS アニメーション
+- **owns**: `components/dashboard/onboarding-stepper.tsx`
+- **done marker**: チェックリスト + 完了時アニメーション動作
+
+#### Task 92: 成功体験アニメーション
+- [ ] AI初回生成完了: CSS @keyframes confetti + 「最初の申請書セクション完成！」
+- [ ] プロフィール100%完了: バッジ + メッセージ (AnimatePresence)
+- [ ] 申請書全セクション完了: 祝福画面 + DOCXダウンロードCTA
+- [ ] CSS @keyframes + framer-motion AnimatePresence (物理演算ライブラリ不使用)
+- **owns**: `components/ui/confetti.tsx` (新規), `applications/new/page.tsx` (成功部分)
+- **done marker**: 3つの成功体験アニメーション動作
+
+#### Task 93: コンテキストヘルプ & 用語説明
+- [ ] Tailwind ツールチップ: 「補助率」「上限額」「AI完全対応 vs AI対応」
+- [ ] AI生成画面: セクション名にインラインヘルプ
+- [ ] 「プロフィールが詳しいほど、AIが精密な申請書を生成します」明示
+- **owns**: `components/ui/tooltip.tsx` (新規), subsidy関連ページ
+- **done marker**: ツールチップ + ヘルプテキスト表示
+
+### Sprint C: パワーユーザー & リテンション (Optional)
+
+#### Task 94: スマート通知 (アプリ内)
+- [ ] 締切7日前バナー、申請書3日未更新ナッジ、新FULL補助金通知
+- **owns**: `components/dashboard/smart-notifications.tsx` (新規)
+- **done marker**: ダッシュボードにスマート通知バナー表示
+
+#### Task 95: コマンドパレット (Cmd+K) [feature:a11y]
+- [ ] 自前実装: Tailwind モーダル + ファジー検索 (cmdk不使用、外部UIライブラリ禁止準拠)
+- [ ] 補助金名検索→詳細ジャンプ、クイックアクション
+- [ ] 全プランで基本機能利用可、Free は upgrade modal 表示で高度機能制限
+- **owns**: `components/ui/command-palette.tsx` (新規), `dashboard/layout.tsx`
+- **done marker**: Cmd+K でパレット起動
+
+### 依存グラフ & 並列レーン
 
 ```
-104 tests passed | tsc ✅ | lint ✅ | build ✅
+Lane A (critical): 88a → 88b → 89 → 91 → 90
+Lane B (独立):     92 (成功アニメーション)
+Lane C (serial):   93 → 94
+Lane D (独立):     95 (Cmd+K)
+max_parallel: 3 (Round1: 88a+92+95, Round2: 88b+93, Round3: 89+94, Round4: 91→90)
 ```
 
----
+### 技術選定 (Phase 0 精査済み)
 
-## Phase 12 詳細: 補助金データ自動更新
-
-**目標**: 静的TS→DB移行 + jGrants API日次自動取込 + 管理画面
-
-| # | タスク | 状態 |
-|---|--------|------|
-| Task 70-71 | DB移行 + データソース切替 | done |
-| Task 72-74 | jGrants APIクライアント + AI抽出 + Cron | done |
-| Task 75 | 管理画面 (CRUD + 取込パネル) | done |
-| Task 76-79 | ビルド検証 + DB push + シード + デプロイ | done |
-| Task 80 | jGrants API v2 互換性修正 (パラメータ・型・バッチ処理) | done (7e99a9b) |
-
-コスト: Supabase Free $0 + Claude Haiku ~$0.50/月 + Vercel Cron $0 = **~$0.50/月**
+| 用途 | 実装方法 | 理由 |
+|------|---------|------|
+| プロダクトツアー | **自前** (framer-motion + Tailwind) | CLAUDE.md「外部UIライブラリ禁止」準拠 |
+| 成功アニメーション | **CSS @keyframes + AnimatePresence** | 物理演算不要、軽量 |
+| コマンドパレット | **自前** (Tailwind モーダル) | cmdk も外部UIに該当、自前で十分 |
+| ツールチップ | **Tailwind CSS** | 外部依存不要 |
+| デモ生成 | **キャッシュ済みサンプル** | セキュリティ: Claude API 不使用 |
+| TTFV計測 | **PostHog ファネル** | 既存PostHog活用 |
 
 ---
 
-## 12週レトロスペクティブ要約
+## Phase 12-14 ✅ 完了 (圧縮)
+
+**Phase 14** (130f510): UI/UX ポリッシュ — styles.ts + motion.tsx 新規、globals.css アニメーション、23ファイル変更
+**Phase 13**: 報告書品質(準拠チェック・品質スコア・差分) + PDF日本語 + CI + StorageProvider (104 tests)
+**Phase 12** (d07bdfa): 補助金DB移行(105件) + jGrants API v2自動取込 + 管理画面 (コスト ~$0.50/月)
 
 ### 技術メトリクス
-
-| 項目 | 数値 |
-|------|------|
-| APIルート | 15本 | DBテーブル | 5 + 3マイグレーション |
-| ブログ記事 | 16本 | 補助金データ | 105件 (12カテゴリ) |
-| FULL AI対応 | 30件 | プロンプト種類 | 10種 |
-| 課金プラン | 4 (Free/Starter/Pro/Business) | PostHogイベント | ~54 |
-| メールシーケンス | 7通 | テスト数 | 104 |
-
-### 学び
-
-- 品質ゲート (tsc + lint + db:check + build) の早期導入がバグ混入を防止
-- 静的TypeScriptデータ管理が型安全性・バージョン管理・デプロイ速度に有効
-- DBスキーマドリフトは3レイヤー (migration + check script + health API) で対策
-- マーケ手動タスクは意図的な優先付けが必要
-
----
-
-## 12週マーケティングスケジュール
-
-- **Week 3-4** ← 現在: SNS初投稿(5本) + note.com + Search Console + はてブ
-- **Week 5-8**: ブログ2本/週 + X 5投稿/週 + SEO最適化 + 内部リンク
-- **Week 9-12**: 補助金診断LP + パートナー + CTA最適化 + レトロスペクティブ
-- **期待成果**: ブログ23本、オーガニック500-1K/月、サインアップ10-50件
+APIルート 15本 / DBテーブル 5+3migration / ブログ 16本 / 補助金 105件(30 FULL AI) / テスト 104 / 課金 4プラン

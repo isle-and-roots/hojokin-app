@@ -7,6 +7,7 @@ import {
   DIFFICULTY_CONFIG,
   PROMPT_SUPPORT_CONFIG,
 } from "@/lib/data/subsidy-categories";
+import { HelpTooltip } from "@/components/ui/tooltip";
 
 export function SubsidyCard({ subsidy, now }: { subsidy: SubsidyInfo; now?: number }) {
   const primaryCategory = subsidy.categories[0];
@@ -47,13 +48,21 @@ export function SubsidyCard({ subsidy, now }: { subsidy: SubsidyInfo; now?: numb
             {difficultyConf.label}
           </span>
         </div>
-        <span
-          className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium shrink-0 ${promptConf.color}`}
-        >
-          {subsidy.promptSupport !== "NONE" && (
-            <Sparkles className="h-3 w-3" />
+        <span className="inline-flex items-center gap-1 shrink-0">
+          <span
+            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${promptConf.color}`}
+          >
+            {subsidy.promptSupport !== "NONE" && (
+              <Sparkles className="h-3 w-3" />
+            )}
+            {promptConf.label}
+          </span>
+          {subsidy.promptSupport === "FULL" && (
+            <HelpTooltip content="専用プロンプトで高品質な申請書を自動生成します。" position="bottom" />
           )}
-          {promptConf.label}
+          {subsidy.promptSupport === "GENERIC" && (
+            <HelpTooltip content="汎用プロンプトで基本的な申請書を生成します。" position="bottom" />
+          )}
         </span>
       </div>
 
@@ -67,8 +76,12 @@ export function SubsidyCard({ subsidy, now }: { subsidy: SubsidyInfo; now?: numb
         <span className="flex items-center gap-1">
           <Banknote className="h-3.5 w-3.5" />
           上限 {formatAmount(subsidy.maxAmount)}
+          <HelpTooltip content="補助金として受け取れる最大金額です。" position="top" />
         </span>
-        <span>補助率 {subsidy.subsidyRate}</span>
+        <span className="flex items-center gap-1">
+          補助率 {subsidy.subsidyRate}
+          <HelpTooltip content="経費に対して補助金でカバーされる割合です。" position="top" />
+        </span>
         <span className="flex items-center gap-1">
           <Calendar className="h-3.5 w-3.5" />
           {formatDeadline(subsidy.deadline)}

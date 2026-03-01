@@ -1,13 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { BusinessProfile } from "@/types";
-import { Loader2, Save, CheckCircle, Zap } from "lucide-react";
+import { Loader2, Save, CheckCircle, Zap, Star } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useToast } from "@/components/ui/toast";
 import { trackProfileCompleted } from "@/lib/analytics";
 import { posthog } from "@/lib/posthog/client";
 import { EVENTS } from "@/lib/posthog/events";
+import { calculateProfileCompleteness } from "@/lib/subsidies";
+import { Confetti } from "@/components/ui/confetti";
+import { HelpTooltip } from "@/components/ui/tooltip";
 import {
   INDUSTRY_OPTIONS, EMPLOYEE_RANGES, REVENUE_RANGES,
   PREFECTURES, SALES_CHANNEL_OPTIONS, CHALLENGE_OPTIONS,
@@ -55,6 +59,9 @@ export default function ProfilePage() {
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showCompleteBadge, setShowCompleteBadge] = useState(false);
+  const [showCompleteConfetti, setShowCompleteConfetti] = useState(false);
+  const completeBadgeFiredRef = useRef(false);
   const isQuickMode = searchParams.get("quick") === "true";
 
   // Supabase からプロフィールを読み込み
@@ -101,6 +108,19 @@ export default function ProfilePage() {
       if (data.profile?.id) setProfileId(data.profile.id);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
+
+      // 100%完了バッジ表示
+      const completeness = calculateProfileCompleteness(
+        profile as BusinessProfile
+      );
+      if (completeness === 100 && !completeBadgeFiredRef.current) {
+        completeBadgeFiredRef.current = true;
+        setShowCompleteBadge(true);
+        setShowCompleteConfetti(true);
+        posthog.capture(EVENTS.PROFILE_100_PERCENT);
+        setTimeout(() => setShowCompleteBadge(false), 4000);
+      }
+
       if (wasNewProfile) {
         trackProfileCompleted();
         posthog.capture(EVENTS.PROFILE_CREATED);
@@ -166,12 +186,61 @@ export default function ProfilePage() {
 
   return (
     <div className="p-4 sm:p-8 max-w-3xl">
+      {/* 100%完了コンフェッティ */}
+      <Confetti
+        show={showCompleteConfetti}
+        onDone={() => setShowCompleteConfetti(false)}
+      />
+
       <div className="mb-8">
-        <h1 className="text-2xl font-bold">企業プロフィール</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold">企業プロフィール</h1>
+          <AnimatePresence>
+            {showCompleteBadge && (
+              <motion.span
+                initial={{ opacity: 0, scale: 0.6 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                className="inline-flex items-center gap-1.5 rounded-full bg-green-100 text-green-700 px-3 py-1 text-xs font-semibold"
+              >
+                <Star className="h-3.5 w-3.5 fill-green-500 text-green-500" />
+                プロフィール完成！
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </div>
         <p className="text-muted-foreground mt-1">
           補助金申請書類の基盤となる事業者情報を入力してください
         </p>
       </div>
+
+      {/* 100%完了メッセージ */}
+      <AnimatePresence>
+        {showCompleteBadge && (
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+            className="mb-6 rounded-xl bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 p-4"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center rounded-full bg-green-100 p-2 shrink-0">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">
+                  準備万端！AIがレコメンドします
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  プロフィールが100%完成しました。より精度の高い補助金マッチングとAI生成が利用できます。
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {error && (
         <div className="mb-6 bg-destructive/10 text-destructive text-sm p-3 rounded-lg">
@@ -236,6 +305,33 @@ export default function ProfilePage() {
           </div>
         ))}
       </div>
+
+      {/* プロフィール充実度インジケーター */}
+      {!isNewProfile && (() => {
+        const pct = calculateProfileCompleteness(profile as BusinessProfile);
+        return (
+          <div className="mb-4 rounded-lg bg-muted/60 px-4 py-3">
+            <div className="flex items-center justify-between text-xs mb-1.5">
+              <span className="flex items-center gap-1.5 text-muted-foreground font-medium">
+                プロフィール充実度
+                <HelpTooltip
+                  content="プロフィールが詳しいほど、AIが精密な申請書を生成します。充実度が高いほど補助金マッチング精度も向上します。"
+                  position="right"
+                />
+              </span>
+              <span className={`font-semibold ${pct === 100 ? "text-green-600" : pct >= 60 ? "text-primary" : "text-muted-foreground"}`}>
+                {pct}%
+              </span>
+            </div>
+            <div className="h-1.5 rounded-full bg-border">
+              <div
+                className={`h-1.5 rounded-full transition-all duration-500 ${pct === 100 ? "bg-green-500" : "bg-primary"}`}
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ステップコンテンツ */}
       <div className="rounded-xl border border-border bg-card p-6">

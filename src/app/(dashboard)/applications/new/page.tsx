@@ -14,10 +14,16 @@ import {
   FileText,
   AlertCircle,
   Search,
+  PartyPopper,
+  Download,
 } from "lucide-react";
 import dynamic from "next/dynamic";
+import { AnimatePresence, motion } from "framer-motion";
 import { CreditDisplay } from "@/components/credit-display";
 import { QuotaProgressBanner } from "@/components/quota-progress-banner";
+import { Confetti } from "@/components/ui/confetti";
+import { HelpTooltip } from "@/components/ui/tooltip";
+import { getDemoSample, DEMO_COMPANY_NAME } from "@/lib/data/demo-samples";
 
 const UpgradeModal = dynamic(
   () => import("@/components/upgrade-modal").then((m) => m.UpgradeModal),
@@ -60,6 +66,7 @@ function NewApplicationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const subsidyId = searchParams.get("subsidyId");
+  const isDemo = searchParams.get("demo") === "true";
   const toast = useToast();
 
   const [profile, setProfile] = useState<BusinessProfile | null>(null);
@@ -79,10 +86,33 @@ function NewApplicationContent() {
   } | null>(null);
   const [profileLoadError, setProfileLoadError] = useState(false);
   const [generationCompleted, setGenerationCompleted] = useState(false);
+  const [showFirstGenCelebration, setShowFirstGenCelebration] = useState(false);
+  const [showAllDoneCelebration, setShowAllDoneCelebration] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const firstGenFiredRef = useRef(false);
+  const allDoneFiredRef = useRef(false);
   const abortRef = useRef<AbortController | null>(null);
+  const [demoRevealedCount, setDemoRevealedCount] = useState(0);
 
   // Load quota, profile, and subsidy in parallel
   useEffect(() => {
+    if (isDemo) {
+      // デモモード: プロフィール・クォータ取得をスキップ、JIZOKUKAセクションで初期化
+      setSections(
+        JIZOKUKA_SECTIONS.map((s) => ({
+          key: s.key,
+          title: s.title,
+          group: s.form,
+          status: "pending",
+          content: "",
+          userEdited: "",
+          additionalContext: "",
+        }))
+      );
+      setLoadingProfile(false);
+      return;
+    }
+
     const fetchQuota = fetch("/api/user/plan")
       .then((res) => (res.ok ? res.json() : null))
       .then((data: { userProfile?: { plan: string; ai_generations_used: number } } | null) => {
@@ -145,11 +175,42 @@ function NewApplicationContent() {
         Promise.resolve());
 
     Promise.all([fetchQuota, fetchProfile, fetchSubsidy]);
-  }, [subsidyId]);
+  }, [subsidyId, isDemo]);
 
   useEffect(() => {
     if (profileLoadError) toast.error("プロフィールの読み込みに失敗しました");
   }, [profileLoadError, toast]);
+
+  // 初回生成完了アニメーション
+  useEffect(() => {
+    if (generationCompleted && !firstGenFiredRef.current) {
+      firstGenFiredRef.current = true;
+      setShowFirstGenCelebration(true);
+      setShowConfetti(true);
+      posthog.capture(EVENTS.FIRST_GENERATION_COMPLETED, {
+        subsidy_id: subsidyId || "jizokuka-001",
+      });
+      setTimeout(() => setShowFirstGenCelebration(false), 3000);
+    }
+  }, [generationCompleted, subsidyId]);
+
+  // 全セクション完了アニメーション
+  const doneSectionCount = sections.filter((s) => s.status === "done").length;
+  useEffect(() => {
+    if (
+      sections.length > 0 &&
+      doneSectionCount === sections.length &&
+      !allDoneFiredRef.current
+    ) {
+      allDoneFiredRef.current = true;
+      setShowAllDoneCelebration(true);
+      setShowConfetti(true);
+      posthog.capture(EVENTS.ALL_SECTIONS_COMPLETED, {
+        subsidy_id: subsidyId || "jizokuka-001",
+        section_count: sections.length,
+      });
+    }
+  }, [doneSectionCount, sections.length, subsidyId]);
 
   const cancelGeneration = () => {
     abortRef.current?.abort();
@@ -161,6 +222,51 @@ function NewApplicationContent() {
       )
     );
     toast.info("生成をキャンセルしました");
+  };
+
+  /** デモモード: APIコールなしでサンプルテキストを即座に表示 */
+  const generateDemoSection = (index: number) => {
+    const section = sections[index];
+    const sampleContent = getDemoSample(section.key, "JIZOKUKA");
+
+    setSections((prev) =>
+      prev.map((s, i) =>
+        i === index
+          ? { ...s, status: "generating", content: "" }
+          : s
+      )
+    );
+
+    // タイピングアニメーション風に段階的に表示（100ms後に完了）
+    setTimeout(() => {
+      setSections((prev) =>
+        prev.map((s, i) =>
+          i === index
+            ? { ...s, status: "done", content: sampleContent, userEdited: sampleContent }
+            : s
+        )
+      );
+      setDemoRevealedCount((c) => c + 1);
+      if (!firstGenFiredRef.current) {
+        firstGenFiredRef.current = true;
+        setShowFirstGenCelebration(true);
+        setShowConfetti(true);
+        posthog.capture(EVENTS.FIRST_GENERATION_COMPLETED, {
+          demo: true,
+          subsidy_id: "jizokuka-001",
+        });
+        setTimeout(() => setShowFirstGenCelebration(false), 3000);
+      }
+    }, 400);
+  };
+
+  /** デモモード: 全セクション一括表示 */
+  const generateAllDemo = () => {
+    sections.forEach((_, i) => {
+      if (sections[i].status !== "done") {
+        setTimeout(() => generateDemoSection(i), i * 200);
+      }
+    });
   };
 
   const generateSection = async (index: number) => {
@@ -345,7 +451,7 @@ function NewApplicationContent() {
     );
   }
 
-  if (!profile) {
+  if (!profile && !isDemo) {
     return (
       <div className="p-4 sm:p-8 max-w-3xl">
         <div className="rounded-xl border border-border bg-card p-4 sm:p-8 text-center">
@@ -368,8 +474,8 @@ function NewApplicationContent() {
     );
   }
 
-  // If no subsidyId and no subsidy loaded, show subsidy selector
-  if (!subsidyId && !subsidy) {
+  // If no subsidyId and no subsidy loaded, show subsidy selector (skip in demo mode)
+  if (!subsidyId && !subsidy && !isDemo) {
     return (
       <div className="p-4 sm:p-8 max-w-3xl">
         <div className="mb-6">
@@ -424,6 +530,17 @@ function NewApplicationContent() {
   const allDone =
     sections.length > 0 && sections.every((s) => s.status === "done");
 
+  // セクションキーから説明文を引くマップ（ツールチップ用）
+  const sectionDescriptionMap: Record<string, string> = {};
+  for (const s of JIZOKUKA_SECTIONS) {
+    sectionDescriptionMap[s.key] = s.description;
+  }
+  if (subsidy) {
+    for (const s of subsidy.applicationSections) {
+      if (s.description) sectionDescriptionMap[s.key] = s.description;
+    }
+  }
+
   // Group sections by group field
   const groups = sections.reduce(
     (acc, s, i) => {
@@ -435,28 +552,55 @@ function NewApplicationContent() {
     {} as Record<string, (SectionState & { globalIndex: number })[]>
   );
 
-  const subsidyName =
-    subsidy?.name ?? "小規模事業者持続化補助金";
+  const subsidyName = isDemo
+    ? "小規模事業者持続化補助金（サンプル）"
+    : (subsidy?.name ?? "小規模事業者持続化補助金");
+  const displayCompanyName = isDemo
+    ? DEMO_COMPANY_NAME
+    : (profile?.companyName ?? "");
 
   return (
     <div className="p-4 sm:p-8">
+      {/* コンフェッティ */}
+      <Confetti show={showConfetti} onDone={() => setShowConfetti(false)} />
+
+      {/* デモモードバナー */}
+      {isDemo && (
+        <div className="mb-6 rounded-xl border border-amber-300 bg-amber-50 px-5 py-3 flex items-start gap-3">
+          <Sparkles className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-amber-800">
+              これはサンプル体験です
+            </p>
+            <p className="text-sm text-amber-700 mt-0.5">
+              架空の食品加工会社「{DEMO_COMPANY_NAME}」のデータを使用しています。
+              Claude API は呼び出されず、クォータは消費されません。
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold">
-            {subsidy?.nameShort ?? "持続化補助金"} 申請書作成
+            {isDemo ? "持続化補助金" : (subsidy?.nameShort ?? "持続化補助金")} 申請書作成
           </h1>
           <p className="text-muted-foreground mt-1">
-            AIが各セクションの下書きを生成します。生成後に編集できます。
+            {isDemo
+              ? "サンプルデータでAI生成を体験できます（クォータ消費なし）"
+              : "AIが各セクションの下書きを生成します。生成後に編集できます。"}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-          <CreditDisplay
-            variant="compact"
-            onQuotaLoaded={(remaining) => setQuotaExhausted(remaining === 0)}
-          />
+          {!isDemo && (
+            <CreditDisplay
+              variant="compact"
+              onQuotaLoaded={(remaining) => setQuotaExhausted(remaining === 0)}
+            />
+          )}
           <button
-            onClick={generateAll}
-            disabled={isGenerating || quotaExhausted}
+            onClick={isDemo ? generateAllDemo : generateAll}
+            disabled={isGenerating || (!isDemo && quotaExhausted)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 ${allPending ? "animate-pulse" : ""}`}
           >
             {isGenerating ? (
@@ -464,9 +608,9 @@ function NewApplicationContent() {
             ) : (
               <Sparkles className="h-4 w-4" />
             )}
-            全セクション一括生成
+            {isDemo ? "サンプルを一括表示" : "全セクション一括生成"}
           </button>
-          {completedCount > 0 && (
+          {!isDemo && completedCount > 0 && (
             <button
               onClick={handleSave}
               className="flex items-center gap-2 px-4 py-2 rounded-lg border border-primary text-primary hover:bg-primary/5 transition-colors"
@@ -484,7 +628,7 @@ function NewApplicationContent() {
           <span>
             生成進捗: {completedCount}/{sections.length} セクション
           </span>
-          <span className="text-muted-foreground">{profile.companyName}</span>
+          <span className="text-muted-foreground">{displayCompanyName}</span>
         </div>
         <div className="mt-2 h-2 rounded-full bg-border">
           <div
@@ -496,8 +640,8 @@ function NewApplicationContent() {
         </div>
       </div>
 
-      {/* クォータ進捗バナー */}
-      {quotaInfo && (
+      {/* クォータ進捗バナー（デモモードでは非表示） */}
+      {!isDemo && quotaInfo && (
         <div className="mb-6">
           <QuotaProgressBanner
             remaining={quotaInfo.remaining}
@@ -507,36 +651,144 @@ function NewApplicationContent() {
         </div>
       )}
 
-      {/* AI生成結果後アップセルバナー */}
-      {generationCompleted && quotaInfo && (
+      {/* AI生成結果後アップセルバナー（デモモードでは非表示） */}
+      {!isDemo && generationCompleted && quotaInfo && (
         <GenerationUpsellBanner plan={quotaInfo.plan} />
       )}
+
+      {/* 初回生成完了アニメーション */}
+      <AnimatePresence>
+        {showFirstGenCelebration && (
+          <motion.div
+            initial={{ opacity: 0, y: -16, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.97 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="mb-6 rounded-xl bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 p-4"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-2xl" aria-hidden>
+                <PartyPopper className="h-6 w-6 text-primary" />
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-foreground">
+                  最初の申請書セクション完成！
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  AIが申請書の下書きを作成しました。内容を確認・編集してください。
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* 初回ガイドバナー */}
       {allPending && (
         <div className="mb-6 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-4">
           <div className="flex items-start gap-3">
             <span className="inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-bold w-6 h-6 shrink-0 mt-0.5">
-              3
+              {isDemo ? "!" : "3"}
             </span>
             <div>
-              <p className="text-sm font-medium">Step 3/3 — AI生成を開始しましょう</p>
+              <p className="text-sm font-medium">
+                {isDemo
+                  ? "「サンプルを一括表示」でAI生成を体験"
+                  : "Step 3/3 — AI生成を開始しましょう"}
+              </p>
               <p className="text-sm text-muted-foreground mt-0.5">
-                「全セクション一括生成」をクリックするとAIが申請書の下書きを作成します
+                {isDemo
+                  ? "ボタンをクリックするとサンプル申請書が即座に表示されます（APIコールなし）"
+                  : "「全セクション一括生成」をクリックするとAIが申請書の下書きを作成します"}
               </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* 全セクション完了メッセージ */}
-      {allDone && (
+      {/* 全セクション完了メッセージ + 祝福画面 */}
+      <AnimatePresence>
+        {showAllDoneCelebration && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: -12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.97, y: -6 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="mb-6 rounded-xl bg-gradient-to-br from-green-50 via-blue-50 to-purple-50 border border-green-200 p-6 text-center shadow-sm"
+          >
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex items-center justify-center rounded-full bg-green-100 p-3">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-foreground">
+                  申請書が完成しました！
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  全セクションのAI生成が完了しました。内容を確認してダウンロードしましょう。
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3 justify-center mt-1">
+                <button
+                  onClick={handleSave}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+                >
+                  <Download className="h-4 w-4" />
+                  保存する
+                </button>
+                <button
+                  onClick={() => setShowAllDoneCelebration(false)}
+                  className="px-4 py-2.5 rounded-lg border border-border text-sm text-muted-foreground hover:bg-accent transition-colors"
+                >
+                  内容を確認する
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {allDone && !showAllDoneCelebration && (
         <div className="mb-6 rounded-xl bg-green-50 border border-green-200 p-4">
           <div className="flex items-center gap-3">
             <CheckCircle className="h-5 w-5 text-green-600 shrink-0" />
             <p className="text-sm font-medium text-green-800">
-              申請書の下書きが完成しました！内容を確認して保存しましょう
+              {isDemo
+                ? "サンプル申請書の体験完了！実際に申請書を作成しましょう"
+                : "申請書の下書きが完成しました！内容を確認して保存しましょう"}
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* デモ完了後のプロフィール誘導CTA */}
+      {isDemo && demoRevealedCount > 0 && (
+        <div className="mb-6 rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/5 to-blue-50/60 p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex-1">
+              <h3 className="font-semibold text-base">
+                あなたの会社専用の申請書を作りませんか？
+              </h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                企業プロフィールを登録すると、AIがあなたの事業情報を元に最適化された申請書を自動生成します。
+                無料プランで月3セクションまで利用可能です。
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 sm:shrink-0">
+              <Link
+                href="/profile?quick=true"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+              >
+                <Sparkles className="h-4 w-4" />
+                プロフィールを登録して無料で試す
+              </Link>
+              <Link
+                href="/subsidies"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl border border-border text-sm text-muted-foreground hover:bg-accent transition-colors"
+              >
+                補助金一覧を見る
+              </Link>
+            </div>
           </div>
         </div>
       )}
@@ -613,14 +865,26 @@ function NewApplicationContent() {
             <div className="rounded-xl border border-border bg-card">
               <div className="flex items-center justify-between border-b border-border px-6 py-4">
                 <div>
-                  <h2 className="font-semibold">{activeSection.title}</h2>
+                  <h2 className="flex items-center gap-2 font-semibold">
+                    {activeSection.title}
+                    {sectionDescriptionMap[activeSection.key] && (
+                      <HelpTooltip
+                        content={sectionDescriptionMap[activeSection.key]}
+                        position="bottom"
+                      />
+                    )}
+                  </h2>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {activeSection.group || subsidyName}
                   </p>
                 </div>
                 <button
-                  onClick={() => generateSection(activeSectionIndex)}
-                  disabled={isGenerating || quotaExhausted}
+                  onClick={() =>
+                    isDemo
+                      ? generateDemoSection(activeSectionIndex)
+                      : generateSection(activeSectionIndex)
+                  }
+                  disabled={isGenerating || (!isDemo && quotaExhausted)}
                   className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm hover:bg-primary/90 transition-colors disabled:opacity-50"
                 >
                   {activeSection.status === "generating" ? (
@@ -628,31 +892,35 @@ function NewApplicationContent() {
                   ) : (
                     <Sparkles className="h-3.5 w-3.5" />
                   )}
-                  {activeSection.status === "done" ? "再生成" : "生成"}
+                  {isDemo
+                    ? activeSection.status === "done" ? "再表示" : "サンプル表示"
+                    : activeSection.status === "done" ? "再生成" : "生成"}
                 </button>
               </div>
 
-              {/* 追加コンテキスト */}
-              <div className="px-6 py-3 border-b border-border bg-muted/50">
-                <label className="text-xs font-medium text-muted-foreground">
-                  追加情報（オプション）
-                </label>
-                <input
-                  type="text"
-                  value={activeSection.additionalContext}
-                  onChange={(e) =>
-                    setSections((prev) =>
-                      prev.map((s, i) =>
-                        i === activeSectionIndex
-                          ? { ...s, additionalContext: e.target.value }
-                          : s
+              {/* 追加コンテキスト（デモモードでは非表示） */}
+              {!isDemo && (
+                <div className="px-6 py-3 border-b border-border bg-muted/50">
+                  <label className="text-xs font-medium text-muted-foreground">
+                    追加情報（オプション）
+                  </label>
+                  <input
+                    type="text"
+                    value={activeSection.additionalContext}
+                    onChange={(e) =>
+                      setSections((prev) =>
+                        prev.map((s, i) =>
+                          i === activeSectionIndex
+                            ? { ...s, additionalContext: e.target.value }
+                            : s
+                        )
                       )
-                    )
-                  }
-                  className="w-full mt-1 rounded-lg border border-border px-3 py-1.5 text-sm bg-card"
-                  placeholder="このセクションに含めたい追加情報を入力..."
-                />
-              </div>
+                    }
+                    className="w-full mt-1 rounded-lg border border-border px-3 py-1.5 text-sm bg-card"
+                    placeholder="このセクションに含めたい追加情報を入力..."
+                  />
+                </div>
+              )}
 
               {/* コンテンツエリア */}
               <div className="p-6">

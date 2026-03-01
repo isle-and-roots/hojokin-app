@@ -15,6 +15,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { PageTransition, FadeInUp, AnimatedGrid, AnimatedItem } from "@/components/ui/motion";
+import { HelpTooltip } from "@/components/ui/tooltip";
 import { getSubsidyById } from "@/lib/subsidies";
 import { getPostsBySubsidyId } from "@/lib/blog";
 import { DUMMY_SUBSIDIES } from "@/lib/data/subsidies";
@@ -158,13 +159,21 @@ export default async function SubsidyDetailPage({
           >
             {difficultyConf.label}
           </span>
-          <span
-            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${promptConf.color}`}
-          >
-            {subsidy.promptSupport !== "NONE" && (
-              <Sparkles className="h-3 w-3" />
+          <span className="inline-flex items-center gap-1">
+            <span
+              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${promptConf.color}`}
+            >
+              {subsidy.promptSupport !== "NONE" && (
+                <Sparkles className="h-3 w-3" />
+              )}
+              {promptConf.label}
+            </span>
+            {subsidy.promptSupport === "FULL" && (
+              <HelpTooltip content="専用プロンプトで高品質な申請書を自動生成します。事業者プロフィールに基づき、補助金要件に最適化された文章を作成します。" position="bottom" />
             )}
-            {promptConf.label}
+            {subsidy.promptSupport === "GENERIC" && (
+              <HelpTooltip content="汎用プロンプトで基本的な申請書を生成します。内容の確認・編集が推奨されます。" position="bottom" />
+            )}
           </span>
         </div>
         <h1 className="text-2xl font-bold mb-1">{subsidy.name}</h1>
@@ -190,6 +199,7 @@ export default async function SubsidyDetailPage({
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
               <Banknote className="h-3.5 w-3.5" />
               上限額
+              <HelpTooltip content="補助金として受け取れる最大金額です。実際の受給額は審査結果によります。" position="bottom" />
             </div>
             <p className="text-lg font-bold">{formatAmount(subsidy.maxAmount)}</p>
           </div>
@@ -199,6 +209,7 @@ export default async function SubsidyDetailPage({
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
               <Banknote className="h-3.5 w-3.5" />
               補助率
+              <HelpTooltip content="事業にかかる経費のうち、補助金でカバーされる割合です。例: 補助率2/3なら100万円の経費に対して67万円が補助されます。" position="bottom" />
             </div>
             <p className="text-lg font-bold">{subsidy.subsidyRate}</p>
           </div>

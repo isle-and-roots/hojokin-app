@@ -6,6 +6,7 @@ import {
   Search,
   Sparkles,
   ArrowRight,
+  Trophy,
 } from "lucide-react";
 import { PageTransition, AnimatedGrid, AnimatedItem } from "@/components/ui/motion";
 import { searchSubsidies, getRecommendedSubsidiesWithReasons } from "@/lib/subsidies";
@@ -20,12 +21,40 @@ import { SignupTracker } from "@/components/dashboard/signup-tracker";
 import { WelcomeModal } from "@/components/dashboard/welcome-modal";
 import { QuotaWidget } from "@/components/dashboard/quota-widget";
 import { ProfileCompletenessBanner } from "@/components/dashboard/profile-completeness-banner";
+import { IndustryQuickStart } from "@/components/dashboard/industry-quick-start";
+import { SmartNotifications } from "@/components/dashboard/smart-notifications";
 import { calculateProfileCompleteness } from "@/lib/subsidies";
 import type { BusinessProfile, RecommendationResult } from "@/types";
 
-const stats = [
-  { label: "申請中", value: "0", icon: FileText, color: "text-blue-600" },
-  { label: "採択済", value: "0", icon: TrendingUp, color: "text-green-600" },
+interface StatCard {
+  label: string;
+  value: number;
+  icon: typeof FileText;
+  color: string;
+  emptyIcon: typeof FileText;
+  emptyCta: string;
+  emptyHref: string;
+}
+
+const STAT_CONFIGS: StatCard[] = [
+  {
+    label: "申請中",
+    value: 0,
+    icon: FileText,
+    color: "text-blue-600",
+    emptyIcon: FileText,
+    emptyCta: "最初の申請書をAIで作成",
+    emptyHref: "/applications/new",
+  },
+  {
+    label: "採択済",
+    value: 0,
+    icon: TrendingUp,
+    color: "text-green-600",
+    emptyIcon: Trophy,
+    emptyCta: "補助金を探して採択を目指そう",
+    emptyHref: "/subsidies",
+  },
 ];
 
 async function getProfile(): Promise<BusinessProfile | null> {
@@ -130,18 +159,15 @@ export default async function Dashboard({
     profileCompleteness = calculateProfileCompleteness(profile);
   }
 
-  // オンボーディング表示ロジック
-  // Step 1: プロフィールなし
-  // Step 3: プロフィールあり + 申請なし
-  // 非表示: プロフィールあり + 申請あり（全完了）
-  const showStepper = !profile || applicationCount === 0;
-  const stepperCurrentStep: 1 | 3 = profile ? 3 : 1;
-
   return (
     <PageTransition>
     <div className="p-8">
       <SignupTracker isWelcome={isWelcome} />
       <WelcomeModal show={isWelcome && !profile} />
+
+      {/* スマート通知 */}
+      <SmartNotifications />
+
       <div className="mb-8">
         {profile ? (
           <h1 className="text-2xl font-bold">こんにちは、{profile.companyName}さん</h1>
@@ -155,17 +181,36 @@ export default async function Dashboard({
 
       {/* ステータスカード */}
       <AnimatedGrid className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
-        {stats.map((stat) => (
+        {STAT_CONFIGS.map((stat) => (
           <AnimatedItem key={stat.label}>
-            <div className="rounded-xl border border-border bg-card p-6 h-full">
-              <div className="flex items-center gap-3">
-                <stat.icon className={`h-5 w-5 ${stat.color}`} />
-                <span className="text-sm text-muted-foreground">
-                  {stat.label}
-                </span>
+            {stat.value === 0 ? (
+              <Link
+                href={stat.emptyHref}
+                className="flex flex-col gap-3 rounded-xl border border-dashed border-border bg-card p-6 h-full hover:border-primary/50 hover:bg-primary/5 transition-all group"
+              >
+                <div className="flex items-center gap-3">
+                  <stat.icon className={`h-5 w-5 ${stat.color}`} />
+                  <span className="text-sm text-muted-foreground">
+                    {stat.label}
+                  </span>
+                </div>
+                <p className="text-3xl font-bold">0</p>
+                <p className="text-xs text-primary font-medium flex items-center gap-1 group-hover:gap-2 transition-all">
+                  {stat.emptyCta}
+                  <ArrowRight className="h-3 w-3" />
+                </p>
+              </Link>
+            ) : (
+              <div className="rounded-xl border border-border bg-card p-6 h-full">
+                <div className="flex items-center gap-3">
+                  <stat.icon className={`h-5 w-5 ${stat.color}`} />
+                  <span className="text-sm text-muted-foreground">
+                    {stat.label}
+                  </span>
+                </div>
+                <p className="mt-2 text-3xl font-bold">{stat.value}</p>
               </div>
-              <p className="mt-2 text-3xl font-bold">{stat.value}</p>
-            </div>
+            )}
           </AnimatedItem>
         ))}
         <AnimatedItem>
@@ -195,70 +240,140 @@ export default async function Dashboard({
         />
       )}
 
-      {/* クイックアクション */}
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold mb-4 pl-3 border-l-[3px] border-primary">はじめる</h2>
-        <AnimatedGrid className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <AnimatedItem>
-            <Link
-              href="/profile"
-              className="flex flex-col gap-3 rounded-xl border border-border bg-card p-6 hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group h-full"
-            >
-              <div className="flex items-center justify-between">
-                <Building2 className="h-8 w-8 text-primary" />
-                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
-              </div>
-              <div>
-                <h3 className="font-semibold">企業プロフィール登録</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  事業者情報を入力して申請書類の基盤を作成
-                </p>
-              </div>
-            </Link>
-          </AnimatedItem>
-          <AnimatedItem>
-            <Link
-              href="/subsidies"
-              className="flex flex-col gap-3 rounded-xl border border-border bg-card p-6 hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group h-full"
-            >
-              <div className="flex items-center justify-between">
-                <Search className="h-8 w-8 text-primary" />
-                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
-              </div>
-              <div>
-                <h3 className="font-semibold">補助金を探す</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {activeSubsidies.length}件の補助金からぴったりの制度を検索
-                </p>
-              </div>
-            </Link>
-          </AnimatedItem>
-          <AnimatedItem>
-            <Link
-              href="/applications"
-              className="flex flex-col gap-3 rounded-xl border border-border bg-card p-6 hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group h-full"
-            >
-              <div className="flex items-center justify-between">
-                <FileText className="h-8 w-8 text-primary" />
-                <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
-              </div>
-              <div>
-                <h3 className="font-semibold">申請一覧</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  作成済みの申請書類を管理
-                </p>
-              </div>
-            </Link>
-          </AnimatedItem>
-        </AnimatedGrid>
-      </div>
+      {/* プロフィール未作成: OnboardingStepperを優先表示 (クイックアクション非表示) */}
+      {!profile && (
+        <>
+          {/* 業種選択 → クイックレコメンド */}
+          <IndustryQuickStart />
 
-      {/* オンボーディングステッパー or レコメンドセクション */}
-      {showStepper && (
+          <OnboardingStepper
+            hasProfile={false}
+            hasApplication={false}
+            isWelcome={isWelcome && !profile}
+          />
+        </>
+      )}
+
+      {/* プロフィールあり + 申請なし: 次のステップとクイックアクション */}
+      {profile && applicationCount === 0 && (
+        <>
+          <OnboardingStepper
+            hasProfile={true}
+            hasApplication={false}
+            isWelcome={false}
+          />
+
+          <div className="mb-8">
+            <h2 className="text-lg font-semibold mb-4 pl-3 border-l-[3px] border-primary">クイックアクション</h2>
+            <AnimatedGrid className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <AnimatedItem>
+                <Link
+                  href="/subsidies"
+                  className="flex flex-col gap-3 rounded-xl border border-border bg-card p-6 hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group h-full"
+                >
+                  <div className="flex items-center justify-between">
+                    <Search className="h-8 w-8 text-primary" />
+                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">補助金を探す</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {activeSubsidies.length}件の補助金からぴったりの制度を検索
+                    </p>
+                  </div>
+                </Link>
+              </AnimatedItem>
+              <AnimatedItem>
+                <Link
+                  href="/applications"
+                  data-tour="application-card"
+                  className="flex flex-col gap-3 rounded-xl border border-border bg-card p-6 hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group h-full"
+                >
+                  <div className="flex items-center justify-between">
+                    <FileText className="h-8 w-8 text-primary" />
+                    <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">申請一覧</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      作成済みの申請書類を管理
+                    </p>
+                  </div>
+                </Link>
+              </AnimatedItem>
+            </AnimatedGrid>
+          </div>
+        </>
+      )}
+
+      {/* プロフィールあり + 申請あり: チェックリスト(shindan未完の場合表示) + クイックアクション */}
+      {profile && applicationCount > 0 && (
         <OnboardingStepper
-          currentStep={stepperCurrentStep}
-          isWelcome={isWelcome && !profile}
+          hasProfile={true}
+          hasApplication={true}
+          isWelcome={false}
         />
+      )}
+
+      {profile && applicationCount > 0 && (
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold mb-4 pl-3 border-l-[3px] border-primary">クイックアクション</h2>
+          <AnimatedGrid className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <AnimatedItem>
+              <Link
+                href="/profile"
+                data-tour="profile-card"
+                className="flex flex-col gap-3 rounded-xl border border-border bg-card p-6 hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group h-full"
+              >
+                <div className="flex items-center justify-between">
+                  <Building2 className="h-8 w-8 text-primary" />
+                  <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">企業プロフィール</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    事業者情報を確認・更新する
+                  </p>
+                </div>
+              </Link>
+            </AnimatedItem>
+            <AnimatedItem>
+              <Link
+                href="/subsidies"
+                data-tour="subsidy-search-card"
+                className="flex flex-col gap-3 rounded-xl border border-border bg-card p-6 hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group h-full"
+              >
+                <div className="flex items-center justify-between">
+                  <Search className="h-8 w-8 text-primary" />
+                  <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">補助金を探す</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {activeSubsidies.length}件の補助金からぴったりの制度を検索
+                  </p>
+                </div>
+              </Link>
+            </AnimatedItem>
+            <AnimatedItem>
+              <Link
+                href="/applications"
+                className="flex flex-col gap-3 rounded-xl border border-border bg-card p-6 hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group h-full"
+              >
+                <div className="flex items-center justify-between">
+                  <FileText className="h-8 w-8 text-primary" />
+                  <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">申請一覧</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    作成済みの申請書類を管理
+                  </p>
+                </div>
+              </Link>
+            </AnimatedItem>
+          </AnimatedGrid>
+        </div>
       )}
 
       {recommendation && (

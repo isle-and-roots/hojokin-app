@@ -76,6 +76,15 @@ export const EVENTS = {
   EMAIL_SEQUENCE_SENT: "email_sequence_sent",
   EMAIL_SEQUENCE_FAILED: "email_sequence_failed",
   EMAIL_SEQUENCE_SKIPPED: "email_sequence_skipped",
+
+  // ─── 業種選択 / クイックレコメンド ───
+  INDUSTRY_SELECTED: "industry_selected",
+  FIRST_RECOMMEND_SHOWN: "first_recommend_shown",
+
+  // ─── 成功体験アニメーション ───
+  FIRST_GENERATION_COMPLETED: "first_generation_completed",
+  ALL_SECTIONS_COMPLETED: "all_sections_completed",
+  PROFILE_100_PERCENT: "profile_100_percent",
 } as const;
 
 export type PostHogEventName = (typeof EVENTS)[keyof typeof EVENTS];
