@@ -32,6 +32,7 @@ Updated: 2026-03-01
 | 11 | モバイルレスポンシブ + PWA | 0a417ab |
 | 12 | 補助金データDB移行 + jGrants API自動取込 + 管理画面 | d07bdfa |
 | 13 | 報告書品質(準拠チェック・品質スコア・差分) + PDF日本語 + デプロイ基盤(CI・ヘルス・ストレージ) | — |
+| 14 | UI/UX ポリッシュ — アニメーション・スケルトン・デザインシステム基盤 | 130f510 |
 
 ### 未実装手動タスク
 
@@ -51,6 +52,27 @@ Updated: 2026-03-01
 | `EMAIL_FROM` | 送信元アドレス |
 
 PostHog: `hero-cta-text` Feature Flag 作成（control / variant_a）
+
+---
+
+## Phase 14 ✅ 完了: UI/UX ポリッシュ
+
+### 概要
+Phase 13 完了後の全体的なビジュアルポリッシュ。アニメーション基盤、スケルトンUI改善、ページ遷移、デザインシステム統一。
+
+### コミット (3件)
+| コミット | 内容 |
+|---------|------|
+| c1d38aa | デザインシステム基盤 — styles.ts + motion.tsx + globals.css アニメーション |
+| 15f4ecf | ページレベル UI — PageTransition, スケルトン shimmer, 締切カウントダウン |
+| 130f510 | コンポーネント UI — サイドバー・カード・モーダル・トースト改善 |
+
+### 新規ファイル (2件)
+- `src/lib/styles.ts` — カード・ボタン・バッジのスタイルバリアント
+- `src/components/ui/motion.tsx` — Framer Motion ラッパー (PageTransition, AnimatedGrid, FadeInUp)
+
+### 変更ファイル (23件)
+globals.css, auth layout/login, dashboard/applications/subsidies/profile pages, 4 loading skeletons, sidebar, plan-badge, quota-widget, welcome-modal, subsidy-card/list/search-page, pricing-page, billing-page, confirm-dialog, toast, upgrade-modal
 
 ---
 
