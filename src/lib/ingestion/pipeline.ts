@@ -53,20 +53,25 @@ export async function runIngestionPipeline(): Promise<PipelineResult> {
   const logId = await createIngestionLog();
 
   try {
-    // 前回のカーソルを取得
+    // 前回のカーソル（result配列内のインデックス）を取得
     const lastLog = await getLatestIngestionLog();
-    const startFrom =
+    const startIndex =
       lastLog?.status === "partial"
         ? ((lastLog.metadata?.next_cursor as number) ?? 0)
         : 0;
 
-    // jGrants一覧取得
+    // jGrants一覧を一括取得（APIはページネーション不要、全件返却）
     const listResponse = await listSubsidies({
-      from: startFrom,
-      size: BATCH_SIZE,
+      keyword: "補助金",
+      sort: "created_date",
+      order: "DESC",
+      acceptance: 1,
     });
 
-    if (!listResponse.result || listResponse.result.length === 0) {
+    const allResults = listResponse.result ?? [];
+    const totalCount = listResponse.metadata?.resultset?.count ?? allResults.length;
+
+    if (allResults.length === 0 || startIndex >= allResults.length) {
       // 全件処理完了 → 期限切れ補助金を非アクティブ化
       const deactivated = await deactivateExpiredSubsidies();
 
@@ -76,7 +81,7 @@ export async function runIngestionPipeline(): Promise<PipelineResult> {
         total_upserted: 0,
         total_skipped: 0,
         total_errors: 0,
-        metadata: { last_cursor: 0, deactivated },
+        metadata: { last_cursor: 0, total_count: totalCount, deactivated },
       });
 
       return {
@@ -92,13 +97,14 @@ export async function runIngestionPipeline(): Promise<PipelineResult> {
       };
     }
 
-    totalFetched = listResponse.result.length;
+    // startIndex からバッチ処理
+    const batch = allResults.slice(startIndex, startIndex + BATCH_SIZE);
+    totalFetched = batch.length;
 
-    // バッチ処理
-    for (const summary of listResponse.result) {
+    for (const summary of batch) {
       // タイムアウトチェック
       if (Date.now() - startTime > TIMEOUT_MS) {
-        nextCursor = startFrom + totalUpserted + totalSkipped + totalErrors;
+        nextCursor = startIndex + totalUpserted + totalSkipped + totalErrors;
         break;
       }
 
@@ -153,14 +159,11 @@ export async function runIngestionPipeline(): Promise<PipelineResult> {
       }
     }
 
-    // 次ページが存在するかチェック
+    // まだ未処理の件数があるかチェック
     const processedCount = totalUpserted + totalSkipped + totalErrors;
-    if (
-      nextCursor !== null ||
-      startFrom + processedCount < listResponse.total_count
-    ) {
-      // まだ続きがある
-      nextCursor = nextCursor ?? startFrom + processedCount;
+    const nextIndex = startIndex + processedCount;
+    if (nextCursor !== null || nextIndex < allResults.length) {
+      nextCursor = nextCursor ?? nextIndex;
     }
 
     const status = nextCursor !== null ? "partial" : "completed";
@@ -180,7 +183,8 @@ export async function runIngestionPipeline(): Promise<PipelineResult> {
       error_details: errors.length > 0 ? errors : undefined,
       metadata: {
         next_cursor: nextCursor,
-        start_from: startFrom,
+        start_index: startIndex,
+        total_count: totalCount,
         deactivated,
       },
     });

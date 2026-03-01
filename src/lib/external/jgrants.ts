@@ -11,17 +11,19 @@ const BASE_URL = "https://api.jgrants-portal.go.jp/exp";
 /** jGrants API 一覧レスポンスの1件 */
 export interface JGrantsSubsidySummary {
   id: string;
-  name: string;
-  subsidy_max_limit: string | null;
+  name: string;          // 内部ID（例: "S-00008160"）
+  title: string;         // 補助金タイトル
+  subsidy_max_limit: number | null;  // 円単位の数値
   acceptance_start_datetime: string | null;
   acceptance_end_datetime: string | null;
-  target_number_of_cases: string | null;
+  target_area_search: string | null;
+  target_number_of_employees: string | null;
 }
 
 /** jGrants API 一覧レスポンス */
 export interface JGrantsListResponse {
+  metadata: { type: string; resultset: { count: number } };
   result: JGrantsSubsidySummary[];
-  total_count: number;
 }
 
 /** jGrants API 詳細レスポンス */
@@ -30,7 +32,7 @@ export interface JGrantsSubsidyDetail {
   name: string;
   title: string;
   name_sub: string | null;
-  subsidy_max_limit: string | null;
+  subsidy_max_limit: number | null;
   subsidy_rate: string | null;
   target: string | null;
   detail: string | null;
@@ -71,19 +73,23 @@ async function rateLimitDelay(): Promise<void> {
 
 /**
  * 補助金一覧を取得
- * @param keyword 検索キーワード（省略可）
- * @param from ページネーション開始位置（0始まり）
- * @param size 取得件数（最大100）
+ * @param keyword 検索キーワード（必須）
+ * @param sort ソートフィールド
+ * @param order ソート順
+ * @param acceptance 受付中のみ（1=受付中）
  */
 export async function listSubsidies(options?: {
   keyword?: string;
-  from?: number;
-  size?: number;
+  sort?: string;
+  order?: string;
+  acceptance?: number;
 }): Promise<JGrantsListResponse> {
   const params = new URLSearchParams();
-  if (options?.keyword) params.set("keyword", options.keyword);
-  if (options?.from !== undefined) params.set("from", String(options.from));
-  params.set("size", String(options?.size ?? 100));
+  params.set("keyword", options?.keyword ?? "補助金");
+  if (options?.sort) params.set("sort", options.sort);
+  if (options?.order) params.set("order", options.order);
+  if (options?.acceptance !== undefined)
+    params.set("acceptance", String(options.acceptance));
 
   const url = `${BASE_URL}/v1/public/subsidies?${params.toString()}`;
 
@@ -130,34 +136,17 @@ export async function getSubsidyDetail(
 }
 
 /**
- * 全件をページネーションで取得するジェネレーター
- * タイムアウト対応: maxItems件取得したら停止
+ * 全件を一括取得
+ * jGrants APIはページネーション不要（全件一括返却）
  */
-export async function* fetchAllSubsidies(options?: {
-  maxItems?: number;
-  startFrom?: number;
-}): AsyncGenerator<JGrantsSubsidySummary[], void, unknown> {
-  const pageSize = 100;
-  let from = options?.startFrom ?? 0;
-  let fetched = 0;
-  const maxItems = options?.maxItems ?? Infinity;
-
-  while (fetched < maxItems) {
-    const response = await listSubsidies({ from, size: pageSize });
-
-    if (!response.result || response.result.length === 0) {
-      break;
-    }
-
-    yield response.result;
-    fetched += response.result.length;
-    from += pageSize;
-
-    // 全件取得完了
-    if (fetched >= response.total_count) {
-      break;
-    }
-
-    await rateLimitDelay();
-  }
+export async function fetchAllSubsidies(options?: {
+  keyword?: string;
+  acceptance?: number;
+}): Promise<JGrantsListResponse> {
+  return listSubsidies({
+    keyword: options?.keyword ?? "補助金",
+    sort: "created_date",
+    order: "DESC",
+    acceptance: options?.acceptance ?? 1,
+  });
 }

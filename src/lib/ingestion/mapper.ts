@@ -13,12 +13,18 @@ export function toInternalId(jgrantsId: string): string {
   return `jg-${jgrantsId.replace(/[^a-zA-Z0-9-]/g, "")}`;
 }
 
-/** 金額文字列をパース（万円単位） */
-function parseAmount(amountStr: string | null): number | null {
-  if (!amountStr) return null;
+/** 金額をパース（万円単位で返却） */
+function parseAmount(amount: number | string | null): number | null {
+  if (amount === null || amount === undefined) return null;
 
-  // 「1,000万円」「100万円」「5億円」などをパース
-  const cleaned = amountStr.replace(/[,、\s]/g, "");
+  // 数値型の場合: 円単位 → 万円に変換
+  if (typeof amount === "number") {
+    if (amount <= 0) return null;
+    return Math.round(amount / 10000);
+  }
+
+  // 文字列型の場合: 「1,000万円」「100万円」「5億円」などをパース
+  const cleaned = amount.replace(/[,、\s]/g, "");
 
   // 億円
   const okuMatch = cleaned.match(/(\d+(?:\.\d+)?)億円/);
@@ -82,10 +88,10 @@ export function mapJGrantsToPartialSubsidy(
 
   return {
     id,
-    name: detail.name || detail.title || "名称不明",
-    nameShort: generateShortName(detail.name || detail.title || "名称不明"),
+    name: detail.title || detail.name || "名称不明",
+    nameShort: generateShortName(detail.title || detail.name || "名称不明"),
     department: detail.competent_authority || "不明",
-    summary: truncate(detail.detail || detail.name || "", 200),
+    summary: truncate(detail.detail || detail.title || "", 200),
     description: detail.detail || "",
     maxAmount: parseAmount(detail.subsidy_max_limit),
     minAmount: null,
