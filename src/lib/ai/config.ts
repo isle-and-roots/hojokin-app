@@ -1,3 +1,14 @@
+import {
+  APIError,
+  APIConnectionError,
+  APIConnectionTimeoutError,
+  AuthenticationError,
+  BadRequestError,
+  NotFoundError,
+  PermissionDeniedError,
+  RateLimitError,
+  InternalServerError,
+} from "@anthropic-ai/sdk";
 import type { PlanKey } from "@/lib/plans";
 
 /** プラン別に使用する Claude モデル */
@@ -53,10 +64,32 @@ export type AiErrorKind =
 
 /** Anthropic API エラーからエラー種別を判定 */
 export function classifyError(error: unknown): AiErrorKind {
+  // 1. SDK 型付きエラー（最も信頼性が高い）
+  if (error instanceof RateLimitError) return "rate_limit";
+  if (error instanceof APIConnectionTimeoutError) return "timeout";
+  if (error instanceof AuthenticationError) return "invalid_request";
+  if (error instanceof PermissionDeniedError) return "invalid_request";
+  if (error instanceof BadRequestError) return "invalid_request";
+  if (error instanceof NotFoundError) return "invalid_request";
+  if (error instanceof InternalServerError) return "server_error";
+  if (error instanceof APIConnectionError) return "server_error";
+
+  // 2. 汎用 APIError（ステータスコードで判定）
+  if (error instanceof APIError) {
+    const s = error.status;
+    if (s === 429) return "rate_limit";
+    if (s === 401 || s === 403 || s === 400 || s === 404) return "invalid_request";
+    if (s !== undefined && s >= 500) return "server_error";
+  }
+
+  // 3. フォールバック: 文字列マッチ（非SDK エラー用）
   if (error instanceof Error) {
     const msg = error.message.toLowerCase();
     if (msg.includes("rate") || msg.includes("429")) return "rate_limit";
     if (msg.includes("timeout") || msg.includes("timed out")) return "timeout";
+    if (msg.includes("401") || msg.includes("authentication") || msg.includes("api key"))
+      return "invalid_request";
+    if (msg.includes("not found") || msg.includes("model")) return "invalid_request";
     if (msg.includes("invalid") || msg.includes("400")) return "invalid_request";
     if (msg.includes("500") || msg.includes("502") || msg.includes("503"))
       return "server_error";
@@ -64,19 +97,26 @@ export function classifyError(error: unknown): AiErrorKind {
   return "unknown";
 }
 
+/** AI機能のコンテキスト種別 */
+export type AiFeatureContext = "generation" | "chat";
+
 /** エラー種別に応じた日本語メッセージ */
-export function getErrorMessage(kind: AiErrorKind): string {
+export function getErrorMessage(kind: AiErrorKind, context: AiFeatureContext = "generation"): string {
   switch (kind) {
     case "rate_limit":
       return "APIリクエストが制限されています。しばらくしてから再度お試しください。";
     case "timeout":
-      return "AI生成がタイムアウトしました。もう一度お試しください。";
+      return context === "chat"
+        ? "AIの応答がタイムアウトしました。もう一度お試しください。"
+        : "AI生成がタイムアウトしました。もう一度お試しください。";
     case "server_error":
       return "AIサーバーで一時的な障害が発生しています。しばらくしてから再度お試しください。";
     case "invalid_request":
       return "リクエスト内容にエラーがあります。入力内容を確認してください。";
     case "unknown":
-      return "申請書の生成に失敗しました。もう一度お試しください。";
+      return context === "chat"
+        ? "AIチャットでエラーが発生しました。もう一度お試しください。"
+        : "申請書の生成に失敗しました。もう一度お試しください。";
   }
 }
 

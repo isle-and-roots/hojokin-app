@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, Suspense } from "react";
+import { Clock } from "lucide-react";
 import type { SubsidyInfo, SubsidySearchFilters } from "@/types";
 import { SearchFilters } from "@/components/subsidies/search-filters";
 import { SubsidyList } from "@/components/subsidies/subsidy-list";
@@ -11,6 +12,8 @@ import { PageTransition } from "@/components/ui/motion";
 export function SubsidySearchPage() {
   const [filters, setFilters] = useState<SubsidySearchFilters>({});
   const [items, setItems] = useState<SubsidyInfo[]>([]);
+  const [total, setTotal] = useState(0);
+  const [lastUpdated, setLastUpdated] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
 
   const doSearch = useCallback(async (f: SubsidySearchFilters) => {
@@ -23,8 +26,12 @@ export function SubsidySearchPage() {
       });
       const data = await res.json();
       setItems(data.items ?? []);
+      setTotal(data.total ?? 0);
+      setLastUpdated(data.lastUpdated);
     } catch {
       setItems([]);
+      setTotal(0);
+      setLastUpdated(undefined);
     } finally {
       setLoading(false);
     }
@@ -42,6 +49,18 @@ export function SubsidySearchPage() {
         <p className="text-muted-foreground mt-1">
           条件を指定して、活用できる補助金を探しましょう
         </p>
+        {!loading && total > 0 && (
+          <p className="flex items-center gap-1.5 text-sm text-muted-foreground mt-2">
+            <span className="font-medium text-foreground">{total}件</span>の補助金から検索
+            {lastUpdated && (
+              <>
+                <span className="mx-1">|</span>
+                <Clock className="h-3.5 w-3.5" />
+                最終更新: {new Date(lastUpdated).toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" })}
+              </>
+            )}
+          </p>
+        )}
       </div>
 
       <Suspense fallback={null}>
@@ -70,7 +89,7 @@ export function SubsidySearchPage() {
           ))}
         </div>
       ) : (
-        <SubsidyList items={items} />
+        <SubsidyList items={items} onReset={() => setFilters({})} />
       )}
     </div>
     </PageTransition>

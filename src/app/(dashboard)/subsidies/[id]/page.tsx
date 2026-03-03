@@ -404,6 +404,31 @@ export default async function SubsidyDetailPage({
         </FadeInUp>
       )}
 
+      {/* データソース */}
+      <FadeInUp>
+        <div className="flex items-center gap-3 text-xs text-muted-foreground mb-6 px-1">
+          <span>
+            出典: {subsidy.source === "jgrants" ? (
+              <a
+                href="https://www.jgrants-portal.go.jp/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
+              >
+                jGrants (デジタル庁)
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            ) : (
+              "公式公募要項"
+            )}
+          </span>
+          <span>|</span>
+          <span>
+            最終更新: {new Date(subsidy.lastUpdated).toLocaleDateString("ja-JP", { year: "numeric", month: "2-digit", day: "2-digit" })}
+          </span>
+        </div>
+      </FadeInUp>
+
       {/* CTA */}
       <FadeInUp>
         <div className="flex items-center gap-3">

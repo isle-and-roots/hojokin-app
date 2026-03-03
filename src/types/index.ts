@@ -85,6 +85,7 @@ export interface SubsidyInfo {
   difficulty: "EASY" | "MEDIUM" | "HARD";
   isActive: boolean;
   lastUpdated: string;
+  source?: "manual" | "jgrants";
 }
 
 // === 補助金検索 ===
@@ -100,6 +101,7 @@ export interface SubsidySearchFilters {
 export interface SubsidySearchResult {
   items: SubsidyInfo[];
   total: number;
+  lastUpdated?: string;
 }
 
 // === 補助金申請 ===

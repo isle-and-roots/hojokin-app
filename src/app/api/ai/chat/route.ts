@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import Anthropic, { APIError } from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import type { PlanKey } from "@/lib/plans";
@@ -220,19 +220,24 @@ export async function POST(request: NextRequest) {
             has_profile: businessProfile !== null,
           });
 
-          // アシスタント返答をDBに保存
-          await supabase.from("chat_messages").insert({
-            session_id: activeSessionId,
-            user_id: user.id,
-            role: "assistant",
-            content: assistantContent,
-          });
-
-          // セッションの updated_at を更新
-          await supabase
-            .from("chat_sessions")
-            .update({ updated_at: new Date().toISOString() })
-            .eq("id", activeSessionId);
+          // AI応答のDB保存（ユーザー体験には非クリティカル）
+          try {
+            await supabase.from("chat_messages").insert({
+              session_id: activeSessionId,
+              user_id: user.id,
+              role: "assistant",
+              content: assistantContent,
+            });
+            await supabase
+              .from("chat_sessions")
+              .update({ updated_at: new Date().toISOString() })
+              .eq("id", activeSessionId);
+          } catch (dbError) {
+            logger.error("chat.db.save_failed", {
+              error_message: dbError instanceof Error ? dbError.message : String(dbError),
+              session_id: activeSessionId,
+            });
+          }
 
           const doneData = JSON.stringify({ type: "done" });
           controller.enqueue(encoder.encode(`data: ${doneData}\n\n`));
@@ -240,11 +245,21 @@ export async function POST(request: NextRequest) {
         } catch (error) {
           const errorKind: AiErrorKind = classifyError(error);
 
-          logger.error("chat.generation.failed", {
+          const diagnostics: Record<string, string | number | boolean | undefined> = {
             error_kind: errorKind,
             error_message: error instanceof Error ? error.message : String(error),
+            error_name: error instanceof Error ? error.name : undefined,
+            model: modelId,
+            system_prompt_length: systemPromptText.length,
+            message_count: messages.length,
             user_plan: plan,
-          });
+            session_id: activeSessionId,
+          };
+          if (error instanceof APIError) {
+            diagnostics.api_status = error.status;
+            diagnostics.api_request_id = error.requestID ?? undefined;
+          }
+          logger.error("chat.generation.failed", diagnostics);
 
           if (error instanceof Error && error.name === "AbortError") {
             controller.close();
@@ -253,7 +268,7 @@ export async function POST(request: NextRequest) {
 
           const errData = JSON.stringify({
             type: "error",
-            message: getErrorMessage(errorKind),
+            message: getErrorMessage(errorKind, "chat"),
           });
           controller.enqueue(encoder.encode(`data: ${errData}\n\n`));
           controller.close();
@@ -284,7 +299,7 @@ export async function POST(request: NextRequest) {
     };
 
     return NextResponse.json(
-      { error: getErrorMessage(errorKind) },
+      { error: getErrorMessage(errorKind, "chat") },
       { status: statusMap[errorKind] }
     );
   }

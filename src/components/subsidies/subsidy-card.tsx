@@ -14,6 +14,10 @@ export function SubsidyCard({ subsidy, now }: { subsidy: SubsidyInfo; now?: numb
   const difficultyConf = DIFFICULTY_CONFIG[subsidy.difficulty];
   const promptConf = PROMPT_SUPPORT_CONFIG[subsidy.promptSupport];
 
+  const isNew = now && subsidy.lastUpdated
+    ? now - new Date(subsidy.lastUpdated).getTime() < 7 * 24 * 60 * 60 * 1000
+    : false;
+
   const formatAmount = (amount: number | null) => {
     if (amount === null) return "—";
     if (amount >= 10000) return `${(amount / 10000).toLocaleString()}億円`;
@@ -35,6 +39,11 @@ export function SubsidyCard({ subsidy, now }: { subsidy: SubsidyInfo; now?: numb
       <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-primary/60 rounded-l-xl" />
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex flex-wrap gap-1.5">
+          {isNew && (
+            <span className="inline-flex items-center rounded-full bg-green-100 text-green-700 px-2 py-0.5 text-xs font-medium">
+              NEW
+            </span>
+          )}
           {primaryCategory && (
             <span
               className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${CATEGORY_COLORS[primaryCategory]}`}

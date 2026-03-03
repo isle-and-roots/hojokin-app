@@ -77,7 +77,13 @@ export async function searchSubsidies(
 
   results.sort((a, b) => b.popularity - a.popularity);
 
-  return { items: results, total: results.length };
+  const lastUpdated = results.reduce<string | undefined>((max, s) => {
+    if (!s.lastUpdated) return max;
+    if (!max) return s.lastUpdated;
+    return s.lastUpdated > max ? s.lastUpdated : max;
+  }, undefined);
+
+  return { items: results, total: results.length, lastUpdated };
 }
 
 export async function getSubsidyById(

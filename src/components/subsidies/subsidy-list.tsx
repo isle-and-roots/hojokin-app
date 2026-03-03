@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { SearchX, ArrowUp } from "lucide-react";
+import Link from "next/link";
+import { SearchX, ArrowUp, RotateCcw, MessageCircle, List } from "lucide-react";
 import type { SubsidyInfo } from "@/types";
 import { SubsidyCard } from "./subsidy-card";
 
 type SortKey = "popularity" | "amount" | "deadline";
 
-export function SubsidyList({ items }: { items: SubsidyInfo[] }) {
+export function SubsidyList({ items, onReset }: { items: SubsidyInfo[]; onReset?: () => void }) {
   const [sortKey, setSortKey] = useState<SortKey>("popularity");
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [now] = useState(() => Date.now());
@@ -42,9 +43,34 @@ export function SubsidyList({ items }: { items: SubsidyInfo[] }) {
       <div className="rounded-xl border border-border bg-card p-12 text-center">
         <SearchX className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
         <p className="font-medium mb-1">該当する補助金が見つかりません</p>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground mb-5">
           検索条件を変更してお試しください
         </p>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          {onReset && (
+            <button
+              onClick={onReset}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm border border-border hover:bg-accent transition-colors"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              フィルタをリセット
+            </button>
+          )}
+          <Link
+            href="/chat"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm border border-border hover:bg-accent transition-colors"
+          >
+            <MessageCircle className="h-3.5 w-3.5" />
+            AIに相談する
+          </Link>
+          <Link
+            href="/subsidies"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm border border-border hover:bg-accent transition-colors"
+          >
+            <List className="h-3.5 w-3.5" />
+            すべての補助金を見る
+          </Link>
+        </div>
       </div>
     );
   }

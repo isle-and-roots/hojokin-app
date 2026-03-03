@@ -102,6 +102,7 @@ export function toSubsidyInfo(row: DbSubsidy): SubsidyInfo {
     difficulty: row.difficulty as "EASY" | "MEDIUM" | "HARD",
     isActive: row.is_active,
     lastUpdated: row.last_updated,
+    source: row.source as "manual" | "jgrants",
   };
 }
 
