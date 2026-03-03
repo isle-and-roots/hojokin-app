@@ -250,8 +250,6 @@ export function ChatInterface({ initialSessionId, subsidyId, plan = "free" }: Ch
             if (event.type === "init" && event.sessionId) {
               const newId = event.sessionId;
               setSessionId(newId);
-              // セッション一覧を更新
-              void fetchSessions();
             } else if (event.type === "delta" && event.text) {
               setMessages((prev) =>
                 prev.map((m) =>
@@ -358,7 +356,6 @@ export function ChatInterface({ initialSessionId, subsidyId, plan = "free" }: Ch
 
             if (event.type === "init" && event.sessionId) {
               setSessionId(event.sessionId);
-              void fetchSessions();
             } else if (event.type === "delta" && event.text) {
               setMessages((prev) =>
                 prev.map((m) =>

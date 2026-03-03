@@ -85,12 +85,20 @@ export async function POST(request: NextRequest) {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
-    const { count: todayCount } = await supabase
+    const { count: todayCount, error: countError } = await supabase
       .from("chat_messages")
       .select("id", { count: "exact", head: true })
       .eq("user_id", user.id)
       .eq("role", "user")
       .gte("created_at", todayStart.toISOString());
+
+    if (countError) {
+      logger.error("chat.rate_limit_query_failed", { error: countError.message });
+      return NextResponse.json(
+        { error: "利用状況の確認に失敗しました。しばらくしてからお試しください。" },
+        { status: 500 }
+      );
+    }
 
     const dailyLimit = getChatDailyLimit(plan);
     if ((todayCount ?? 0) >= dailyLimit) {
@@ -136,15 +144,15 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 会話履歴取得（最新 CHAT_MAX_HISTORY 件）
+    // 会話履歴取得（最新 CHAT_MAX_HISTORY 件を降順で取得→時系列に並べ替え）
     const { data: historyRows } = await supabase
       .from("chat_messages")
       .select("role, content")
       .eq("session_id", activeSessionId)
-      .order("created_at", { ascending: true })
+      .order("created_at", { ascending: false })
       .limit(CHAT_MAX_HISTORY);
 
-    const history: MessageParam[] = (historyRows ?? []).map((row) => ({
+    const history: MessageParam[] = (historyRows ?? []).reverse().map((row) => ({
       role: row.role as "user" | "assistant",
       content: row.content,
     }));

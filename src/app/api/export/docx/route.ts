@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { canUseFeature } from "@/lib/plans";
+import type { PlanKey } from "@/lib/plans";
 import { trackServerEvent } from "@/lib/posthog/track";
 import { EVENTS } from "@/lib/posthog/events";
 
@@ -35,9 +37,10 @@ export async function POST(request: NextRequest) {
       .eq("id", user.id)
       .single();
 
-    if (userProfile?.plan === "free") {
+    const plan: PlanKey = (userProfile?.plan as PlanKey) ?? "free";
+    if (!canUseFeature(plan, "docxExport")) {
       return NextResponse.json(
-        { error: "この機能は Pro プラン以上でご利用いただけます。" },
+        { error: "この機能は Starter プラン以上でご利用いただけます。" },
         { status: 403 }
       );
     }

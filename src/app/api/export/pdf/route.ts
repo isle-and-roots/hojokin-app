@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { canUseFeature } from "@/lib/plans";
+import type { PlanKey } from "@/lib/plans";
 import { trackServerEvent } from "@/lib/posthog/track";
 import { EVENTS } from "@/lib/posthog/events";
 
@@ -46,9 +48,10 @@ export async function POST(request: NextRequest) {
       .eq("id", user.id)
       .single();
 
-    if (userProfile?.plan === "free") {
+    const plan: PlanKey = (userProfile?.plan as PlanKey) ?? "free";
+    if (!canUseFeature(plan, "docxExport")) {
       return NextResponse.json(
-        { error: "この機能は Pro プラン以上でご利用いただけます。" },
+        { error: "この機能は Starter プラン以上でご利用いただけます。" },
         { status: 403 }
       );
     }
@@ -56,7 +59,7 @@ export async function POST(request: NextRequest) {
     const body: ApplicationData = await request.json();
     const { subsidyName, sections, companyInfo } = body;
 
-    const { renderToBuffer, Document } = await import("@react-pdf/renderer");
+    const { renderToBuffer } = await import("@react-pdf/renderer");
     const { registerFonts } = await import("@/lib/pdf/font-config");
     const { ApplicationPdf } = await import("@/lib/pdf/application-pdf");
     const React = await import("react");
@@ -69,12 +72,7 @@ export async function POST(request: NextRequest) {
       companyInfo,
     });
 
-    // ApplicationPdf renders a Document at its root; cast to satisfy renderToBuffer's type
-    const docElement = appElement as unknown as React.ReactElement<
-      React.ComponentProps<typeof Document>
-    >;
-
-    const buffer = await renderToBuffer(docElement);
+    const buffer = await renderToBuffer(appElement as Parameters<typeof renderToBuffer>[0]);
 
     trackServerEvent(user.id, EVENTS.DOCX_EXPORTED, {
       subsidy_name: subsidyName,

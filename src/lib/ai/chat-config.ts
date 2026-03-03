@@ -2,8 +2,8 @@ import type { PlanKey } from "@/lib/plans";
 
 /** チャット用プラン別モデル */
 export const CHAT_MODEL_BY_PLAN: Record<PlanKey, string> = {
-  free: "claude-haiku-4-5-20241022",
-  starter: "claude-haiku-4-5-20241022",
+  free: "claude-haiku-4-5-20251001",
+  starter: "claude-haiku-4-5-20251001",
   pro: "claude-sonnet-4-20250514",
   business: "claude-sonnet-4-20250514",
 };

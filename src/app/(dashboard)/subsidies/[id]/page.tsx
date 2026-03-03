@@ -73,6 +73,11 @@ export async function generateMetadata({
   };
 }
 
+function computeDaysLeft(deadline: string | null): number | null {
+  if (!deadline) return null;
+  return Math.ceil((new Date(deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+}
+
 export default async function SubsidyDetailPage({
   params,
 }: {
@@ -121,11 +126,7 @@ export default async function SubsidyDetailPage({
     return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
   };
 
-  const getDaysUntilDeadline = (deadline: string | null) => {
-    if (!deadline) return null;
-    return Math.ceil((new Date(deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-  };
-  const daysLeft = getDaysUntilDeadline(subsidy.deadline);
+  const daysLeft = computeDaysLeft(subsidy.deadline);
 
   return (
     <PageTransition>

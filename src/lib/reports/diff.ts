@@ -54,10 +54,6 @@ function computeLCS(oldTokens: string[], newTokens: string[]): number[][] {
   const m = oldTokens.length;
   const n = newTokens.length;
 
-  // DPテーブル（メモリ効率のため2行のみ保持）
-  let prev = new Array<number>(n + 1).fill(0);
-  let curr = new Array<number>(n + 1).fill(0);
-
   // LCS長の全テーブルが必要なのでフルテーブルを作成
   const dp: number[][] = Array.from({ length: m + 1 }, () =>
     new Array<number>(n + 1).fill(0)
@@ -72,10 +68,6 @@ function computeLCS(oldTokens: string[], newTokens: string[]): number[][] {
       }
     }
   }
-
-  // LCSは使うが変数への代入を消すため
-  void prev;
-  void curr;
 
   return dp;
 }
