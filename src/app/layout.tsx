@@ -4,7 +4,8 @@ import "./globals.css";
 import { ClientProviders } from "@/components/ui/client-providers";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { DatadogRumInit } from "@/components/datadog/rum-init";
+import { ErrorBoundaryReporter } from "@/components/observability/error-boundary-reporter";
+import { WebVitalsReporter } from "@/components/observability/web-vitals-reporter";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -138,7 +139,8 @@ export default function RootLayout({
         <ClientProviders>{children}</ClientProviders>
         <Analytics />
         <SpeedInsights />
-        <DatadogRumInit />
+        <ErrorBoundaryReporter />
+        <WebVitalsReporter />
       </body>
     </html>
   );

@@ -11,11 +11,13 @@
     "setup:polar:production": "tsx --env-file=.env.local scripts/setup-polar.ts --production",
     "setup:polar:vercel": "tsx --env-file=.env.local scripts/sync-vercel-env.ts",
     "db:check": "tsx --env-file=.env.local scripts/check-schema.ts",
-    "smoke-test": "tsx scripts/smoke-test.ts"
+    "smoke-test": "tsx scripts/smoke-test.ts",
+    "typecheck": "tsc --noEmit",
+    "quality-gate": "npm run typecheck && npm run lint && npm run build",
+    "prepare": "husky"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
-    "@datadog/browser-rum": "^6.28.1",
     "@polar-sh/nextjs": "^0.9.3",
     "@polar-sh/sdk": "^0.44.0",
     "@react-pdf/renderer": "^4.3.2",
@@ -25,7 +27,6 @@
     "@vercel/analytics": "^1.6.1",
     "@vercel/speed-insights": "^1.3.1",
     "clsx": "^2.1.1",
-    "dd-trace": "^5.87.0",
     "docx": "^9.5.3",
     "framer-motion": "^12.34.3",
     "gray-matter": "^4.0.3",
@@ -43,6 +44,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@secretlint/secretlint-rule-preset-recommend": "^11.3.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
@@ -52,10 +54,21 @@
     "@vitejs/plugin-react": "^5.1.4",
     "eslint": "^10.0.2",
     "eslint-config-next": "^16.1.6",
+    "husky": "^9.1.7",
     "jsdom": "^28.1.0",
+    "lint-staged": "^16.3.3",
+    "secretlint": "^11.3.1",
     "tailwindcss": "^4",
     "tsx": "^4.19.0",
     "typescript": "^5",
     "vitest": "^4.0.18"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix"
+    ],
+    "*": [
+      "secretlint"
+    ]
   }
 }

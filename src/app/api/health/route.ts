@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { checkEnvironment, type EnvCheckResult } from "@/lib/env-check";
+import { getObservabilityClient } from "@/lib/observability/admin-client";
 
 /**
  * ヘルスチェックエンドポイント
@@ -86,6 +87,23 @@ export async function GET() {
   const status = allHealthy ? "healthy" : "degraded";
   const httpStatus = allHealthy ? 200 : 503;
   const responseTimeMs = Date.now() - startTime;
+
+  // Record health check results to observability table
+  const obsClient = getObservabilityClient();
+  if (obsClient) {
+    for (const check of dbChecks) {
+      Promise.resolve(
+        obsClient
+          .from("health_checks")
+          .insert({
+            service: `db:${check.table}`,
+            status: check.status === "ok" ? "ok" : "down",
+            response_time_ms: check.durationMs,
+            error_message: check.error ?? null,
+          })
+      ).catch(() => {});
+    }
+  }
 
   return NextResponse.json(
     {

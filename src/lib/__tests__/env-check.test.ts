@@ -19,7 +19,7 @@ describe("env-check", () => {
       "POLAR_BUSINESS_PRODUCT_ID",
       "NEXT_PUBLIC_SITE_URL",
       "RESEND_API_KEY",
-      "DD_API_KEY",
+      "ALERT_EMAIL",
       "NEXT_PUBLIC_POSTHOG_KEY",
       "POLAR_STARTER_ANNUAL_PRODUCT_ID",
       "POLAR_PRO_ANNUAL_PRODUCT_ID",

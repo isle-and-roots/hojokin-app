@@ -4,6 +4,7 @@ import { getPolarWebhookSecret } from "@/lib/polar/config";
 import { getPlanKeyByProductId } from "@/lib/plans";
 import { trackServerEvent, identifyUser } from "@/lib/posthog/track";
 import { EVENTS } from "@/lib/posthog/events";
+import { logInfo, logError } from "@/lib/observability/structured-logger";
 
 // Webhook には Service Role Key を使用（RLS バイパス）
 function getSupabaseAdmin() {
@@ -46,13 +47,13 @@ export const POST = Webhooks({
     const productId = payload.data.productId;
 
     if (!userId) {
-      console.error("Webhook: externalId (userId) が見つかりません");
+      logError("webhooks/polar", "externalId (userId) が見つかりません");
       return;
     }
 
     const planKey = getPlanKeyByProductId(productId);
     if (!planKey) {
-      console.error(`Webhook: 不明な productId: ${productId}`);
+      logError("webhooks/polar", `不明な productId: ${productId}`);
       return;
     }
 
@@ -69,8 +70,9 @@ export const POST = Webhooks({
       .eq("id", userId);
 
     if (error) {
-      console.error("subscription.created DB update error:", error);
+      logError("webhooks/polar", "subscription.created DB update error", error);
     } else {
+      logInfo("webhooks/polar", `サブスクリプション作成: ${planKey}`, "billing_webhook", { userId, metadata: { plan: planKey, productId } });
       trackServerEvent(userId, EVENTS.SUBSCRIPTION_CREATED, {
         plan: planKey,
         product_id: productId,
@@ -106,7 +108,9 @@ export const POST = Webhooks({
       .eq("id", userId);
 
     if (error) {
-      console.error("subscription.active DB update error:", error);
+      logError("webhooks/polar", "subscription.active DB update error", error);
+    } else {
+      logInfo("webhooks/polar", `サブスクリプション有効化: ${planKey}`, "billing_webhook", { userId });
     }
   },
 
@@ -138,7 +142,7 @@ export const POST = Webhooks({
           .eq("id", userId);
 
         if (error) {
-          console.error("subscription.updated (plan change) DB update error:", error);
+          logError("webhooks/polar", "subscription.updated (plan change) DB update error", error);
         }
       }
     } else {
@@ -152,7 +156,7 @@ export const POST = Webhooks({
         .eq("id", userId);
 
       if (error) {
-        console.error("subscription.updated DB update error:", error);
+        logError("webhooks/polar", "subscription.updated DB update error", error);
       }
     }
   },
@@ -175,7 +179,7 @@ export const POST = Webhooks({
       .eq("id", userId);
 
     if (error) {
-      console.error("subscription.canceled DB update error:", error);
+      logError("webhooks/polar", "subscription.canceled DB update error", error);
     } else {
       trackServerEvent(userId, EVENTS.SUBSCRIPTION_CANCELLED, {
         previous_subscription_id: payload.data.id,
@@ -202,7 +206,8 @@ export const POST = Webhooks({
       .eq("id", userId);
 
     if (error) {
-      console.error("subscription.revoked DB update error:", error);
+      logError("webhooks/polar", "subscription.revoked DB update error", error);
     }
   },
 });
+

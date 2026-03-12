@@ -16,8 +16,8 @@ import {
 } from "@/lib/ai/config";
 import { trackServerEvent } from "@/lib/posthog/track";
 import { EVENTS } from "@/lib/posthog/events";
-import { withSpan } from "@/lib/datadog";
-import { logger } from "@/lib/datadog/logger";
+import { logError } from "@/lib/observability/structured-logger";
+import { logAiUsage } from "@/lib/observability/ai-usage";
 
 const anthropic = new Anthropic();
 
@@ -156,17 +156,6 @@ export async function POST(request: NextRequest) {
     const readable = new ReadableStream({
       async start(controller) {
         try {
-          await withSpan(
-            'ai.generate-section',
-            {
-              resource: 'generate-section',
-              tags: {
-                'user.plan': plan,
-                'subsidy.id': subsidyId || 'jizokuka-001',
-                'ai.model': modelId,
-              },
-            },
-            async () => {
               const stream = anthropic.messages.stream(
                 {
                   model: modelId,
@@ -194,16 +183,18 @@ export async function POST(request: NextRequest) {
 
               const finalMessage = await stream.finalMessage();
 
-              // トークン使用量・キャッシュヒット率のログ記録 (LLM Observability)
-              logger.info('anthropic.generation.complete', {
-                model: modelId,
-                input_tokens: finalMessage.usage.input_tokens,
-                output_tokens: finalMessage.usage.output_tokens,
-                cache_creation_input_tokens: finalMessage.usage.cache_creation_input_tokens ?? 0,
-                cache_read_input_tokens: finalMessage.usage.cache_read_input_tokens ?? 0,
-                subsidy_id: subsidyId || 'jizokuka-001',
-                user_plan: plan,
-                section_key: sectionKey,
+              // トークン使用量・キャッシュヒット率のログ記録 (AI Observability)
+              logAiUsage({
+                userId: user.id,
+                toolName: "generate-section",
+                modelId,
+                inputTokens: finalMessage.usage.input_tokens,
+                outputTokens: finalMessage.usage.output_tokens,
+                cacheCreationTokens: finalMessage.usage.cache_creation_input_tokens ?? 0,
+                cacheReadTokens: finalMessage.usage.cache_read_input_tokens ?? 0,
+                subsidyId: subsidyId || "jizokuka-001",
+                sectionKey,
+                plan,
               });
 
               // 使用量インクリメント（ストリーム完了後のみ）
@@ -235,8 +226,6 @@ export async function POST(request: NextRequest) {
               });
               controller.enqueue(encoder.encode(`data: ${doneData}\n\n`));
               controller.close();
-            }
-          );
         } catch (error) {
           // エラー分類
           const errorKind: AiErrorKind = classifyError(error);
@@ -251,10 +240,9 @@ export async function POST(request: NextRequest) {
             // エラートラッキング自体の失敗は無視
           }
 
-          console.error("[AI] Generation failed:", {
-            kind: errorKind,
-            message: error instanceof Error ? error.message : String(error),
-            stack: error instanceof Error ? error.stack : undefined,
+          logError("ai/generate-section", "AI生成失敗", error, {
+            userId: user.id,
+            metadata: { errorKind },
           });
 
           // キャンセル時はストリームを静かに閉じる

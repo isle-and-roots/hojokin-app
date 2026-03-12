@@ -7,6 +7,7 @@ import {
 } from "@/lib/email/templates";
 import { getPostHogServer } from "@/lib/posthog/server";
 import { EVENTS } from "@/lib/posthog/events";
+import { logInfo, logError } from "@/lib/observability/structured-logger";
 
 const EMAIL_FROM =
   process.env.EMAIL_FROM || "noreply@hojokin.isle-and-roots.com";
@@ -217,6 +218,10 @@ export async function GET(request: NextRequest) {
 
         if (result.success) {
           sent++;
+          logInfo("cron/email-sequence", `メール送信成功: ${step.templateKey}`, "email_sent", {
+            userId: user.id,
+            metadata: { template: step.templateKey },
+          });
           posthog?.capture({
             distinctId: user.id,
             event: EVENTS.EMAIL_SEQUENCE_SENT,
@@ -224,9 +229,10 @@ export async function GET(request: NextRequest) {
           });
         } else {
           failed++;
-          console.error(
-            `[EmailCron] Failed to send ${step.templateKey} to user ${user.id}: ${result.error}`
-          );
+          logError("cron/email-sequence", `メール送信失敗: ${step.templateKey}`, undefined, {
+            userId: user.id,
+            metadata: { template: step.templateKey, error: result.error },
+          });
           posthog?.capture({
             distinctId: user.id,
             event: EVENTS.EMAIL_SEQUENCE_FAILED,
@@ -248,7 +254,7 @@ export async function GET(request: NextRequest) {
       results,
     });
   } catch (error) {
-    console.error("[EmailCron] Unexpected error:", error);
+    logError("cron/email-sequence", "メールシーケンスエラー", error);
     return NextResponse.json(
       { error: "メールシーケンス処理中にエラーが発生しました" },
       { status: 500 }

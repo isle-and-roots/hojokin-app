@@ -13,7 +13,8 @@ import { classifyError, getErrorMessage, type AiErrorKind } from "@/lib/ai/confi
 import { buildChatSystemPrompt, buildUserContext } from "@/lib/ai/chat-prompt";
 import { searchSubsidies } from "@/lib/subsidies";
 import { getBusinessProfile } from "@/lib/db/business-profiles";
-import { logger } from "@/lib/datadog/logger";
+import { logError } from "@/lib/observability/structured-logger";
+import { logAiUsage } from "@/lib/observability/ai-usage";
 
 const anthropic = new Anthropic();
 
@@ -209,15 +210,16 @@ export async function POST(request: NextRequest) {
 
           const finalMessage = await stream.finalMessage();
 
-          // Datadog: トークン使用量 + キャッシュヒット率ログ
-          logger.info("chat.generation.complete", {
-            model: modelId,
-            input_tokens: finalMessage.usage.input_tokens,
-            output_tokens: finalMessage.usage.output_tokens,
-            cache_creation_input_tokens: finalMessage.usage.cache_creation_input_tokens ?? 0,
-            cache_read_input_tokens: finalMessage.usage.cache_read_input_tokens ?? 0,
-            user_plan: plan,
-            has_profile: businessProfile !== null,
+          // トークン使用量 + キャッシュヒット率ログ (AI Observability)
+          logAiUsage({
+            userId: user.id,
+            toolName: "chat",
+            modelId,
+            inputTokens: finalMessage.usage.input_tokens,
+            outputTokens: finalMessage.usage.output_tokens,
+            cacheCreationTokens: finalMessage.usage.cache_creation_input_tokens ?? 0,
+            cacheReadTokens: finalMessage.usage.cache_read_input_tokens ?? 0,
+            plan,
           });
 
           // AI応答のDB保存（ユーザー体験には非クリティカル）
@@ -233,9 +235,9 @@ export async function POST(request: NextRequest) {
               .update({ updated_at: new Date().toISOString() })
               .eq("id", activeSessionId);
           } catch (dbError) {
-            logger.error("chat.db.save_failed", {
-              error_message: dbError instanceof Error ? dbError.message : String(dbError),
-              session_id: activeSessionId,
+            logError("chat/db", "チャットDB保存失敗", dbError, {
+              userId: user.id,
+              metadata: { session_id: activeSessionId },
             });
           }
 
@@ -259,7 +261,10 @@ export async function POST(request: NextRequest) {
             diagnostics.api_status = error.status;
             diagnostics.api_request_id = error.requestID ?? undefined;
           }
-          logger.error("chat.generation.failed", diagnostics);
+          logError("chat/generation", "チャット生成失敗", error, {
+            userId: user.id,
+            metadata: diagnostics as Record<string, unknown>,
+          });
 
           if (error instanceof Error && error.name === "AbortError") {
             controller.close();

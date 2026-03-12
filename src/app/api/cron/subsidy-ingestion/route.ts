@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { runIngestionPipeline } from "@/lib/ingestion/pipeline";
 import { getPostHogServer } from "@/lib/posthog/server";
+import { logInfo, logError } from "@/lib/observability/structured-logger";
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,6 +19,15 @@ export async function GET(request: NextRequest) {
     const posthog = getPostHogServer();
 
     const result = await runIngestionPipeline();
+
+    logInfo("cron/subsidy-ingestion", `取込完了: ${result.totalUpserted}件`, "subsidy_ingestion", {
+      metadata: {
+        status: result.status,
+        totalFetched: result.totalFetched,
+        totalUpserted: result.totalUpserted,
+        totalErrors: result.totalErrors,
+      },
+    });
 
     posthog?.capture({
       distinctId: "system",
@@ -38,7 +48,7 @@ export async function GET(request: NextRequest) {
       ...result,
     });
   } catch (error) {
-    console.error("[SubsidyIngestion] Unexpected error:", error);
+    logError("cron/subsidy-ingestion", "補助金取込エラー", error);
     return NextResponse.json(
       { error: "補助金取込処理中にエラーが発生しました" },
       { status: 500 }
