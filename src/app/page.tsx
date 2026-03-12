@@ -61,12 +61,10 @@ import { CategoryTabs } from "@/components/landing/category-tabs";
 import { FaqAccordion } from "@/components/landing/faq-accordion";
 import { CtaLink } from "@/components/landing/cta-link";
 import { EmailCaptureSection } from "@/components/landing/email-capture-section";
-import { ExitIntentModal } from "@/components/landing/exit-intent-modal";
 import { HeroCtaButton } from "@/components/landing/hero-cta";
 import { FadeInUp, StaggerContainer, StaggerItem, FloatingCircle } from "@/components/landing/motion-wrapper";
-import { AiTypewriterDemo } from "@/components/landing/ai-typewriter-demo";
-import { RoiCalculator } from "@/components/landing/roi-calculator";
 import { cn } from "@/lib/utils";
+import { LazyAiTypewriterDemo, LazyRoiCalculator, LazyExitIntentModal } from "@/components/landing/lazy-components";
 
 const FAQ_ITEMS = [
   {
@@ -209,7 +207,7 @@ export default async function LandingPage() {
       />
     <div className="min-h-screen">
       {/* Exit Intent Modal */}
-      <ExitIntentModal />
+      <LazyExitIntentModal />
 
       {/* 1. Sticky Header */}
       <StickyHeader />
@@ -221,61 +219,53 @@ export default async function LandingPage() {
         <FloatingCircle className="absolute bottom-0 left-0 w-80 h-80 bg-green-500/5 rounded-full blur-3xl" />
         <FloatingCircle className="absolute top-1/2 left-1/3 w-72 h-72 bg-purple-500/5 rounded-full blur-3xl" />
 
-        <StaggerContainer className="max-w-5xl mx-auto text-center relative z-10" staggerDelay={0.15}>
-          <StaggerItem>
+        <div className="max-w-5xl mx-auto text-center relative z-10">
+          <div className="animate-[fade-in-up_0.5s_ease-out_0.1s_both]">
             <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 text-primary px-4 py-1.5 text-sm font-medium mb-6 border border-primary/20">
               <Sparkles className="h-4 w-4" />
               AI搭載 補助金申請支援サービス
             </div>
-          </StaggerItem>
+          </div>
 
-          <StaggerItem>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6 tracking-tight">
-              <span className="gradient-text">{stats.total}件以上の補助金</span>
-              に対応
-              <br />
-              申請書類をAIが自動生成
-            </h1>
-          </StaggerItem>
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-6 tracking-tight">
+            <span className="gradient-text">{stats.total}件以上の補助金</span>
+            に対応
+            <br />
+            申請書類をAIが自動生成
+          </h1>
 
-          <StaggerItem>
-            <p className="text-lg lg:text-xl text-muted-foreground max-w-3xl mx-auto mb-8 leading-relaxed">
-              持続化補助金・IT導入補助金・ものづくり補助金など、{stats.categoryCount}
-              カテゴリ{stats.total}
-              件の補助金をカバー。企業プロフィールを入力するだけで、中小企業診断士レベルの申請書類をAIが生成します。
-            </p>
-          </StaggerItem>
+          <p className="text-lg lg:text-xl text-muted-foreground max-w-3xl mx-auto mb-8 leading-relaxed animate-[fade-in-up_0.5s_ease-out_0.15s_both]">
+            持続化補助金・IT導入補助金・ものづくり補助金など、{stats.categoryCount}
+            カテゴリ{stats.total}
+            件の補助金をカバー。企業プロフィールを入力するだけで、中小企業診断士レベルの申請書類をAIが生成します。
+          </p>
 
-          <StaggerItem>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
-              <HeroCtaButton />
-              <Link
-                href="/subsidies"
-                className="inline-flex items-center gap-2 px-8 py-4 rounded-xl border-2 border-border font-semibold text-lg hover:bg-accent transition-all"
-              >
-                <Search className="h-5 w-5" />
-                補助金を探す
-              </Link>
-            </div>
-          </StaggerItem>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12 animate-[fade-in-up_0.5s_ease-out_0.25s_both]">
+            <HeroCtaButton />
+            <Link
+              href="/subsidies"
+              className="inline-flex items-center gap-2 px-8 py-4 rounded-xl border-2 border-border font-semibold text-lg hover:bg-accent transition-all"
+            >
+              <Search className="h-5 w-5" />
+              補助金を探す
+            </Link>
+          </div>
 
-          <StaggerItem>
-            <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <Shield className="h-4 w-4 text-green-600" />
-                無料プランあり
-              </span>
-              <span className="flex items-center gap-1.5">
-                <CreditCard className="h-4 w-4" />
-                クレジットカード不要
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Clock className="h-4 w-4" />
-                3分で最初の生成
-              </span>
-            </div>
-          </StaggerItem>
-        </StaggerContainer>
+          <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground animate-[fade-in-up_0.5s_ease-out_0.35s_both]">
+            <span className="flex items-center gap-1.5">
+              <Shield className="h-4 w-4 text-green-600" />
+              無料プランあり
+            </span>
+            <span className="flex items-center gap-1.5">
+              <CreditCard className="h-4 w-4" />
+              クレジットカード不要
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Clock className="h-4 w-4" />
+              3分で最初の生成
+            </span>
+          </div>
+        </div>
       </section>
 
       {/* 3. Stats Bar */}
@@ -502,7 +492,7 @@ export default async function LandingPage() {
           </FadeInUp>
 
           <FadeInUp delay={0.2}>
-            <AiTypewriterDemo />
+            <LazyAiTypewriterDemo />
           </FadeInUp>
 
           <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-12" staggerDelay={0.1}>
@@ -554,7 +544,7 @@ export default async function LandingPage() {
           </FadeInUp>
 
           <FadeInUp delay={0.2}>
-            <RoiCalculator />
+            <LazyRoiCalculator />
           </FadeInUp>
         </div>
       </section>

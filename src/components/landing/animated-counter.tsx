@@ -18,11 +18,14 @@ export function AnimatedCounter({ target, suffix, label }: AnimatedCounterProps)
     damping: 20,
     restDelta: 0.5,
   });
-  const [display, setDisplay] = useState(0);
+  const [display, setDisplay] = useState(target);
+  const hasAnimatedRef = useRef(false);
 
   useEffect(() => {
-    if (isInView) {
-      motionValue.set(target);
+    if (isInView && !hasAnimatedRef.current) {
+      hasAnimatedRef.current = true;
+      motionValue.set(0);
+      requestAnimationFrame(() => motionValue.set(target));
     }
   }, [isInView, target, motionValue]);
 

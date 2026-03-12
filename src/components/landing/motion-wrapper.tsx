@@ -102,17 +102,9 @@ interface FloatingCircleProps {
 
 export function FloatingCircle({ className }: FloatingCircleProps) {
   return (
-    <motion.div
+    <div
       className={className}
-      animate={{
-        x: [0, 15, -10, 0],
-        y: [0, -20, 10, 0],
-      }}
-      transition={{
-        duration: 20,
-        repeat: Infinity,
-        ease: "easeInOut",
-      }}
+      style={{ animation: "float 20s ease-in-out infinite" }}
     />
   );
 }

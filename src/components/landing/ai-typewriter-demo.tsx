@@ -87,11 +87,17 @@ export function AiTypewriterDemo() {
         return;
       }
 
-      const char = text[charIndexRef.current];
-      charIndexRef.current++;
+      const batchSize = 5;
+      let added = 0;
+      while (added < batchSize && charIndexRef.current < text.length) {
+        if (text[charIndexRef.current] === "\n" && added > 0) break;
+        charIndexRef.current++;
+        added++;
+      }
       setDisplayedText(text.slice(0, charIndexRef.current));
 
-      const delay = char === "\n" ? 300 : 30;
+      const lastChar = text[charIndexRef.current - 1];
+      const delay = lastChar === "\n" ? 300 : 50;
       typingRef.current = setTimeout(typeNext, delay);
     }
 
