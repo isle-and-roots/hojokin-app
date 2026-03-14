@@ -40,6 +40,10 @@ export default async function DashboardLayout({
       <main className="flex-1 lg:ml-64 pt-14 lg:pt-0">{children}</main>
       <CommandPaletteTrigger plan={plan} />
       <SpotlightTour />
+      <div className="hidden lg:flex fixed bottom-4 right-4 items-center gap-1.5 px-3 py-1.5 rounded-lg bg-muted/80 text-xs text-muted-foreground border border-border/50 backdrop-blur-sm">
+        <kbd className="px-1.5 py-0.5 rounded bg-background border border-border text-[10px] font-mono">⌘K</kbd>
+        <span>で検索</span>
+      </div>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 import { posthog } from "@/lib/posthog/client";
 import { EVENTS } from "@/lib/posthog/events";
 
@@ -16,7 +17,7 @@ export function CtaLink({ href, location, className, children }: CtaLinkProps) {
   return (
     <Link
       href={href}
-      className={className}
+      className={cn("focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary", className)}
       onClick={() =>
         posthog.capture(EVENTS.CTA_CLICK, { location, href })
       }

@@ -81,6 +81,14 @@ export async function getLandingStats() {
     .sort((a, b) => b.popularity - a.popularity)
     .slice(0, 4);
 
+  const totalMaxAmountMan = subsidies.reduce((sum, s) => {
+    return sum + (s.maxAmount ?? 0);
+  }, 0);
+  const totalMaxAmount =
+    totalMaxAmountMan >= 10000
+      ? `${Math.floor(totalMaxAmountMan / 10000)}億円`
+      : `${totalMaxAmountMan.toLocaleString()}万円`;
+
   return {
     total,
     aiSupported,
@@ -91,5 +99,7 @@ export async function getLandingStats() {
     promptSupportConfig: PROMPT_SUPPORT_CONFIG,
     categoryLabels: CATEGORY_LABELS,
     categoryColors: CATEGORY_COLORS,
+    userCount: 100,
+    totalMaxAmount,
   };
 }

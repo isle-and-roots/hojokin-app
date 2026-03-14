@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { X, Mail, CheckCircle, Loader2, FileText } from "lucide-react";
 import { posthog } from "@/lib/posthog/client";
 import { EVENTS } from "@/lib/posthog/events";
@@ -12,6 +12,7 @@ export function ExitIntentModal() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const modalRef = useRef<HTMLDivElement>(null);
 
   const handleClose = useCallback(() => {
     posthog.capture(EVENTS.EMAIL_CAPTURE_DISMISSED, { source: "exit_intent" });
@@ -49,6 +50,47 @@ export function ExitIntentModal() {
     };
   }, []);
 
+  // Focus trap and Escape key handler
+  useEffect(() => {
+    if (!open) return;
+
+    const modal = modalRef.current;
+    if (!modal) return;
+
+    // Focus the modal on open
+    modal.focus();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        handleClose();
+        return;
+      }
+
+      if (e.key !== "Tab") return;
+
+      const focusable = modal.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last?.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first?.focus();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open, handleClose]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) return;
@@ -62,10 +104,10 @@ export function ExitIntentModal() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, source: "exit_intent" }),
       });
-      const data = await res.json();
+      const data: { error?: string } = await res.json();
 
       if (!res.ok) {
-        setErrorMsg(data.error || "登録に失敗しました");
+        setErrorMsg(data.error ?? "登録に失敗しました");
         setStatus("error");
         return;
       }
@@ -87,10 +129,18 @@ export function ExitIntentModal() {
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={handleClose}
       />
-      <div className="relative w-full max-w-md mx-4 rounded-2xl bg-card border border-border shadow-2xl overflow-hidden">
+      <div
+        ref={modalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="exit-intent-title"
+        tabIndex={-1}
+        className="relative w-full max-w-md mx-4 rounded-2xl bg-card border border-border shadow-2xl overflow-hidden focus:outline-none"
+      >
         <button
           onClick={handleClose}
-          className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-accent transition-colors z-10"
+          aria-label="モーダルを閉じる"
+          className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-accent transition-colors z-10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
           <X className="h-5 w-5 text-muted-foreground" />
         </button>
@@ -111,7 +161,7 @@ export function ExitIntentModal() {
               <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mb-4">
                 <FileText className="h-7 w-7 text-primary" />
               </div>
-              <h2 className="text-xl font-bold">
+              <h2 id="exit-intent-title" className="text-xl font-bold">
                 補助金の締切、見逃していませんか？
               </h2>
               <p className="text-muted-foreground mt-2 text-sm">
@@ -134,7 +184,9 @@ export function ExitIntentModal() {
               </ul>
 
               <form onSubmit={handleSubmit} className="space-y-3">
+                <label htmlFor="exit-email" className="sr-only">メールアドレス</label>
                 <input
+                  id="exit-email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}

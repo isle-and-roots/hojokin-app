@@ -22,9 +22,12 @@ export function FaqAccordion({ items }: FaqAccordionProps) {
         <div key={i} className="rounded-xl border border-border bg-card">
           <button
             onClick={() => setOpenIndex(openIndex === i ? null : i)}
-            className="flex w-full items-center justify-between px-6 py-4 text-left"
+            aria-expanded={openIndex === i}
+            aria-controls={`faq-answer-${i}`}
+            id={`faq-question-${i}`}
+            className="flex w-full items-center justify-between gap-4 px-6 py-4 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
-            <span className="font-medium pr-4">{item.question}</span>
+            <span className="font-medium min-w-0">{item.question}</span>
             <ChevronDown
               className={cn(
                 "h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200",
@@ -33,6 +36,10 @@ export function FaqAccordion({ items }: FaqAccordionProps) {
             />
           </button>
           <div
+            id={`faq-answer-${i}`}
+            role="region"
+            aria-labelledby={`faq-question-${i}`}
+            aria-hidden={openIndex !== i}
             className={cn(
               "grid transition-all duration-200",
               openIndex === i

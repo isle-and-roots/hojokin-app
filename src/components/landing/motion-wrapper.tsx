@@ -1,15 +1,42 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { type ReactNode, useState, useEffect } from "react";
 import { motion, type Variants } from "framer-motion";
+
+function useReducedMotion(): boolean {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setPrefersReducedMotion(mq.matches);
+
+    const handler = (e: MediaQueryListEvent) => {
+      setPrefersReducedMotion(e.matches);
+    };
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  return prefersReducedMotion;
+}
 
 const fadeInUpVariants: Variants = {
   hidden: { opacity: 0, y: 30 },
   visible: { opacity: 1, y: 0 },
 };
 
+const noMotionVariants: Variants = {
+  hidden: { opacity: 1, y: 0 },
+  visible: { opacity: 1, y: 0 },
+};
+
 const scaleInVariants: Variants = {
   hidden: { opacity: 0, scale: 0.9 },
+  visible: { opacity: 1, scale: 1 },
+};
+
+const noScaleVariants: Variants = {
+  hidden: { opacity: 1, scale: 1 },
   visible: { opacity: 1, scale: 1 },
 };
 
@@ -20,9 +47,11 @@ interface FadeInUpProps {
 }
 
 export function FadeInUp({ children, className, delay = 0 }: FadeInUpProps) {
+  const prefersReducedMotion = useReducedMotion();
+
   return (
     <motion.div
-      variants={fadeInUpVariants}
+      variants={prefersReducedMotion ? noMotionVariants : fadeInUpVariants}
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, margin: "-50px" }}
@@ -45,12 +74,14 @@ export function StaggerContainer({
   className,
   staggerDelay = 0.1,
 }: StaggerContainerProps) {
+  const prefersReducedMotion = useReducedMotion();
+
   return (
     <motion.div
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, margin: "-50px" }}
-      transition={{ staggerChildren: staggerDelay }}
+      transition={{ staggerChildren: prefersReducedMotion ? 0 : staggerDelay }}
       className={className}
     >
       {children}
@@ -64,9 +95,11 @@ interface StaggerItemProps {
 }
 
 export function StaggerItem({ children, className }: StaggerItemProps) {
+  const prefersReducedMotion = useReducedMotion();
+
   return (
     <motion.div
-      variants={fadeInUpVariants}
+      variants={prefersReducedMotion ? noMotionVariants : fadeInUpVariants}
       transition={{ duration: 0.5, ease: "easeOut" }}
       className={className}
     >
@@ -82,9 +115,11 @@ interface ScaleInProps {
 }
 
 export function ScaleIn({ children, className, delay = 0 }: ScaleInProps) {
+  const prefersReducedMotion = useReducedMotion();
+
   return (
     <motion.div
-      variants={scaleInVariants}
+      variants={prefersReducedMotion ? noScaleVariants : scaleInVariants}
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, margin: "-50px" }}

@@ -14,8 +14,6 @@ import {
   UserCheck,
   PenTool,
   FileDown,
-  Banknote,
-  Calendar,
   CheckCircle,
   type LucideIcon,
 } from "lucide-react";
@@ -54,17 +52,18 @@ export const metadata: Metadata = {
 };
 import { getLandingStats } from "@/lib/data/landing-stats";
 import { PLAN_LIST } from "@/lib/plans";
-import { PROMPT_SUPPORT_CONFIG } from "@/lib/data/subsidy-categories";
 import { StickyHeader } from "@/components/landing/sticky-header";
 import { AnimatedCounter } from "@/components/landing/animated-counter";
-import { CategoryTabs } from "@/components/landing/category-tabs";
 import { FaqAccordion } from "@/components/landing/faq-accordion";
 import { CtaLink } from "@/components/landing/cta-link";
-import { EmailCaptureSection } from "@/components/landing/email-capture-section";
+
 import { HeroCtaButton } from "@/components/landing/hero-cta";
 import { FadeInUp, StaggerContainer, StaggerItem, FloatingCircle } from "@/components/landing/motion-wrapper";
+import { InlineShindan } from "@/components/landing/inline-shindan";
+import { SocialProof } from "@/components/landing/social-proof";
 import { cn } from "@/lib/utils";
 import { LazyAiTypewriterDemo, LazyRoiCalculator, LazyExitIntentModal } from "@/components/landing/lazy-components";
+import { InlineEmailCapture } from "@/components/landing/inline-email-capture";
 
 const FAQ_ITEMS = [
   {
@@ -136,12 +135,6 @@ function FeatureItem({
       </div>
     </div>
   );
-}
-
-function formatAmount(amount: number | null): string {
-  if (amount === null) return "要確認";
-  if (amount >= 10000) return `${(amount / 10000).toFixed(0)}億円`;
-  return `${amount.toLocaleString()}万円`;
 }
 
 function formatPrice(price: number): string {
@@ -243,15 +236,15 @@ export default async function LandingPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12 animate-[fade-in-up_0.5s_ease-out_0.25s_both]">
             <HeroCtaButton />
             <Link
-              href="/subsidies"
+              href="/shindan"
               className="inline-flex items-center gap-2 px-8 py-4 rounded-xl border-2 border-border font-semibold text-lg hover:bg-accent transition-all"
             >
               <Search className="h-5 w-5" />
-              補助金を探す
+              無料で診断する
             </Link>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-muted-foreground animate-[fade-in-up_0.5s_ease-out_0.35s_both]">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs sm:text-sm text-muted-foreground animate-[fade-in-up_0.5s_ease-out_0.35s_both]">
             <span className="flex items-center gap-1.5">
               <Shield className="h-4 w-4 text-green-600" />
               無料プランあり
@@ -268,7 +261,10 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* 3. Stats Bar */}
+      {/* 3. Inline Shindan Quiz */}
+      <InlineShindan />
+
+      {/* 4. Stats Bar */}
       <section className="py-10 px-6 bg-card border-y border-border">
         <StaggerContainer className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center" staggerDelay={0.1}>
           <StaggerItem>
@@ -302,8 +298,17 @@ export default async function LandingPage() {
         </StaggerContainer>
       </section>
 
-      {/* 4. How It Works */}
-      <section className="py-20 px-6">
+      {/* 5. Social Proof */}
+      <SocialProof
+        stats={{
+          userCount: stats.userCount,
+          fullSupportCount: stats.fullSupport,
+          totalMaxAmount: stats.totalMaxAmount,
+        }}
+      />
+
+      {/* 6. How It Works */}
+      <section className="py-12 md:py-20 px-6 bg-muted/30">
         <div className="max-w-5xl mx-auto">
           <FadeInUp>
             <div className="text-center mb-16">
@@ -370,112 +375,8 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* 4.5. Email Capture */}
-      <EmailCaptureSection />
-
-      {/* 5. Category Showcase */}
-      <section className="py-20 px-6 bg-muted/30">
-        <div className="max-w-5xl mx-auto">
-          <FadeInUp>
-            <div className="text-center mb-12">
-              <p className="text-sm font-semibold text-primary mb-2 tracking-wider uppercase">
-                CATEGORIES
-              </p>
-              <h2 className="text-3xl font-bold">
-                {stats.categoryCount}カテゴリの補助金をカバー
-              </h2>
-              <p className="text-muted-foreground mt-3 max-w-lg mx-auto">
-                業種や目的に合わせて最適な補助金を見つけられます
-              </p>
-            </div>
-          </FadeInUp>
-
-          <FadeInUp delay={0.2}>
-            <CategoryTabs categories={stats.categories} />
-          </FadeInUp>
-        </div>
-      </section>
-
-      {/* 6. Popular Subsidies */}
-      <section className="py-20 px-6">
-        <div className="max-w-5xl mx-auto">
-          <FadeInUp>
-            <div className="text-center mb-12">
-              <p className="text-sm font-semibold text-primary mb-2 tracking-wider uppercase">
-                POPULAR
-              </p>
-              <h2 className="text-3xl font-bold">人気の補助金</h2>
-              <p className="text-muted-foreground mt-3">
-                最も多く利用されている補助金をご紹介
-              </p>
-            </div>
-          </FadeInUp>
-
-          <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 gap-6" staggerDelay={0.1}>
-            {stats.topSubsidies.map((subsidy) => {
-              const supportConfig =
-                PROMPT_SUPPORT_CONFIG[subsidy.promptSupport];
-              return (
-                <StaggerItem key={subsidy.id}>
-                  <div className="rounded-2xl border border-border bg-card p-6 hover-lift">
-                    <div className="flex items-start justify-between mb-3">
-                      <span
-                        className={cn(
-                          "rounded-full px-2.5 py-0.5 text-xs font-medium",
-                          stats.categoryColors[subsidy.categories[0]]
-                        )}
-                      >
-                        {stats.categoryLabels[subsidy.categories[0]]}
-                      </span>
-                      <span
-                        className={cn(
-                          "rounded-full px-2.5 py-0.5 text-xs font-medium flex items-center gap-1",
-                          supportConfig.color
-                        )}
-                      >
-                        <Sparkles className="h-3 w-3" />
-                        {supportConfig.label}
-                      </span>
-                    </div>
-                    <h3 className="font-bold text-lg mb-1">{subsidy.name}</h3>
-                    <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                      {subsidy.summary}
-                    </p>
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground border-t border-border pt-3">
-                      <span className="flex items-center gap-1">
-                        <Banknote className="h-4 w-4" />
-                        上限 {formatAmount(subsidy.maxAmount)}
-                      </span>
-                      <span>補助率 {subsidy.subsidyRate}</span>
-                      {subsidy.deadline && (
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-4 w-4" />
-                          {subsidy.deadline}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </StaggerItem>
-              );
-            })}
-          </StaggerContainer>
-
-          <FadeInUp delay={0.3}>
-            <div className="text-center mt-10">
-              <Link
-                href="/subsidies"
-                className="inline-flex items-center gap-2 text-primary font-medium hover:underline"
-              >
-                すべての補助金を見る
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-          </FadeInUp>
-        </div>
-      </section>
-
-      {/* 7. AI Feature Showcase */}
-      <section className="py-20 px-6 bg-muted/30">
+      {/* 7. AI Feature Showcase + ROI Calculator (merged) */}
+      <section className="py-12 md:py-20 px-6">
         <div className="max-w-5xl mx-auto">
           <FadeInUp>
             <div className="text-center mb-12">
@@ -525,32 +426,30 @@ export default async function LandingPage() {
               />
             </StaggerItem>
           </StaggerContainer>
-        </div>
-      </section>
 
-      {/* 7.5. ROI Calculator */}
-      <section className="py-20 px-6">
-        <div className="max-w-5xl mx-auto">
-          <FadeInUp>
-            <div className="text-center mb-12">
-              <p className="text-sm font-semibold text-primary mb-2 tracking-wider uppercase">
-                COST COMPARISON
-              </p>
-              <h2 className="text-3xl font-bold">コンサルタント費用 vs AI</h2>
-              <p className="text-muted-foreground mt-3 max-w-lg mx-auto">
-                専門家に依頼する場合と比べて、どれだけ節約できるか確認しましょう
-              </p>
-            </div>
-          </FadeInUp>
+          {/* ROI Calculator merged */}
+          <div className="mt-16">
+            <FadeInUp>
+              <div className="text-center mb-12">
+                <p className="text-sm font-semibold text-primary mb-2 tracking-wider uppercase">
+                  COST COMPARISON
+                </p>
+                <h2 className="text-3xl font-bold">コンサルタント費用 vs AI</h2>
+                <p className="text-muted-foreground mt-3 max-w-lg mx-auto">
+                  専門家に依頼する場合と比べて、どれだけ節約できるか確認しましょう
+                </p>
+              </div>
+            </FadeInUp>
 
-          <FadeInUp delay={0.2}>
-            <LazyRoiCalculator />
-          </FadeInUp>
+            <FadeInUp delay={0.2}>
+              <LazyRoiCalculator />
+            </FadeInUp>
+          </div>
         </div>
       </section>
 
       {/* 8. Pricing Preview */}
-      <section className="py-20 px-6 bg-muted/30">
+      <section className="py-12 md:py-20 px-6 bg-muted/30">
         <div className="max-w-5xl mx-auto">
           <FadeInUp>
             <div className="text-center mb-12">
@@ -633,7 +532,7 @@ export default async function LandingPage() {
       </section>
 
       {/* 9. FAQ */}
-      <section className="py-20 px-6">
+      <section className="py-12 md:py-20 px-6">
         <div className="max-w-5xl mx-auto">
           <FadeInUp>
             <div className="text-center mb-12">
@@ -650,8 +549,8 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* 10. Final CTA */}
-      <section className="py-20 px-6 bg-primary/5 relative overflow-hidden">
+      {/* 10. Final CTA + Email Capture (merged) */}
+      <section className="py-12 md:py-20 px-6 bg-primary/5 relative overflow-hidden">
         <FloatingCircle className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-primary/5 blur-3xl" />
 
         <FadeInUp>
@@ -675,13 +574,21 @@ export default async function LandingPage() {
               location="final_cta"
               className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-primary text-primary-foreground font-semibold text-lg hover:bg-primary/90 transition-all shadow-lg shadow-primary/25"
             >
-              無料で申請書を作成する
+              無料で始める
               <ArrowRight className="h-5 w-5" />
             </CtaLink>
 
             <p className="mt-4 text-sm text-muted-foreground">
               クレジットカード不要 ・ 3分で最初の生成
             </p>
+
+            {/* Email capture inline */}
+            <div className="mt-10 pt-8 border-t border-primary/10">
+              <p className="text-sm text-muted-foreground mb-4">
+                まだ迷っている方は、補助金の最新情報をメールでお届けします
+              </p>
+              <InlineEmailCapture />
+            </div>
           </div>
         </FadeInUp>
       </section>
@@ -689,7 +596,7 @@ export default async function LandingPage() {
       {/* 11. Footer */}
       <footer className="border-t border-border py-12 px-6">
         <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">

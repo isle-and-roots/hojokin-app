@@ -21,6 +21,7 @@ function isPlanKey(v: unknown): v is PlanKey {
 
 export function QuotaWidget() {
   const [quota, setQuota] = useState<QuotaData | null>(null);
+  const [waitForReset, setWaitForReset] = useState(false);
   const bannerFired = { current: false };
 
   useEffect(() => {
@@ -70,6 +71,10 @@ export function QuotaWidget() {
   const isExhausted = quota.remaining === 0;
   const showUpgrade = quota.plan !== "business";
 
+  // Specific remaining counts for targeted messages
+  const isLastOne = quota.remaining === 1;
+  const isNearlyExhausted = quota.remaining <= 3 && quota.remaining > 0 && (quota.plan === "free" || quota.plan === "starter");
+
   const barColor = isExhausted
     ? "bg-red-500"
     : isLow
@@ -112,18 +117,50 @@ export function QuotaWidget() {
       {showUpgrade && (
         <div className="mt-4">
           {isExhausted ? (
-            <div className="rounded-lg bg-red-50 border border-red-200 p-3">
-              <p className="text-xs font-medium text-red-800 mb-2">
-                今月の生成回数を使い切りました
+            waitForReset ? (
+              <p className="text-xs text-muted-foreground">
+                リセット日: {quota.resetMonth}
+              </p>
+            ) : (
+              <div className="rounded-lg bg-red-50 border border-red-200 p-3">
+                <p className="text-xs font-medium text-red-800 mb-2">
+                  今月の生成回数を使い切りました
+                </p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Link
+                    href="/pricing"
+                    onClick={handleUpgradeClick}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-medium hover:bg-red-700 transition-colors"
+                  >
+                    <Sparkles className="h-3.5 w-3.5" />
+                    アップグレードで増やす
+                    <ArrowUpRight className="h-3 w-3" />
+                  </Link>
+                  <button
+                    onClick={() => setWaitForReset(true)}
+                    className="inline-flex items-center px-3 py-1.5 rounded-lg border border-red-200 text-red-700 text-xs font-medium hover:bg-red-50 transition-colors"
+                  >
+                    来月まで待つ
+                  </button>
+                </div>
+              </div>
+            )
+          ) : isLastOne ? (
+            <p className="text-xs text-orange-700 font-medium">
+              最後の1回を最高品質で使いましょう
+            </p>
+          ) : isNearlyExhausted ? (
+            <div>
+              <p className="text-xs text-orange-700 font-medium mb-1">
+                Proなら月100回まで生成可能
               </p>
               <Link
                 href="/pricing"
                 onClick={handleUpgradeClick}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-medium hover:bg-red-700 transition-colors"
+                className="inline-flex items-center gap-1 text-sm text-orange-700 hover:underline font-medium"
               >
-                <Sparkles className="h-3.5 w-3.5" />
-                アップグレードで増やす
-                <ArrowUpRight className="h-3 w-3" />
+                残りわずか — アップグレードで増やす
+                <ArrowUpRight className="h-3.5 w-3.5" />
               </Link>
             </div>
           ) : isLow ? (

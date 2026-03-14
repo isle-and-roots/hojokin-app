@@ -14,6 +14,7 @@ import {
   FolderOpen,
   Sparkles,
   ArrowRight,
+  Minus,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -74,15 +75,23 @@ export function CategoryTabs({ categories }: CategoryTabsProps) {
   return (
     <div>
       {/* Tab buttons */}
-      <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-4 mb-6">
+      <div
+        role="tablist"
+        aria-label="補助金カテゴリ"
+        className="flex gap-2 overflow-x-auto scrollbar-hide pb-4 mb-6"
+      >
         {categories.map((cat, i) => {
           const CatIcon = CATEGORY_ICONS[cat.key];
           return (
             <button
               key={cat.key}
+              role="tab"
+              aria-selected={i === activeIndex}
+              aria-controls={`tabpanel-${cat.key}`}
+              id={`tab-${cat.key}`}
               onClick={() => setActiveIndex(i)}
               className={cn(
-                "shrink-0 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all",
+                "shrink-0 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
                 i === activeIndex
                   ? "bg-primary text-primary-foreground shadow-md"
                   : "bg-card border border-border text-muted-foreground hover:text-foreground hover:border-primary/30"
@@ -96,7 +105,12 @@ export function CategoryTabs({ categories }: CategoryTabsProps) {
       </div>
 
       {/* Active panel */}
-      <div className="rounded-2xl border border-border bg-card p-6 sm:p-8">
+      <div
+        role="tabpanel"
+        id={`tabpanel-${active.key}`}
+        aria-labelledby={`tab-${active.key}`}
+        className="rounded-2xl border border-border bg-card p-6 sm:p-8"
+      >
         <div className="flex items-center gap-3 mb-4">
           <div
             className={cn(
@@ -135,10 +149,13 @@ export function CategoryTabs({ categories }: CategoryTabsProps) {
                   </span>
                   <span
                     className={cn(
-                      "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+                      "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
                       support.color
                     )}
                   >
+                    {sub.promptSupport === "NONE" && (
+                      <Minus className="h-3 w-3" />
+                    )}
                     {support.label}
                   </span>
                 </div>

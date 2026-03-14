@@ -20,17 +20,12 @@ const INDUSTRY_TO_TARGET: Record<string, TargetIndustry> = {
 
 export async function POST(request: NextRequest) {
   try {
-    // 認証チェック
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "ログインしてください" },
-        { status: 401 }
-      );
+    // 認証は任意（未ログインでも利用可能）
+    try {
+      const supabase = await createClient();
+      await supabase.auth.getUser();
+    } catch {
+      // 認証エラーは無視してスコアリングを続行
     }
 
     // リクエストバリデーション

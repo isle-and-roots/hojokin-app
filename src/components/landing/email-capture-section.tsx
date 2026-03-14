@@ -67,7 +67,9 @@ export function EmailCaptureSection() {
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+          <label htmlFor="email-capture" className="sr-only">メールアドレス</label>
           <input
+            id="email-capture"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}

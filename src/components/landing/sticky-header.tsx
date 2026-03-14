@@ -29,7 +29,7 @@ export function StickyHeader() {
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
         isScrolled
-          ? "glass-header border-b border-border/50 shadow-sm py-3"
+          ? "glass-header border-b border-border/50 shadow-sm py-2 md:py-3"
           : "bg-transparent py-4"
       )}
     >
@@ -43,6 +43,12 @@ export function StickyHeader() {
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-6">
+          <Link
+            href="/shindan"
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            無料で診断
+          </Link>
           <Link
             href="/subsidies"
             className="text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -94,6 +100,13 @@ export function StickyHeader() {
       {isMobileMenuOpen && (
         <div className="md:hidden border-t border-border/50 bg-card/95 backdrop-blur-lg">
           <nav className="max-w-6xl mx-auto px-6 py-4 flex flex-col gap-3">
+            <Link
+              href="/shindan"
+              className="text-sm py-2 text-muted-foreground hover:text-foreground transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              無料で診断
+            </Link>
             <Link
               href="/subsidies"
               className="text-sm py-2 text-muted-foreground hover:text-foreground transition-colors"

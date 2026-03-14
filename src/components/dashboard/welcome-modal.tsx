@@ -2,15 +2,15 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { X, Building2, Search, Sparkles, ArrowRight } from "lucide-react";
+import { X, MessageSquare, Search, Building2, ArrowRight, Sparkles } from "lucide-react";
 import { posthog } from "@/lib/posthog/client";
 import { EVENTS } from "@/lib/posthog/events";
 
 const STEPS = [
   {
-    icon: Building2,
-    title: "企業プロフィール登録",
-    description: "会社名・業種・従業員数の3項目だけでOK",
+    icon: MessageSquare,
+    title: "AIに補助金を相談",
+    description: "まずはAIチャットで気軽に質問してみましょう",
     time: "1分",
   },
   {
@@ -20,9 +20,9 @@ const STEPS = [
     time: "30秒",
   },
   {
-    icon: Sparkles,
-    title: "AI で申請書を自動生成",
-    description: "プロの中小企業診断士レベルの申請書が完成",
+    icon: Building2,
+    title: "プロフィールで精度UP",
+    description: "企業情報を登録するとAI生成の精度が大幅に向上",
     time: "1分",
   },
 ];
@@ -44,7 +44,7 @@ export function WelcomeModal({ show }: { show: boolean }) {
   const handleStart = () => {
     posthog.capture(EVENTS.WELCOME_MODAL_CTA_CLICKED);
     setDismissed(true);
-    router.push("/profile?quick=true");
+    router.push("/chat");
   };
 
   const handleClose = () => {
@@ -115,7 +115,7 @@ export function WelcomeModal({ show }: { show: boolean }) {
             onClick={handleStart}
             className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors"
           >
-            プロフィール登録を始める
+            AIに相談してみる
             <ArrowRight className="h-4 w-4" />
           </button>
           <button

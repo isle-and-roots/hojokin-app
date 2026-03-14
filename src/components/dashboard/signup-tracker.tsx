@@ -11,6 +11,12 @@ export function SignupTracker({ isWelcome }: { isWelcome: boolean }) {
     if (isWelcome && !fired.current) {
       fired.current = true;
       posthog.capture(EVENTS.SIGNUP_COMPLETED);
+      posthog.capture(EVENTS.FTUE_STEP_REACHED, { step: "signup" });
+      try {
+        sessionStorage.setItem("ftue_start", Date.now().toString());
+      } catch {
+        // sessionStorage may be unavailable (private browsing)
+      }
     }
   }, [isWelcome]);
 

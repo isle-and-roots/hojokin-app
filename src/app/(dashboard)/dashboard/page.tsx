@@ -22,6 +22,7 @@ import { SignupTracker } from "@/components/dashboard/signup-tracker";
 import { WelcomeModal } from "@/components/dashboard/welcome-modal";
 import { QuotaWidget } from "@/components/dashboard/quota-widget";
 import { ProfileCompletenessBanner } from "@/components/dashboard/profile-completeness-banner";
+import { UnifiedUpgradeBanner } from "@/components/dashboard/unified-upgrade-banner";
 import { IndustryQuickStart } from "@/components/dashboard/industry-quick-start";
 import { SmartNotifications } from "@/components/dashboard/smart-notifications";
 import { ChatOnboardingCta } from "@/components/dashboard/chat-onboarding-cta";
@@ -184,7 +185,16 @@ export default async function Dashboard({
         </p>
       </div>
 
-      {/* ステータスカード */}
+      {/* アップセルバナー（プロフィールあり時のみ） */}
+      {profile && (
+        <UnifiedUpgradeBanner
+          plan={userPlan}
+          profileCompleteness={profileCompleteness}
+        />
+      )}
+
+      {/* ステータスカード（プロフィールあり時のみ） */}
+      {profile && (
       <AnimatedGrid className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
         {STAT_CONFIGS.map((stat) => (
           <AnimatedItem key={stat.label}>
@@ -236,6 +246,7 @@ export default async function Dashboard({
           <PlanBadgeCard />
         </AnimatedItem>
       </AnimatedGrid>
+      )}
 
       {/* プロフィール充実度バナー */}
       {profile && (
@@ -423,7 +434,8 @@ export default async function Dashboard({
         />
       )}
 
-      {/* 対応補助金 */}
+      {/* 対応補助金（プロフィールあり + 申請あり時のみ） */}
+      {profile && applicationCount > 0 && (
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold pl-3 border-l-[3px] border-primary">対応補助金</h2>
@@ -471,6 +483,7 @@ export default async function Dashboard({
           })}
         </div>
       </div>
+      )}
     </div>
     </PageTransition>
   );

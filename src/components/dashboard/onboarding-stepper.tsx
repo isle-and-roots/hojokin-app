@@ -37,20 +37,20 @@ const STEP_CONFIGS: StepConfig[] = [
     ctaText: "完了",
   },
   {
-    id: "profile",
-    label: "企業プロフィール登録",
-    description: "事業者情報を入力してAI生成精度を上げましょう",
-    icon: Building2,
-    href: "/profile",
-    ctaText: "プロフィールを登録する",
-  },
-  {
     id: "shindan",
     label: "補助金診断を受ける",
     description: "自社にぴったりの補助金を診断しましょう",
     icon: Search,
     href: "/shindan",
     ctaText: "診断をはじめる",
+  },
+  {
+    id: "profile",
+    label: "企業プロフィール登録",
+    description: "事業者情報を入力してAI生成精度を上げましょう",
+    icon: Building2,
+    href: "/profile",
+    ctaText: "プロフィールを登録する",
   },
   {
     id: "application",

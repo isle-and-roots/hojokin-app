@@ -93,6 +93,10 @@ export const EVENTS = {
 
   // ─── FAQ ───
   FAQ_QUESTION_CLICKED: "faq_question_clicked",
+
+  // ─── FTUE ファネル ───
+  FTUE_STEP_REACHED: "ftue_step_reached",
+  FTUE_TIME_TO_VALUE: "ftue_time_to_value",
 } as const;
 
 export type PostHogEventName = (typeof EVENTS)[keyof typeof EVENTS];
