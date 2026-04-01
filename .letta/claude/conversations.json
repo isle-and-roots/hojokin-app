@@ -6,5 +6,9 @@
   "2a165839-1048-445b-ae40-68e5f7c225dd": {
     "conversationId": "conv-6563ee53-792f-4430-83a7-26693ae77506",
     "agentId": "agent-f98f4f21-a727-40c3-8c9f-53d2fea64fa0"
+  },
+  "be59bca6-b35f-4e3b-83b0-7585e481fa99": {
+    "conversationId": "conv-ea1dbb73-bf35-4ab6-95e7-6e8a56374709",
+    "agentId": "agent-f98f4f21-a727-40c3-8c9f-53d2fea64fa0"
   }
 }
